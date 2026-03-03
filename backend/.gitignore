@@ -1,0 +1,68 @@
+# ==============================
+
+# CrewFlow - Django Backend
+
+# ==============================
+
+# Python
+
+**pycache**/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+
+venv/
+env/
+ENV/
+
+# Django
+
+*.log
+db.sqlite3
+db.sqlite3-journal
+
+# Media files (user uploads)
+
+media/
+
+# Static files (collected)
+
+staticfiles/
+
+# Environment variables
+
+.env
+.env.*
+!.env.example
+
+# Django migrations cache
+
+*/migrations/*.pyc
+*/migrations/**pycache**/
+
+# Pytest
+
+.pytest_cache/
+
+# Coverage reports
+
+.coverage
+coverage.xml
+htmlcov/
+
+# VS Code
+
+.vscode/
+
+# PyCharm
+
+.idea/
+
+# macOS
+
+.DS_Store
+
+# Windows
+
+Thumbs.db
