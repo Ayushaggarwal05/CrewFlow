@@ -26,4 +26,6 @@ urlpatterns = [
     path('api/teams/' , include("apps.teams.urls")),
     path('api/projects/' , include("apps.projects.urls")),
     path('api/tasks/' , include("apps.tasks.urls")),
+    path('api/comments/' , include("apps.comments.urls")),
+    path('api/activity/', include("apps.activity.urls")),
 ]
