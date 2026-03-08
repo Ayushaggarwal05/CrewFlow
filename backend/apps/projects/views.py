@@ -10,6 +10,9 @@ class ProjectCreateView(generics.CreateAPIView):
 
 
 class ProjectListView(generics.ListAPIView):
-    queryset = Project.objects.all()
     serializer_class = ProjectSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        return super().get_queryset()
 
