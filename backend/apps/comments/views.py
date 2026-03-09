@@ -12,7 +12,7 @@ class CommentCreateView(generics.CreateAPIView):
         task = serializer.validated_data["task"]
         user = self.request.user
 
-        is_member = task.project.team.organisation.memberships.filter(user = user).exists()
+        is_member = task.project.team.organization.memberships.filter(user = user).exists()
 
         if not is_member:
             raise PermissionDenied("NOt allowed")
@@ -27,4 +27,4 @@ class CommentListView(generics.ListAPIView):
     def get_queryset(self):
         task_id = self.kwargs["task_id"]
         user = self.request.user
-        return Comment.objects.filter(task_id=task_id , task_project_team_organisation_membership_user = user)
+        return Comment.objects.filter(task_id=task_id , task_project_team_organization_membership_user = user)

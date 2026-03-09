@@ -4,11 +4,12 @@ from .models import ActivityLog
 from .serializers import ActivityLogSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
+from .permissions import IsOrganizationMember
 # Create your views here.
 
 class ActivityCreateView(generics.CreateAPIView):
     serializer_class = ActivityLogSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated , IsOrganizationMember]
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -22,7 +23,7 @@ class ActivityCreateView(generics.CreateAPIView):
 
 class ActivityListView(generics.ListAPIView):
     serializer_class = ActivityLogSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated , IsOrganizationMember]
 
     def get_queryset(self):
         user = self.request.user
