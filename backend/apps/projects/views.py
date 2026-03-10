@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework import generics
-from .serializers import ProjectCreateSerializer  , ProjectSerializer
+from .serializers import ProjectCreateSerializer , ProjectSerializer
 from .models import Project
 from rest_framework.permissions import IsAuthenticated 
 from rest_framework.exceptions import PermissionDenied
@@ -25,8 +25,9 @@ class ProjectListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
+        org_id = self.kwargs["organization_id"]
         user = self.request.user
-        return Project.objects.filter(team__organization__memberships__user = user)
+        return Project.objects.filter( team__organization_id = org_id ,team__organization__memberships__user = user)
 
 
 class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):

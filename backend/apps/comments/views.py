@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from .models import Comment
 from .serializers import CommentSerializer, CommentCreateSerializer
-from apps.organizations.permissions import IsDeveloperOrAbove
+from apps.organizations.permissions import IsDeveloperOrAbove , IsManagerOrAdmin
 
 class CommentCreateView(generics.CreateAPIView):
     serializer_class = CommentCreateSerializer
@@ -29,3 +29,12 @@ class CommentListView(generics.ListAPIView):
         task_id = self.kwargs["task_id"]
         user = self.request.user
         return Comment.objects.filter(task_id=task_id , task__project__team__organization__memberships__user = user)
+
+
+class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated , IsManagerOrAdmin ]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Comment.objects.filter(task__project__team__organization__memberships__user=user)
