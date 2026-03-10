@@ -28,4 +28,4 @@ class CommentListView(generics.ListAPIView):
     def get_queryset(self):
         task_id = self.kwargs["task_id"]
         user = self.request.user
-        return Comment.objects.filter(task_id=task_id , task__project__team__organization__membership__user = user)
+        return Comment.objects.filter(task_id=task_id , task__project__team__organization__memberships__user = user)

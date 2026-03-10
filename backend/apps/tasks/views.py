@@ -30,7 +30,7 @@ class TaskListView(generics.ListAPIView):
 
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TaskSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated , IsManagerOrAdmin]
 
     def get_queryset(self):
         user = self.request.user

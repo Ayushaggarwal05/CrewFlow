@@ -33,9 +33,21 @@ class IsDeveloperOrAbove(BasePermission):
 class IsManagerOrAdmin(BasePermission):
 
     def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated
+    
+    def has_object_permission(self, request, view, obj):
         user = request.user
 
-        return OrganizationMembership.objects.filter(
-            user=user,
-            role__in=["ADMIN", "MANAGER"]
-        ).exists()
+        if hasattr(obj , "organization"):
+            organization  = obj.organization
+        elif hasattr(obj , "team"):
+            organization = obj.team.organization
+        elif hasattr(obj , "project"):
+            organization = obj.project.team.organization
+        elif hasattr(obj, "task"):
+            organization = obj.task.project.team.organization
+        else:
+            return False
+        
+        membership = OrganizationMembership.objects.filter(user = user , organization = organization , role__in = ["ADMIN" , 'MANAGER']).exists()
+        return membership
