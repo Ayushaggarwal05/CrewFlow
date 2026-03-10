@@ -2,13 +2,14 @@ from django.shortcuts import render
 from rest_framework import generics
 from .serializers import TaskCreateSerializer , TaskSerializer
 from .models import Task
+from apps.organizations.permissions import IsManagerOrAdmin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 # Create your views here.
 
 class TaskCreateView(generics.CreateAPIView):
     serializer_class = TaskCreateSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated , IsManagerOrAdmin]
 
     def perform_create(self, serializer):
         project = serializer.validated_data["project"]

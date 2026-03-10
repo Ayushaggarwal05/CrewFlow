@@ -6,7 +6,7 @@ class Organization(models.Model):
     owner = models.ForeignKey("users.User" , on_delete=models.CASCADE , related_name="owned_organization")
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def _str_(self):
+    def __str__(self):
         return self.name
 
 
