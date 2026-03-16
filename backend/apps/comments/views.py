@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from .models import Comment
 from .serializers import CommentSerializer, CommentCreateSerializer
-from apps.organizations.permissions import IsDeveloperOrAbove , IsManagerOrAdmin
+from apps.common.permissions import IsDeveloperOrAbove , IsManagerOrAdmin
 
 class CommentCreateView(generics.CreateAPIView):
     serializer_class = CommentCreateSerializer

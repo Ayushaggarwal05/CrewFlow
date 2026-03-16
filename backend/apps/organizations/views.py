@@ -3,7 +3,7 @@ from rest_framework import generics
 from .models import Organization
 from .serializers import OrganizationSerializer , OrganizationCreateSerializer
 from rest_framework.permissions import IsAuthenticated
-from .permissions import IsManagerOrAdmin,IsOrganizationAdmin
+from apps.common.permissions import IsManagerOrAdmin,IsOrganizationAdmin
 # Create your views here.
 
 class OrganizationListView(generics.ListAPIView):

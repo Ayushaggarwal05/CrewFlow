@@ -4,7 +4,7 @@ from .serializers import ProjectCreateSerializer , ProjectSerializer
 from .models import Project
 from rest_framework.permissions import IsAuthenticated 
 from rest_framework.exceptions import PermissionDenied
-from apps.organizations.permissions import IsManagerOrAdmin
+from apps.common.permissions import IsManagerOrAdmin
 # Create your views here.
 
 class ProjectCreateView(generics.CreateAPIView):
