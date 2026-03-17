@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from .models import Organization , OrganizationMembership
 
-class OrganizationSerializer(serializers.ModelSerializer):
+
+# --------------BASE---------------
+
+class OrganizationBaseSerializer(serializers.ModelSerializer):
     class Meta :
         model = Organization
         fields = [
@@ -10,10 +13,20 @@ class OrganizationSerializer(serializers.ModelSerializer):
             "owner",
             "created_at"
         ]
+        read_only_fields = [
+            "id",
+            "owner",
+            "created_at",
+        ]
 
-class OrganizationCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Organization
+#--------------READ----------------        
+
+class OrganizationSerializer(OrganizationBaseSerializer):
+    pass
+    
+
+class OrganizationWriteSerializer(OrganizationBaseSerializer):
+    class Meta(OrganizationBaseSerializer.Meta):
         fields = ["id" , "name"]
     
     def create(self ,validated_data):

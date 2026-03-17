@@ -1,31 +1,40 @@
 from django.shortcuts import render
 from rest_framework import generics
 from .models import Organization
-from .serializers import OrganizationSerializer , OrganizationCreateSerializer
+from .serializers import OrganizationSerializer , OrganizationWriteSerializer
 from rest_framework.permissions import IsAuthenticated
 from apps.common.permissions import IsManagerOrAdmin,IsOrganizationAdmin
 # Create your views here.
 
-class OrganizationListView(generics.ListAPIView):
-    serializer_class = OrganizationSerializer
-    permission_classes = [IsAuthenticated , IsManagerOrAdmin]
+
+
+#------------------List and create ---------------
+
+class OrganizationListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated,]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        return Organization.objects.filter(memberships__user = user)
+    
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return OrganizationWriteSerializer
+        return OrganizationSerializer
+
+
+#----------------Update , Delete , Detail-------------
+
+class OrganizationDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated , IsOrganizationAdmin]
 
     def get_queryset(self):
         user = self.request.user
         return Organization.objects.filter(memberships__user = user)
 
-class OrganizationCreateView(generics.CreateAPIView):
-    serializer_class = OrganizationCreateSerializer
-    permission_classes = [IsAuthenticated]
+    def get_serializer_class(self):
+        if self.request.method in ["PUT", "PATCH"]:
+            return OrganizationWriteSerializer
 
-    def get_queryset(self):
-        return Organization.objects.filter(memberships__user = self.request.user)
-
-class OrganizationDeleteView(generics.DestroyAPIView):
-    serializer_class = OrganizationSerializer
-    permission_classes = [IsAuthenticated, IsOrganizationAdmin]
-
-    def get_queryset(self):
-        return Organization.objects.filter(
-            memberships__user=self.request.user
-        )
+        return OrganizationSerializer
