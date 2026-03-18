@@ -1,42 +1,43 @@
 from django.shortcuts import render
 from rest_framework import generics
-from .serializers import ProjectCreateSerializer , ProjectSerializer
-from .models import Project
 from rest_framework.permissions import IsAuthenticated 
-from rest_framework.exceptions import PermissionDenied
+from .models import Project
+from .serializers import ProjectWriteSerializer , ProjectSerializer
+# from rest_framework.exceptions import PermissionDenied
 from apps.common.permissions import IsManagerOrAdmin
 # Create your views here.
 
-class ProjectCreateView(generics.CreateAPIView):
-    serializer_class = ProjectCreateSerializer
-    permission_classes = [IsAuthenticated , IsManagerOrAdmin]
 
-    def perform_create(self, serializer):
-        team = serializer.validated_data["team"]
-        user = self.request.user
-        is_member = team.organization.memberships.filter(user=user).exists()
+#------------------------list nad create -----------------------
+class ProjectListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated ]
 
-        if not is_member:
-            raise PermissionDenied("not allowed")
-        serializer.save(created_by=user)
-
-class ProjectListView(generics.ListAPIView):
-    serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated]
-    
     def get_queryset(self):
-        org_id = self.kwargs["organization_id"]
         user = self.request.user
-        return Project.objects.filter( team__organization_id = org_id ,team__organization__memberships__user = user)
+        team_id = self.kwargs["team_id"]
+        return Project.objects.filter(team__id = team_id , team__organization__memberships__user=user).distinct()
+    
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return ProjectWriteSerializer
+        return ProjectSerializer
+    
 
+#-----------------------Update, delete , detail----------------
 
 class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated,IsManagerOrAdmin]
 
     def get_queryset(self):
         user = self.request.user
+        team_id = self.kwargs["team_id"]
 
         return Project.objects.filter(
+            team__id = team_id,
             team__organization__memberships__user=user
-        )
+        ).distinct()
+    
+    def get_serializer_class(self):
+        if self.request.method in ["PUT","PATCH"]:
+            return ProjectWriteSerializer
+        return ProjectSerializer
