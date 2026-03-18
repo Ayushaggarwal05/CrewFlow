@@ -5,7 +5,7 @@ from .serializers import ActivityLogSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from .permissions import IsOrganizationMember
-from apps.organizations.permissions import IsDeveloperOrAbove
+from apps.common.permissions import IsDeveloperOrAbove
 # Create your views here.
 
 class ActivityCreateView(generics.CreateAPIView):
