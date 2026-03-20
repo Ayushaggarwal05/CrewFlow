@@ -13,14 +13,5 @@ class ActivityLogSerializer(serializers.ModelSerializer):
             "action",
             "timestamp"
         ]
-        read_only_fields = ["id", "timestamp" , "user"]
+        read_only_fields = ["id", "timestamp" , "user" , "project" , "action"]
 
-    def validate(self , data):
-        request = self.context["request"]
-        user = request.user
-        project = data.get("project")
-
-        if project :
-            if not project.team.organization.memberships.filter(user=user).exists():
-                raise serializers.ValidationError("You cannot use this project ")
-        return data

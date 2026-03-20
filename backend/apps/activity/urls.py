@@ -1,7 +1,6 @@
 from django.urls import path
-from .views import ActivityCreateView, ActivityListView
+from .views import ActivityLogListView
 
 urlpatterns = [
-    path("", ActivityListView.as_view()),
-    path("create/", ActivityCreateView.as_view()),
+    path("projects/<int:project_id>/activity/", ActivityLogListView.as_view() , name="activity-list"),
 ]
