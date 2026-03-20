@@ -36,3 +36,44 @@ class OrganizationWriteSerializer(OrganizationBaseSerializer):
         OrganizationMembership.objects.create(user= user , organization=org , role="ADMIN")
 
         return org
+
+
+
+#_______________________________________OrganizationMemberships_________________________
+
+class OrganizationMembershipBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrganizationMembership
+        fields = [
+            "id",
+            "user",
+            "organization",
+            "role",
+            "joined_at",
+        ]
+
+        read_only_fields = [
+            "id",
+            "organization",
+            "joined_at",
+        ]
+
+
+class OrganizationMembershipSerializer(OrganizationMembershipBaseSerializer):
+    pass
+
+class OrganizationMembershipWriteSerializer(OrganizationMembershipBaseSerializer):
+
+    class Meta(OrganizationMembershipBaseSerializer.Meta):
+        fields = [
+            "id",
+            "user",
+            "role"
+        ]
+    
+    def create(self, validated_data):
+        org_id = self.context["view"].kwargs["org_id"]
+        organization = Organization.objects.get(id = org_id)
+        membership = OrganizationMembership.objects.create(organization = organization , **validated_data)
+
+        return membership

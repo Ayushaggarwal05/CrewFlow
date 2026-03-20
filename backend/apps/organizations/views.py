@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import generics
-from .models import Organization
-from .serializers import OrganizationSerializer , OrganizationWriteSerializer
+from .models import Organization , OrganizationMembership
+from .serializers import OrganizationSerializer , OrganizationWriteSerializer , OrganizationMembershipSerializer , OrganizationMembershipWriteSerializer
 from rest_framework.permissions import IsAuthenticated
 from apps.common.permissions import IsManagerOrAdmin,IsOrganizationAdmin
 # Create your views here.
@@ -38,3 +38,37 @@ class OrganizationDetailView(generics.RetrieveUpdateDestroyAPIView):
             return OrganizationWriteSerializer
 
         return OrganizationSerializer
+
+
+#_______________________________________organizationmembership___________________________
+
+
+class OrganizationMembershipListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated , IsOrganizationAdmin]
+
+    def get_queryset(self):
+        user= self.request.user
+        org_id = self.kwargs["org_id"]
+
+        return OrganizationMembership.objects.filter(organization__id = org_id , organization__memberships__user = user).distinct()
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return OrganizationMembershipWriteSerializer
+        return OrganizationMembershipSerializer
+    
+
+
+class OrganizationMembershipDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated , IsOrganizationAdmin]
+
+    def get_queryset(self):
+        user= self.request.user
+        org_id = self.kwargs["org_id"]
+
+        return OrganizationMembership.objects.filter(organization__id = org_id , organization__memberships__user = user).distinct()
+
+    def get_serializer_class(self):
+        if self.request.method in ["PUT" , "PATCH"]:
+            return OrganizationMembershipWriteSerializer
+        return OrganizationMembershipSerializer
