@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from .models import Comment
+from apps.tasks.models import Task
 
-class CommentSerializer(serializers.ModelSerializer):
+
+#-------------------------Base-----------------------
+class CommentBaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = [
@@ -11,15 +14,30 @@ class CommentSerializer(serializers.ModelSerializer):
             "content",
             "created_at"
         ]
-        read_only_fields = ["user"]
+        read_only_fields = [
+            "id",
+            "task",
+            "author",
+            "created_at",
+        ]
 
-class CommentCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
+
+#-------------------read------------
+
+class CommentSerializer(CommentBaseSerializer):
+    pass
+
+#----------------------------write---------------------
+class CommentWriteSerializer(CommentBaseSerializer):
+    class Meta(CommentBaseSerializer.Meta):
         fields = [
-            "task" , "content"
+            "id" , "content"
         ]
     
     def create(self , validated_data):
-        user = self.context["request"].user
-        return Comment.objects.create(user=user , **validated_data)
+        request = self.context["request"]
+        task_id = self.context["view"].kwargs["task_id"]
+
+        task = Task.objects.get(id=task_id)
+        comment = Comment.objects.create(task = task ,author = request.user , **validated_data)
+        return comment

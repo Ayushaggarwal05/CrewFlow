@@ -2,39 +2,39 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from .models import Comment
-from .serializers import CommentSerializer, CommentCreateSerializer
+from .serializers import CommentSerializer, CommentWriteSerializer
 from apps.common.permissions import IsDeveloperOrAbove , IsManagerOrAdmin
 
-class CommentCreateView(generics.CreateAPIView):
-    serializer_class = CommentCreateSerializer
+
+#-------------------list and create-----------------
+class CommentListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated , IsDeveloperOrAbove]
 
-    def perform_create(self, serializer):
-        task = serializer.validated_data["task"]
-        user = self.request.user
-
-        is_member = task.project.team.organization.memberships.filter(user = user).exists()
-
-        if not is_member:
-            raise PermissionDenied("NOt allowed")
-
-        serializer.save(user=user)
-
-
-class CommentListView(generics.ListAPIView):
-    serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
-
     def get_queryset(self):
-        task_id = self.kwargs["task_id"]
         user = self.request.user
-        return Comment.objects.filter(task_id=task_id , task__project__team__organization__memberships__user = user)
+        task_id  = self.kwargs["task_id"]
+        return Comment.objects.filter(task__id = task_id , task__project__team__organization__memberships__user=user).distinct()
+    
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return CommentWriteSerializer
+        return CommentSerializer
 
 
+#----------------------------Detal ,update----------------------
 class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated , IsManagerOrAdmin ]
 
     def get_queryset(self):
         user = self.request.user
-        return Comment.objects.filter(task__project__team__organization__memberships__user=user)
+        task_id = self.kwargs["task_id"]
+        return Comment.objects.filter(
+            task__id=task_id,
+            task__project__team__organization__memberships__user=user,
+        ).distinct()
+    
+    def get_serializer_class(self):
+        if self.request.method in ["PUT", "PATCH"]:
+            return CommentWriteSerializer
+
+        return CommentSerializer
