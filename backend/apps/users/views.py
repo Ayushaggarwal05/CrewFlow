@@ -24,6 +24,18 @@ class OrganizationUsersView(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated , IsOrganizationMember]
 
+    filterset_fields = [
+        "is_active",
+    ]
+
+    search_fields = [
+        "email","full_name",
+    ]
+
+    ordering_fields = [
+        "date_joined",
+    ]
+
     def get_queryset(self):
         org_id = self.kwargs["org_id"]
         return User.objects.filter(organizationmembership__organization__id = org_id).distinct()
@@ -32,6 +44,18 @@ class OrganizationUsersView(generics.ListAPIView):
 class TeamUsersView(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated , IsOrganizationMember]
+
+    filterset_fields = [
+        "is_active",
+    ]
+
+    search_fields = [
+        "email","full_name",
+    ]
+
+    ordering_fields = [
+        "date_joined",
+    ]
 
     def get_queryset(self):
         team_id = self.kwargs["team_id"]

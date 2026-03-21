@@ -14,6 +14,18 @@ from apps.common.permissions import (
 #------------------list and create----------
 class TeamListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
+    
+    filterset_fields = [
+        "organization",
+    ]
+
+    search_fields = [
+        "name",
+    ]
+
+    ordering_fields = [
+        "created_at",
+    ]
 
     def get_queryset(self):
         user = self.request.user
@@ -50,6 +62,19 @@ class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class TeamMembershipListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated , IsManagerOrAdmin]
+
+    filterset_fields = [
+        "role","user" , "team"
+    ]
+
+    search_fields = [
+        "user__email",
+    ]
+
+    ordering_fields = [
+        "joined_at",
+    ]
+
     def get_queryset(self):
         user = self.request.user
         team_id  = self.kwargs["team_id"]

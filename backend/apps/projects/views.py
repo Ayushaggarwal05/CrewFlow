@@ -12,6 +12,18 @@ from apps.common.permissions import IsManagerOrAdmin
 class ProjectListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated ]
 
+    filterset_fields = [
+        "status","team" ,"created_by",
+    ]
+
+    search_fields = [
+        "name","description",
+    ]
+
+    ordering_fields = [
+        "created_at","deadline",
+    ]
+
     def get_queryset(self):
         user = self.request.user
         team_id = self.kwargs["team_id"]

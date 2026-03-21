@@ -13,10 +13,17 @@ from apps.common.permissions import IsManagerOrAdmin,IsOrganizationAdmin
 class OrganizationListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated,]
 
+    filterset_fields = [                                   #drop down/filter
+        "owner",
+    ]
+
+    search_fields = ["name"]                                #search box
+    ordering_fields = ["created_at"]                        #sort
+
     def get_queryset(self):
         user = self.request.user
 
-        return Organization.objects.filter(memberships__user = user)
+        return Organization.objects.filter(memberships__user = user).distinct()
     
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -45,6 +52,19 @@ class OrganizationDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class OrganizationMembershipListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated , IsOrganizationAdmin]
+
+    filterset_fields = [
+        "role",
+        "user",
+    ]
+
+    search_fields = [
+        "user__email",
+    ]
+
+    ordering_fields = [
+        "joined_at",
+    ]
 
     def get_queryset(self):
         user= self.request.user

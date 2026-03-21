@@ -11,6 +11,18 @@ class ActivityLogListView(generics.ListAPIView):
     serializer_class = ActivityLogSerializer
     permission_classes = [IsAuthenticated , IsOrganizationMember , IsDeveloperOrAbove]
 
+    filterset_fields = [
+        "project","user",
+    ]
+
+    search_fields = [
+        "action",
+    ]
+
+    ordering_fields = [
+        "timestamp",
+    ]
+
     def get_queryset(self):
         user = self.request.user
         project_id = self.kwargs["project_id"]
