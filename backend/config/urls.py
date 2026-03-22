@@ -25,8 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     #JWT
-    path('api/token/' , TokenObtainPairView.as_view()),
-    path('api/token/refresh/' , TokenRefreshView.as_view()),
+    path('api/auth/' , include("apps.authentication.urls")),
 
     #API routes
     path('api/users/' , include("apps.users.urls")),

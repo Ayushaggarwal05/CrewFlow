@@ -43,6 +43,8 @@ INSTALLED_APPS = [
 
      # Third-party
     'rest_framework',
+    "rest_framework.authtoken",
+    "rest_framework_simplejwt.token_blacklist",
     "django_filters",
 
     # Local apps
@@ -52,7 +54,8 @@ INSTALLED_APPS = [
     'apps.projects',
     'apps.tasks',
     'apps.comments',
-    'apps.activity'
+    'apps.activity',
+    'apps.authentication',
 ]
 
 MIDDLEWARE = [
@@ -151,7 +154,7 @@ REST_FRAMEWORK = {
     #-------------------------------Pagination-----------------------
     "DEFAULT_PAGINATION_CLASS" : 
         "apps.common.pagination.DefaultPagination",
-        
+
     "PAGE_SIZE" : 10,
 
     #--------------------Filtering-----------------------------------------
@@ -167,4 +170,10 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME" : timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME" : timedelta(days=1),
     "AUTH_HEADERS_TYPES" : ("Bearer" ,),
+    "AUTH_TOKEN_CLASSES" : (
+        "rest_framewrok_simplejwt.tokens.AccessToken",
+    ),
+
+    "BLACKLIST_AFTER_ROTATION" : True,
+    "ROTATE_REFRESH_TOKENS" : True,
 }
