@@ -3,7 +3,7 @@ from rest_framework import generics
 from .models import Organization , OrganizationMembership
 from .serializers import OrganizationSerializer , OrganizationWriteSerializer , OrganizationMembershipSerializer , OrganizationMembershipWriteSerializer
 from rest_framework.permissions import IsAuthenticated
-from apps.common.permissions import IsManagerOrAdmin,IsOrganizationAdmin
+from apps.common.permissions import IsAuthenticatedAndMember,IsOrganizationAdmin
 # Create your views here.
 
 
@@ -11,7 +11,7 @@ from apps.common.permissions import IsManagerOrAdmin,IsOrganizationAdmin
 #------------------List and create ---------------
 
 class OrganizationListCreateView(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [IsAuthenticated, IsAuthenticatedAndMember]
 
     filterset_fields = [                                   #drop down/filter
         "owner",

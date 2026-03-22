@@ -19,6 +19,10 @@ class IsAuthenticatedAndMember(BasePermission):
     
 
 class IsOrganizationMember(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated
+    
+
     def has_object_permission(self, request, view, obj):
         user = request.user
         organization= get_organization_from_obj(obj)
@@ -30,6 +34,10 @@ class IsOrganizationMember(BasePermission):
 
 
 class IsManagerOrAdmin(BasePermission):
+
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated
+
     def has_object_permission(self, request, view, obj):
         user = request.user
         organization= get_organization_from_obj(obj)
@@ -44,6 +52,11 @@ class IsManagerOrAdmin(BasePermission):
         ).exists()
     
 class IsDeveloperOrAbove(BasePermission):
+
+    def has_permission(self, request, view):
+
+        return request.user and request.user.is_authenticated
+
     def has_object_permission(self, request, view, obj):
         user = request.user
         organization= get_organization_from_obj(obj)
@@ -58,11 +71,23 @@ class IsDeveloperOrAbove(BasePermission):
         ).exists()
     
 class IsOrganizationAdmin(BasePermission):
+
+    def has_permission(self, request, view):
+
+        return request.user and request.user.is_authenticated
+
+
     def has_object_permission(self, request, view, obj):
+
         user = request.user
-        organization = organization
-        
+
+        organization = get_organization_from_obj(obj)
+
         if not organization:
             return False
-        
-        return OrganizationMembership.objects.filter(user = user , organization = organization ,role = "ADMIN").exists()
+
+        return OrganizationMembership.objects.filter(
+            user=user,
+            organization=organization,
+            role="ADMIN",
+        ).exists()
