@@ -3,13 +3,13 @@ from rest_framework import generics
 from .models import ActivityLog
 from .serializers import ActivityLogSerializer
 from rest_framework.permissions import IsAuthenticated
-from .permissions import IsOrganizationMember
+# from .permissions import IsOrganizationMember
 from apps.common.permissions import IsDeveloperOrAbove
 # Create your views here.
 
 class ActivityLogListView(generics.ListAPIView):
     serializer_class = ActivityLogSerializer
-    permission_classes = [IsAuthenticated , IsOrganizationMember , IsDeveloperOrAbove]
+    permission_classes = [IsAuthenticated  , IsDeveloperOrAbove]
 
     filterset_fields = [
         "project","user",

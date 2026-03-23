@@ -68,7 +68,7 @@ class OrganizationMembershipListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user= self.request.user
-        org_id = self.kwargs["org_id"]
+        org_id = self.kwargs["org_id"]      # make sure that organization id is present int he url calling 
 
         return OrganizationMembership.objects.filter(organization__id = org_id , organization__memberships__user = user).distinct()
 
