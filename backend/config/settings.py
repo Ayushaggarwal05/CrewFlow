@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
+    "corsheaders",
 
     # Local apps
     'apps.users',
@@ -59,6 +60,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -141,6 +143,16 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_HEADERS = [
+    "content-type",
+    "authorization",
+]
+
 
 REST_FRAMEWORK = {
     #-------------------------AUTH----------------------------
@@ -164,7 +176,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ] ,
 
-    "EXCEPTION_HANDLER" : "apps.common.exception.custom_exception_handler",
+    "EXCEPTION_HANDLER" : "apps.common.exceptions.custom_exception_handler",
 }
 
 
