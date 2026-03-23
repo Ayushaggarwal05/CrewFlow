@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     'apps.projects',
     'apps.tasks',
     'apps.comments',
-    'apps.activity',
+    'apps.activity.apps.ActivityConfig',
     'apps.authentication',
 ]
 

@@ -4,6 +4,7 @@ from django.dispatch import receiver
 from apps.tasks.models import Task
 from apps.projects.models import Project
 from apps.comments.models import Comment
+from apps.organizations.models import OrganizationMembership
 
 from .models import ActivityLog
 
@@ -47,3 +48,17 @@ def log_project(sender , instance , created , **kwargs):
 def log_project_delete(sender , instance , **kwargs):
     ActivityLog.objects.create(user = instance.created_by , project = instance  , action= "Project deleted")
     
+
+
+#---------------------------------organisationmembership-----------------
+
+@receiver(post_save, sender=OrganizationMembership)
+def log_membership_activity(sender, instance, created, **kwargs):
+
+    if created:
+
+        ActivityLog.objects.create(
+            user=instance.user,
+            action="Joined organization",
+            organization=instance.organization,
+        )
