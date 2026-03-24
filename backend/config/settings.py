@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +22,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-0hg0@(v=bz7#cwaktn1i^b9v((6nbg)x8q9ga*u3h6=dk(zz^+'
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG" , default =False , cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config(
+    "ALLOWED_HOSTS",
+    cast=lambda v: [s.strip() for s in v.split(",")]
+)
 
 
 AUTH_USER_MODEL = 'users.User'
@@ -47,6 +51,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
     "corsheaders",
+    "drf_spectacular",  
 
     # Local apps
     'apps.users',
@@ -177,6 +182,12 @@ REST_FRAMEWORK = {
     ] ,
 
     "EXCEPTION_HANDLER" : "apps.common.exceptions.custom_exception_handler",
+
+    "DEFAULT_SCHEMA_CLASS" : 'drf_spectacular.openapi.AutoSchema',
+
+    "DEFAULT_RENDERER_CLASSES": (
+        "apps.common.renderers.CustomRenderer",
+    ),
 }
 
 
@@ -190,4 +201,10 @@ SIMPLE_JWT = {
 
     "BLACKLIST_AFTER_ROTATION" : True,
     "ROTATE_REFRESH_TOKENS" : True,
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "CrewFlow API",
+    "DESCRIPTION": "Project Management API",
+    "VERSION": "1.0.0",
 }
