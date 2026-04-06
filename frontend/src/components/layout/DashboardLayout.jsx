@@ -9,7 +9,7 @@ import { PageLoader } from "../ui/Spinner";
 const DashboardLayout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [initializing, setInitializing] = useState(!user);
 
