@@ -14,22 +14,27 @@ const DashboardLayout = () => {
   const [initializing, setInitializing] = useState(!user);
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    const init = async () => {
+      const token = localStorage.getItem("access_token");
 
-    if (!token) {
-      navigate("/login", { replace: true });
-      return;
-    }
-    if (!user) {
-      dispatch(fetchCurrentUser()).then((result) => {
+      if (!token) {
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      if (!user) {
+        const result = await dispatch(fetchCurrentUser());
+
         if (fetchCurrentUser.rejected.match(result)) {
           navigate("/login", { replace: true });
+          return;
         }
-        setInitializing(false);
-      });
-    } else {
+      }
+
       setInitializing(false);
-    }
+    };
+
+    init();
   }, [user, dispatch, navigate]);
 
   if (initializing) {
