@@ -27,7 +27,8 @@ const AppRouter = () => {
           <ProtectedRoute>
             <DashboardLayout />
           </ProtectedRoute>
-        }>
+        }
+      >
         <Route index element={<Navigate to="/app/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="organizations" element={<OrganizationList />} />
@@ -36,11 +37,18 @@ const AppRouter = () => {
           path="organizations/:orgId/teams/:teamId"
           element={<TeamDetails />}
         />
+
+        {/* Global Projects */}
+        <Route path="projects" element={<ProjectList />} />
         <Route path="teams/:teamId/projects" element={<ProjectList />} />
         <Route
           path="teams/:teamId/projects/:projectId"
           element={<ProjectDetails />}
         />
+
+        {/* Global Activity */}
+        <Route path="activity" element={<ActivityLog />} />
+
         <Route path="projects/:projectId/tasks" element={<TaskBoard />} />
         <Route path="projects/:projectId/activity" element={<ActivityLog />} />
       </Route>
