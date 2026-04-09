@@ -106,7 +106,6 @@ const handleLogout = () => {
   localStorage.removeItem("access_token");
   localStorage.removeItem("refresh_token");
 
-  //  Option 1 (simple)
   window.location.href = "/login";
 };
 
