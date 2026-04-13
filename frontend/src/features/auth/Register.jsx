@@ -54,7 +54,8 @@ const Register = () => {
         navigate("/login");
       }
     } catch (err) {
-      toast.error("Something went wrong");
+      console.log(err);
+      toast.error("Something went wrong", err);
     }
   };
 
