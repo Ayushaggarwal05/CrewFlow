@@ -126,7 +126,9 @@ const TeamList = () => {
             <div
               key={team.id}
               className="card-hover p-5 group"
-              onClick={() => navigate(`/app/teams/${orgId}/${team.id}`)}
+              onClick={() =>
+                navigate(`/app/organizations/${orgId}/teams/${team.id}`)
+              }
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center">

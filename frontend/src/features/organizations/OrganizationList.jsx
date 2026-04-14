@@ -175,18 +175,8 @@ const OrganizationList = () => {
         open={showCreate}
         onClose={() => setShowCreate(false)}
         title="Create Organization"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setShowCreate(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" loading={creating} icon={Plus}>
-              Create
-            </Button>
-          </>
-        }
       >
-        <form onSubmit={handleCreate}>
+        <form onSubmit={handleCreate} className="space-y-6">
           <Input
             label="Organization Name"
             placeholder="Acme Corporation"
@@ -195,6 +185,18 @@ const OrganizationList = () => {
             required
             autoFocus
           />
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-dark-700 -mx-6 px-6">
+            <Button
+              variant="ghost"
+              onClick={() => setShowCreate(false)}
+              type="button"
+            >
+              Cancel
+            </Button>
+            <Button type="submit" loading={creating} icon={Plus}>
+              Create
+            </Button>
+          </div>
         </form>
       </Modal>
     </div>

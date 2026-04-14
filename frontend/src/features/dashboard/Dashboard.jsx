@@ -61,8 +61,15 @@ const Dashboard = () => {
 
     const load = async () => {
       try {
-        const { data } = await getOrganizations(); // ✅ FIXED
-        if (mounted) setOrgs(data || []);
+        // if (mounted) setOrgs(data || []);
+        const response = await getOrganizations();
+        // Handle DRF pagination & custom renderer ({ success: true, data: { results: [] } })
+        const payload =
+          response.data?.data?.results ||
+          response.data?.data ||
+          response.data ||
+          [];
+        if (mounted) setOrgs(Array.isArray(payload) ? payload : []);
       } catch (err) {
         console.log("Failed to fetch orgs:", err);
       } finally {

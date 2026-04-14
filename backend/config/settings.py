@@ -10,10 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
+from dotenv import load_dotenv
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
 
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -102,7 +105,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.getenv('DB_NAME'),
     }
 }
 
@@ -148,10 +151,10 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+CORS_ALLOWED_ORIGINS = config(
+    "CORS_ALLOWED_ORIGINS",
+    cast=lambda v: [s.strip() for s in v.split(",")]
+)
 
 CORS_ALLOW_HEADERS = [
     "content-type",
@@ -196,7 +199,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME" : timedelta(days=1),
     "AUTH_HEADERS_TYPES" : ("Bearer" ,),
     "AUTH_TOKEN_CLASSES" : (
-        "rest_framewrok_simplejwt.tokens.AccessToken",
+        "rest_framework_simplejwt.tokens.AccessToken",
     ),
 
     "BLACKLIST_AFTER_ROTATION" : True,

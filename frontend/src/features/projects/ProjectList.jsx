@@ -136,7 +136,7 @@ const ProjectList = () => {
               key={proj.id}
               className="card-hover p-5"
               onClick={() =>
-                navigate(`/app/projects/${proj.teamId}/${proj.id}`)
+                navigate(`/app/teams/${proj.teamId}/projects/${proj.id}`)
               }
             >
               <Badge variant={proj.status} />

@@ -203,7 +203,9 @@ const TeamDetails = () => {
             {projects.map((proj) => (
               <div
                 key={proj.id}
-                onClick={() => navigate(`/app/projects/${teamId}/${proj.id}`)}
+                onClick={() =>
+                  navigate(`/app/teams/${teamId}/projects/${proj.id}`)
+                }
                 className="card-hover p-4"
               >
                 <h3>{proj.name}</h3>
