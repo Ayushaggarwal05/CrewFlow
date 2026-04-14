@@ -55,21 +55,60 @@ const Dashboard = () => {
     }
   }, [dispatch, user]);
 
-  // Fetch organizations
+  const [teamsCount, setTeamsCount] = useState(0);
+  const [projectsCount, setProjectsCount] = useState(0);
+
+  // Fetch organizations & compute stats globally
   useEffect(() => {
     let mounted = true;
 
     const load = async () => {
       try {
-        // if (mounted) setOrgs(data || []);
         const response = await getOrganizations();
-        // Handle DRF pagination & custom renderer ({ success: true, data: { results: [] } })
         const payload =
           response.data?.data?.results ||
           response.data?.data ||
           response.data ||
           [];
-        if (mounted) setOrgs(Array.isArray(payload) ? payload : []);
+        const validOrgs = Array.isArray(payload) ? payload : [];
+        if (!mounted) return;
+        setOrgs(validOrgs);
+
+        // Fetch dynamic counts efficiently using parallel Promise maps
+        import("../teams/teamAPI").then(async ({ getTeams }) => {
+          if (!mounted) return;
+
+          const teamsResponses = await Promise.all(
+            validOrgs.map((org) =>
+              getTeams(org.id).catch(() => ({ data: [] })),
+            ),
+          );
+
+          const allTeams = teamsResponses.flatMap((res) =>
+            Array.isArray(res.data) ? res.data : [],
+          );
+
+          if (mounted) setTeamsCount(allTeams.length);
+
+          // Globally compute all connected projects based on the unified teams
+          import("../projects/projectAPI").then(async ({ getProjects }) => {
+            if (!mounted) return;
+
+            const projectResponses = await Promise.all(
+              allTeams.map((team) =>
+                getProjects(team.id).catch(() => ({ data: [] })),
+              ),
+            );
+
+            const totalProjects = projectResponses.reduce(
+              (sum, res) =>
+                sum + (Array.isArray(res.data) ? res.data.length : 0),
+              0,
+            );
+
+            if (mounted) setProjectsCount(totalProjects);
+          });
+        });
       } catch (err) {
         console.log("Failed to fetch orgs:", err);
       } finally {
@@ -120,11 +159,16 @@ const Dashboard = () => {
             label="Organizations"
             value={orgs.length}
           />
-          <StatCard icon={Users} label="Teams" value="—" color="purple" />
+          <StatCard
+            icon={Users}
+            label="Teams"
+            value={teamsCount || "0"}
+            color="purple"
+          />
           <StatCard
             icon={FolderKanban}
             label="Projects"
-            value="—"
+            value={projectsCount || "0"}
             color="blue"
           />
           <StatCard

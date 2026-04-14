@@ -1,7 +1,11 @@
 from rest_framework.permissions import BasePermission
 from apps.organizations.models import OrganizationMembership
 
+from apps.organizations.models import Organization
+
 def get_organization_from_obj(obj):
+    if isinstance(obj, Organization):
+        return obj
     if hasattr(obj, "organization"):
         return obj.organization
     if hasattr(obj, "team"):
