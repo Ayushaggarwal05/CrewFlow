@@ -29,7 +29,14 @@ class TaskListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         project_id = self.kwargs["project_id"]
 
-        return Task.objects.filter(Project__id = project_id , project__team__organization__memberships__user=user).distinct()
+        return (
+            Task.objects.filter(
+                project__id=project_id,
+                project__team__organization__memberships__user=user,
+            )
+            .distinct()
+            .order_by("-created_at")
+        )
     
     def get_serializer_class(self):
         if self.request.method == "POST":

@@ -1,13 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Clock, User, RefreshCw } from "lucide-react";
-import { getActivityLogs } from "./activityAPI";
+import { getMyActivityLogs } from "./activityAPI";
 import { CardSkeleton } from "../../components/ui/Spinner";
 import { formatRelativeTime } from "../../utils/helpers";
 import toast from "react-hot-toast";
 
-const ActivityLog = () => {
-  const { projectId } = useParams();
+const MyActivity = () => {
   const navigate = useNavigate();
 
   const [logs, setLogs] = useState([]);
@@ -15,11 +14,9 @@ const ActivityLog = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   const loadLogs = useCallback(async () => {
-    if (!projectId) return;
-
     setLoading(true);
     try {
-      const { data } = await getActivityLogs(projectId);
+      const { data } = await getMyActivityLogs();
       const normalized = Array.isArray(data) ? data : data?.results || [];
       setLogs(normalized);
     } catch {
@@ -27,20 +24,12 @@ const ActivityLog = () => {
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, []);
 
-  //  Effect
   useEffect(() => {
-    if (!projectId || isNaN(projectId)) {
-      toast.error("Invalid project");
-      navigate("/app/organizations", { replace: true });
-      return;
-    }
-
     loadLogs();
-  }, [projectId, navigate, loadLogs]);
+  }, [loadLogs]);
 
-  // Refresh
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadLogs();
@@ -61,9 +50,9 @@ const ActivityLog = () => {
           </button>
 
           <div>
-            <h1 className="page-header">Activity Log</h1>
+            <h1 className="page-header">Activity</h1>
             <p className="text-dark-400 text-sm mt-0.5">
-              All actions in this project
+              All actions you’ve performed
             </p>
           </div>
         </div>
@@ -85,7 +74,7 @@ const ActivityLog = () => {
           <Clock size={40} className="mx-auto text-dark-600 mb-3" />
           <p className="text-dark-400 font-medium">No activity yet</p>
           <p className="text-dark-500 text-sm mt-1">
-            Actions in this project will appear here
+            Your actions across organizations and projects will appear here
           </p>
         </div>
       ) : (
@@ -99,7 +88,7 @@ const ActivityLog = () => {
               <div className="flex-1">
                 <p className="text-sm text-dark-200">
                   <span className="font-medium text-dark-100">
-                    {log.user?.full_name || log.user?.email || "Someone"}
+                    {log.user?.full_name || log.user?.email || "You"}
                   </span>{" "}
                   {log.action}
                 </p>
@@ -117,4 +106,4 @@ const ActivityLog = () => {
   );
 };
 
-export default ActivityLog;
+export default MyActivity;

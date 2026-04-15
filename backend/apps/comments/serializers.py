@@ -1,6 +1,13 @@
 from rest_framework import serializers
+from rest_framework.exceptions import NotFound
 from .models import Comment
 from apps.tasks.models import Task
+
+
+class CommentUserSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    full_name = serializers.CharField()
+    email = serializers.EmailField()
 
 
 #-------------------------Base-----------------------
@@ -17,7 +24,7 @@ class CommentBaseSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "task",
-            "author",
+            "user",
             "created_at",
         ]
 
@@ -25,7 +32,7 @@ class CommentBaseSerializer(serializers.ModelSerializer):
 #-------------------read------------
 
 class CommentSerializer(CommentBaseSerializer):
-    pass
+    user = CommentUserSerializer(read_only=True)
 
 #----------------------------write---------------------
 class CommentWriteSerializer(CommentBaseSerializer):
@@ -38,6 +45,9 @@ class CommentWriteSerializer(CommentBaseSerializer):
         request = self.context["request"]
         task_id = self.context["view"].kwargs["task_id"]
 
-        task = Task.objects.get(id=task_id)
-        comment = Comment.objects.create(task = task ,author = request.user , **validated_data)
+        task = Task.objects.filter(id=task_id).first()
+        if not task:
+            raise NotFound(detail="Task not found")
+
+        comment = Comment.objects.create(task=task, user=request.user, **validated_data)
         return comment

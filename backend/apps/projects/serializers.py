@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import NotFound, PermissionDenied
 from .models import Project
 from apps.teams.models import Team
 
@@ -41,6 +42,14 @@ class ProjectWriteSerializer(ProjectBaseSerializer):
     def create(self , validated_data):
         request = self.context["request"]
         team_id = self.context["view"].kwargs["team_id"]
-        team = Team.objects.get(id=team_id)
+        team = Team.objects.select_related("organization").filter(id=team_id).first()
+        if not team:
+            raise NotFound(detail="Team not found")
+
+        # Safety net: view permission should already enforce this for POST.
+        is_member = team.organization.memberships.filter(user=request.user).exists()
+        if not is_member:
+            raise PermissionDenied(detail="You are not a member of this organization")
+
         project  = Project.objects.create(team = team , created_by  = request.user , **validated_data)
         return project

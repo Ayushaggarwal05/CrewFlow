@@ -9,7 +9,7 @@ const sizeMap = {
   xl: "max-w-4xl",
 };
 
-const Modal = ({ open, onClose, title, children, size = "md ", footer }) => {
+const Modal = ({ open, onClose, title, children, size = "md", footer }) => {
   const overlayRef = useRef(null);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ const Modal = ({ open, onClose, title, children, size = "md ", footer }) => {
       <div
         className={clsx(
           "w-full bg-dark-800 border border-dark-700 rounded-2xl shadow-2xl animate-slide-in",
-          sizeMap[size],
+          sizeMap[size] || sizeMap.md,
         )}
       >
         {/* Header */}

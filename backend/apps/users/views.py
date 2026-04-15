@@ -59,4 +59,4 @@ class TeamUsersView(generics.ListAPIView):
 
     def get_queryset(self):
         team_id = self.kwargs["team_id"]
-        return User.objects.filter(teammembership__team__id = team_id).distinct()
+        return User.objects.filter(team_memberships__team__id=team_id).distinct()

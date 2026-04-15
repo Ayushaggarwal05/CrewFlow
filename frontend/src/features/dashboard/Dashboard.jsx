@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -8,13 +8,15 @@ import {
   CheckSquare,
   TrendingUp,
   Clock,
-  AlertCircle,
+  Activity,
 } from "lucide-react";
 import { fetchCurrentUser } from "../auth/authSlice";
 import { getOrganizations } from "../organizations/organizationAPI";
 import { CardSkeleton } from "../../components/ui/Spinner";
 import Badge from "../../components/ui/Badge";
 import { formatDate } from "../../utils/helpers";
+import { getTeams } from "../teams/teamAPI";
+import { getProjects } from "../projects/projectAPI";
 
 const StatCard = ({ icon: Icon, label, value, color = "brand" }) => {
   const colorMap = {
@@ -57,6 +59,7 @@ const Dashboard = () => {
 
   const [teamsCount, setTeamsCount] = useState(0);
   const [projectsCount, setProjectsCount] = useState(0);
+  const [recentProjects, setRecentProjects] = useState([]);
 
   // Fetch organizations & compute stats globally
   useEffect(() => {
@@ -74,41 +77,35 @@ const Dashboard = () => {
         if (!mounted) return;
         setOrgs(validOrgs);
 
-        // Fetch dynamic counts efficiently using parallel Promise maps
-        import("../teams/teamAPI").then(async ({ getTeams }) => {
-          if (!mounted) return;
+        const teamsResponses = await Promise.all(
+          validOrgs.map((org) => getTeams(org.id).catch(() => ({ data: [] }))),
+        );
 
-          const teamsResponses = await Promise.all(
-            validOrgs.map((org) =>
-              getTeams(org.id).catch(() => ({ data: [] })),
-            ),
+        const allTeams = teamsResponses.flatMap((res) =>
+          Array.isArray(res.data) ? res.data : [],
+        );
+
+        if (mounted) setTeamsCount(allTeams.length);
+
+        const projectResponses = await Promise.all(
+          allTeams.map((team) =>
+            getProjects(team.id).catch(() => ({ data: [] })),
+          ),
+        );
+
+        const allProjects = projectResponses.flatMap((res) =>
+          Array.isArray(res.data) ? res.data : [],
+        );
+
+        if (mounted) {
+          setProjectsCount(allProjects.length);
+          setRecentProjects(
+            allProjects
+              .slice()
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+              .slice(0, 5),
           );
-
-          const allTeams = teamsResponses.flatMap((res) =>
-            Array.isArray(res.data) ? res.data : [],
-          );
-
-          if (mounted) setTeamsCount(allTeams.length);
-
-          // Globally compute all connected projects based on the unified teams
-          import("../projects/projectAPI").then(async ({ getProjects }) => {
-            if (!mounted) return;
-
-            const projectResponses = await Promise.all(
-              allTeams.map((team) =>
-                getProjects(team.id).catch(() => ({ data: [] })),
-              ),
-            );
-
-            const totalProjects = projectResponses.reduce(
-              (sum, res) =>
-                sum + (Array.isArray(res.data) ? res.data.length : 0),
-              0,
-            );
-
-            if (mounted) setProjectsCount(totalProjects);
-          });
-        });
+        }
       } catch (err) {
         console.log("Failed to fetch orgs:", err);
       } finally {
@@ -125,6 +122,10 @@ const Dashboard = () => {
 
   // Role (safe fallback)
   const role = user?.org_role ?? user?.role ?? null;
+  const firstName = useMemo(
+    () => user?.full_name?.split(" ")?.[0] || "there",
+    [user?.full_name],
+  );
 
   // Optional: redirect if not authenticated (extra safety)
   useEffect(() => {
@@ -137,9 +138,7 @@ const Dashboard = () => {
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="page-header">
-          Welcome back, {user?.full_name?.split(" ")[0] || "there"} 👋
-        </h1>
+        <h1 className="page-header">Welcome back, {firstName}</h1>
         <p className="text-dark-400 mt-1">
           Here's what's happening across your workspace.
         </p>
@@ -184,7 +183,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Organizations */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <h2 className="font-semibold text-dark-100">Your Organizations</h2>
             <button
               onClick={() => navigate("/app/organizations")}
@@ -270,6 +269,57 @@ const Dashboard = () => {
               </div>
             )}
           </div>
+
+          {/* Recent Projects */}
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-dark-100">Recent Projects</h2>
+            <button
+              onClick={() => navigate("/app/projects")}
+              className="text-sm text-brand-400 hover:text-brand-300"
+            >
+              View all
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="card p-5">
+              <div className="skeleton h-4 w-2/3 rounded mb-3" />
+              <div className="skeleton h-4 w-1/2 rounded mb-3" />
+              <div className="skeleton h-4 w-3/4 rounded" />
+            </div>
+          ) : recentProjects.length === 0 ? (
+            <div className="card p-5 text-sm text-dark-500">
+              No projects yet. Create one from a team page.
+            </div>
+          ) : (
+            <div className="card divide-y divide-dark-700">
+              {recentProjects.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    localStorage.setItem("last_project_id", String(p.id));
+                    navigate(`/app/projects/${p.id}/tasks`);
+                  }}
+                  className="w-full text-left px-4 py-3 hover:bg-dark-700/60 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm text-dark-100 font-medium truncate">
+                        {p.name}
+                      </p>
+                      <p className="text-xs text-dark-500">
+                        Created {formatDate(p.created_at)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge variant={p.status} />
+                      <Activity size={14} className="text-dark-600" />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Quick Links */}
           <h2 className="font-semibold text-dark-100">Quick Access</h2>

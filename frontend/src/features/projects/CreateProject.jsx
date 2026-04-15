@@ -36,12 +36,25 @@ const CreateProject = () => {
     setLoading(true);
 
     try {
-      await createProject(teamId, form);
+      const payload = {
+        name: form.name?.trim(),
+        description: form.description?.trim() || "",
+        status: form.status || "ACTIVE",
+      };
+      if (form.deadline) payload.deadline = form.deadline;
+
+      await createProject(teamId, payload);
 
       toast.success("Project created!");
       navigate(-1);
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to create project");
+      const detail =
+        err?.response?.data?.message ||
+        err?.response?.data?.detail ||
+        (typeof err?.response?.data === "object"
+          ? JSON.stringify(err.response.data)
+          : null);
+      toast.error(detail || "Failed to create project");
     } finally {
       setLoading(false);
     }

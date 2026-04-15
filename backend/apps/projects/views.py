@@ -4,13 +4,13 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Project
 from .serializers import ProjectWriteSerializer , ProjectSerializer
 # from rest_framework.exceptions import PermissionDenied
-from apps.common.permissions import IsManagerOrAdmin
+from apps.common.permissions import IsManagerOrAdmin, IsTeamManagerOrAdminFromURL
 # Create your views here.
 
 
 #------------------------list nad create -----------------------
 class ProjectListCreateView(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated ]
+    permission_classes = [IsAuthenticated]
 
     filterset_fields = [
         "status","team" ,"created_by",
@@ -33,6 +33,13 @@ class ProjectListCreateView(generics.ListCreateAPIView):
         if self.request.method == "POST":
             return ProjectWriteSerializer
         return ProjectSerializer
+
+    def get_permissions(self):
+        # GET: any authenticated org member can view team projects (queryset is filtered).
+        # POST: only MANAGER/ADMIN of the team org can create.
+        if self.request.method == "POST":
+            return [IsAuthenticated(), IsTeamManagerOrAdminFromURL()]
+        return [IsAuthenticated()]
     
 
 #-----------------------Update, delete , detail----------------

@@ -86,7 +86,20 @@ const TeamDetails = () => {
     e.preventDefault();
     setCreating(true);
     try {
-      await createProject(teamId, { ...projectForm, team: teamId });
+      const payload = {
+        name: projectForm.name?.trim(),
+        description: projectForm.description?.trim() || "",
+        status: projectForm.status || "ACTIVE",
+      };
+
+      if (!payload.name) {
+        toast.error("Project name is required");
+        return;
+      }
+
+      if (projectForm.deadline) payload.deadline = projectForm.deadline;
+
+      await createProject(teamId, payload);
       toast.success("Project created!");
       setShowCreateProject(false);
       setProjectForm({
@@ -100,7 +113,13 @@ const TeamDetails = () => {
       setProjects(data);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to create project");
+      const detail =
+        err?.response?.data?.message ||
+        err?.response?.data?.detail ||
+        (typeof err?.response?.data === "object"
+          ? JSON.stringify(err.response.data)
+          : null);
+      toast.error(detail || "Failed to create project");
     } finally {
       setCreating(false);
     }
@@ -117,7 +136,13 @@ const TeamDetails = () => {
       toast.success("Project deleted");
     } catch (err) {
       console.error(err);
-      toast.error("Failed to delete project");
+      const detail =
+        err?.response?.data?.message ||
+        err?.response?.data?.detail ||
+        (typeof err?.response?.data === "object"
+          ? JSON.stringify(err.response.data)
+          : null);
+      toast.error(detail || "Failed to delete project");
     }
   };
 

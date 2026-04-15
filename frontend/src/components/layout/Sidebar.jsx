@@ -22,7 +22,7 @@ const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/app/dashboard" },
   { label: "Organizations", icon: Building2, to: "/app/organizations" },
   { label: "Projects", icon: FolderKanban, action: "projects" },
-  { label: "Activity", icon: Activity, action: "activity" },
+  { label: "Activity", icon: Activity, to: "/app/activity" },
 ];
 
 const Sidebar = ({ open, onClose }) => {
@@ -40,7 +40,7 @@ const Sidebar = ({ open, onClose }) => {
     }
 
     const lastTeamId = localStorage.getItem("last_team_id");
-    const lastProjectId = localStorage.getItem("last_project_id");
+    // const lastProjectId = localStorage.getItem("last_project_id");
 
     // Projects
     if (item.action === "projects") {
@@ -51,15 +51,7 @@ const Sidebar = ({ open, onClose }) => {
       }
     }
 
-    // Activity
-    if (item.action === "activity") {
-      if (lastProjectId) {
-        navigate(`/app/projects/${lastProjectId}/activity`);
-      } else {
-        toast.error("Select a project first");
-        navigate("/app/organizations");
-      }
-    }
+    // Activity is a normal route now (global feed).
 
     onClose?.();
   };
