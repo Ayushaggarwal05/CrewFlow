@@ -12,8 +12,8 @@ import Input from "../../components/ui/Input";
 import Modal from "../../components/ui/Modal";
 import { CardSkeleton } from "../../components/ui/Spinner";
 import { formatDate } from "../../utils/helpers";
-
 import toast from "react-hot-toast";
+import JoinCodeCard from "../invites/JoinCodeCard";
 
 const ProjectDetails = () => {
   const { teamId, projectId } = useParams();
@@ -193,6 +193,17 @@ const ProjectDetails = () => {
           )}
         </div>
       </div>
+
+      {project && (
+        <div className="mb-4">
+          <JoinCodeCard
+            entityType="projects"
+            entityId={projectId}
+            parentEntityId={teamId}
+            initialCode={project.join_code}
+          />
+        </div>
+      )}
 
       {/* Task Header */}
       <div className="flex justify-between">

@@ -11,6 +11,7 @@ import {
   User,
   Settings,
   X,
+  Rocket
 } from "lucide-react";
 import { logout } from "../../features/auth/authSlice";
 import { getInitials, getAvatarColor } from "../../utils/helpers";
@@ -23,6 +24,7 @@ const navItems = [
   { label: "Organizations", icon: Building2, to: "/app/organizations" },
   { label: "Projects", icon: FolderKanban, action: "projects" },
   { label: "Activity", icon: Activity, to: "/app/activity" },
+  { label: "Join with Code", icon: Rocket, to: "/app/join" },
 ];
 
 const Sidebar = ({ open, onClose }) => {
@@ -40,7 +42,7 @@ const Sidebar = ({ open, onClose }) => {
     }
 
     const lastTeamId = localStorage.getItem("last_team_id");
-    // const lastProjectId = localStorage.getItem("last_project_id");
+    const lastProjectId = localStorage.getItem("last_project_id");
 
     // Projects
     if (item.action === "projects") {
@@ -85,9 +87,8 @@ const Sidebar = ({ open, onClose }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-50 w-64 bg-dark-900 border-r border-dark-800 flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:z-auto ${
-          open ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 bottom-0 z-50 w-64 bg-dark-900 border-r border-dark-800 flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:z-auto ${open ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Header */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-dark-800">
@@ -168,9 +169,8 @@ const Sidebar = ({ open, onClose }) => {
 
               <ChevronDown
                 size={14}
-                className={`text-dark-400 transition-transform ${
-                  profileOpen ? "rotate-180" : ""
-                }`}
+                className={`text-dark-400 transition-transform ${profileOpen ? "rotate-180" : ""
+                  }`}
               />
             </button>
 

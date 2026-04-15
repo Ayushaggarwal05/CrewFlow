@@ -5,18 +5,24 @@ from .models import Organization , OrganizationMembership
 # --------------BASE---------------
 
 class OrganizationBaseSerializer(serializers.ModelSerializer):
-    class Meta :
+    class Meta:
         model = Organization
         fields = [
             "id",
             "name",
             "owner",
-            "created_at"
+            "created_at",
+            "join_code",
+            "code_is_active",
+            "code_expires_at",
         ]
         read_only_fields = [
             "id",
             "owner",
             "created_at",
+            "join_code",
+            "code_is_active",
+            "code_expires_at",
         ]
 
 #--------------READ----------------        

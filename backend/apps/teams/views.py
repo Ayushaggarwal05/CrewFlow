@@ -13,7 +13,10 @@ from apps.common.permissions import (
 
 #------------------list and create----------
 class TeamListCreateView(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated , IsOrganizationAdmin]
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [IsAuthenticated(), IsOrganizationAdmin()]
+        return [IsAuthenticated()]
     
     filterset_fields = [
         "organization",

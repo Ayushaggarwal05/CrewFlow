@@ -8,22 +8,29 @@ from apps.users.models import User
 
 class TeamBaseSerializer(serializers.ModelSerializer):
 
-    members = serializers.PrimaryKeyRelatedField(many = True , read_only = True)
-    class Meta :
+    members = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+
+    class Meta:
         model = Team
         fields = [
             "id",
             "name",
             "organization",
             "members",
-            "created_at"
+            "created_at",
+            "join_code",
+            "code_is_active",
+            "code_expires_at",
         ]
 
         read_only_fields = [
             "id",
             "organization",
             "members",
-            "created_at"
+            "created_at",
+            "join_code",
+            "code_is_active",
+            "code_expires_at",
         ]
 
 class TeamSerializer(TeamBaseSerializer):

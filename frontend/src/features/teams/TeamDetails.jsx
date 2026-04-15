@@ -201,11 +201,10 @@ const TeamDetails = () => {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm border-b-2 ${
-              activeTab === tab
-                ? "border-brand-500 text-brand-400"
-                : "text-dark-400"
-            }`}
+            className={`px-4 py-2 text-sm border-b-2 ${activeTab === tab
+              ? "border-brand-500 text-brand-400"
+              : "text-dark-400"
+              }`}
           >
             {tab}
           </button>
@@ -228,9 +227,7 @@ const TeamDetails = () => {
             {projects.map((proj) => (
               <div
                 key={proj.id}
-                onClick={() =>
-                  navigate(`/app/teams/${teamId}/projects/${proj.id}`)
-                }
+                onClick={() => navigate(`/app/teams/${teamId}/projects/${proj.id}`)}
                 className="card-hover p-4"
               >
                 <h3>{proj.name}</h3>

@@ -13,6 +13,7 @@ import ProjectDetails from "../features/projects/ProjectDetails";
 import TaskBoard from "../features/tasks/TaskBoard";
 import ActivityLog from "../features/activity/ActivityLog";
 import MyActivity from "../features/activity/MyActivity";
+import JoinViaCode from "../features/invites/JoinViaCode";
 
 const AppRouter = () => {
   return (
@@ -49,6 +50,8 @@ const AppRouter = () => {
         <Route path="projects/:projectId/tasks" element={<TaskBoard />} />
         <Route path="projects/:projectId/activity" element={<ActivityLog />} />
         <Route path="activity" element={<MyActivity />} />
+
+        <Route path="join" element={<JoinViaCode />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

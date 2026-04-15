@@ -186,11 +186,7 @@ const OrganizationList = () => {
             autoFocus
           />
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-dark-700 -mx-6 px-6">
-            <Button
-              variant="ghost"
-              onClick={() => setShowCreate(false)}
-              type="button"
-            >
+            <Button variant="ghost" onClick={() => setShowCreate(false)} type="button">
               Cancel
             </Button>
             <Button type="submit" loading={creating} icon={Plus}>

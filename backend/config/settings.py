@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'apps.comments',
     'apps.activity.apps.ActivityConfig',
     'apps.authentication',
+    'apps.invites',
 ]
 
 MIDDLEWARE = [

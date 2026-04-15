@@ -16,13 +16,19 @@ class ProjectBaseSerializer(serializers.ModelSerializer):
             "created_by",
             "deadline",
             "status",
-            "created_at"    
+            "created_at",
+            "join_code",
+            "code_is_active",
+            "code_expires_at",
         ]
         read_only_fields = [
             "id",
             "team",
             "created_by",
             "created_at",
+            "join_code",
+            "code_is_active",
+            "code_expires_at",
         ]
 
 #_-------------------------READ-----------------

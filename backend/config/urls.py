@@ -37,4 +37,5 @@ urlpatterns = [
     path('api/tasks/' , include("apps.tasks.urls")),
     path('api/comments/' , include("apps.comments.urls")),
     path('api/activity/', include("apps.activity.urls")),
+    path('api/', include("apps.invites.urls")),
 ]
