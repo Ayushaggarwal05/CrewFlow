@@ -9,6 +9,10 @@ const JoinCodeCard = ({ entityType, entityId, parentEntityId, initialCode }) => 
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // If no code is provided, we don't have permission to see/manage it.
+  if (!initialCode) return null;
+
+
   const handleRegenerate = async () => {
     if (!window.confirm("Are you sure? Old codes will stop working.")) return;
 

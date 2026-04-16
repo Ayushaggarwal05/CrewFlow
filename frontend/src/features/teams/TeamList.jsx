@@ -9,6 +9,7 @@ import Input from "../../components/ui/Input";
 import { CardSkeleton } from "../../components/ui/Spinner";
 import { formatDate } from "../../utils/helpers";
 import toast from "react-hot-toast";
+import JoinCodeCard from "../invites/JoinCodeCard";
 
 const TeamList = () => {
   const { orgId } = useParams();
@@ -106,6 +107,17 @@ const TeamList = () => {
           </div>
         </div>
       </div>
+
+      {org && org.join_code && (
+        <div className="mb-4">
+          <JoinCodeCard
+            entityType="organizations"
+            entityId={orgId}
+            initialCode={org.join_code}
+          />
+        </div>
+      )}
+
 
       {loading ? (
         <CardSkeleton count={3} />

@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from .models import Team , TeamMembership
 from apps.organizations.models import Organization
+from apps.organizations.utils import is_admin_or_owner
 from apps.users.models import User
+
 
 
 #--------------------BASE-----------
@@ -9,6 +11,8 @@ from apps.users.models import User
 class TeamBaseSerializer(serializers.ModelSerializer):
 
     members = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    join_code = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Team
@@ -32,6 +36,17 @@ class TeamBaseSerializer(serializers.ModelSerializer):
             "code_is_active",
             "code_expires_at",
         ]
+
+    def get_join_code(self, obj):
+        request = self.context.get("request")
+        if not request:
+            return None
+        
+        # Team permissions depend on organization roles
+        if is_admin_or_owner(request.user, obj.organization):
+            return obj.join_code
+        return None
+
 
 class TeamSerializer(TeamBaseSerializer):
     pass

@@ -1,10 +1,14 @@
 from rest_framework import serializers
 from .models import Organization , OrganizationMembership
+from .utils import is_admin_or_owner
+
 
 
 # --------------BASE---------------
 
 class OrganizationBaseSerializer(serializers.ModelSerializer):
+    join_code = serializers.SerializerMethodField()
+
     class Meta:
         model = Organization
         fields = [
@@ -24,6 +28,17 @@ class OrganizationBaseSerializer(serializers.ModelSerializer):
             "code_is_active",
             "code_expires_at",
         ]
+
+    def get_join_code(self, obj):
+        request = self.context.get("request")
+        if not request:
+            return None
+        
+        if is_admin_or_owner(request.user, obj):
+            return obj.join_code
+        return None
+
+
 
 #--------------READ----------------        
 

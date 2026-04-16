@@ -6,7 +6,9 @@ from rest_framework.permissions import IsAuthenticated
 from apps.common.permissions import (
     IsManagerOrAdmin,
     IsOrganizationAdmin,
+    IsOrganizationMember,
 )
+
 
 
 # Create your views here.
@@ -44,7 +46,11 @@ class TeamListCreateView(generics.ListCreateAPIView):
 
 
 class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthenticated , IsManagerOrAdmin]
+    def get_permissions(self):
+        if self.request.method in ["PUT", "PATCH", "DELETE"]:
+            return [IsAuthenticated(), IsManagerOrAdmin()]
+        return [IsAuthenticated(), IsOrganizationMember()]
+
     def get_queryset(self):
         user = self.request.user
         org_id = self.kwargs["org_id"]
@@ -58,6 +64,7 @@ class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method in ["PUT" , "PATCH"]:
             return TeamWriteSerializer
         return TeamSerializer
+
 
 
 

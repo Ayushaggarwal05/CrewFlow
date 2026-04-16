@@ -26,6 +26,7 @@ import Badge from "../../components/ui/Badge";
 import { CardSkeleton } from "../../components/ui/Spinner";
 import { formatDate, getInitials, getAvatarColor } from "../../utils/helpers";
 import toast from "react-hot-toast";
+import JoinCodeCard from "../invites/JoinCodeCard";
 
 const TeamDetails = () => {
   const { orgId, teamId } = useParams();
@@ -194,6 +195,18 @@ const TeamDetails = () => {
           <h1 className="page-header mt-0.5">{team?.name || "..."}</h1>
         </div>
       </div>
+
+      {team && team.join_code && (
+        <div className="mb-4">
+          <JoinCodeCard
+            entityType="teams"
+            entityId={teamId}
+            parentEntityId={orgId}
+            initialCode={team.join_code}
+          />
+        </div>
+      )}
+
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-dark-800">

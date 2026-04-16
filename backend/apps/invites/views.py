@@ -14,7 +14,9 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
 from apps.organizations.models import Organization, OrganizationMembership
+from apps.organizations.utils import is_admin_or_owner
 from apps.teams.models import Team, TeamMembership
+
 from apps.projects.models import Project
 
 
@@ -231,11 +233,12 @@ class GenerateOrgCodeView(APIView):
         except Organization.DoesNotExist:
             return Response({"detail": "Organization not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        if not _is_org_admin(request.user, org):
+        if not is_admin_or_owner(request.user, org):
             return Response(
-                {"detail": "Only organization admins can regenerate the join code."},
+                {"detail": "Only organization admins or owners can regenerate the join code."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+
 
         org.regenerate_join_code()
         return Response(
@@ -259,11 +262,12 @@ class GenerateTeamCodeView(APIView):
         except Team.DoesNotExist:
             return Response({"detail": "Team not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        if not _is_org_admin_or_manager(request.user, team.organization):
+        if not is_admin_or_owner(request.user, team.organization):
             return Response(
-                {"detail": "Only admins or managers can regenerate the team join code."},
+                {"detail": "Only organization admins or owners can regenerate the team join code."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+
 
         team.regenerate_join_code()
         return Response(
@@ -287,11 +291,12 @@ class GenerateProjectCodeView(APIView):
         except Project.DoesNotExist:
             return Response({"detail": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        if not _is_org_admin_or_manager(request.user, project.team.organization):
+        if not is_admin_or_owner(request.user, project.team.organization):
             return Response(
-                {"detail": "Only admins or managers can regenerate the project join code."},
+                {"detail": "Only organization admins or owners can regenerate the project join code."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+
 
         project.regenerate_join_code()
         return Response(
