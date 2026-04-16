@@ -28,7 +28,13 @@ class Project(models.Model):
 
     # --- Invite code fields ---
     join_code = models.CharField(max_length=20, unique=True, blank=True)
+    join_role = models.CharField(
+        max_length=20,
+        choices=[("LEAD", "Lead"), ("MEMBER", "Member")],
+        default="MEMBER"
+    )
     code_is_active = models.BooleanField(default=True)
+
     code_expires_at = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -44,7 +50,8 @@ class Project(models.Model):
 
     def regenerate_join_code(self):
         self.join_code = self._unique_code()
-        self.save(update_fields=["join_code"])
+        self.save(update_fields=["join_code", "join_role"])
+
 
     def is_code_valid(self):
         if not self.code_is_active:

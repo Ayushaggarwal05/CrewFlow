@@ -12,6 +12,9 @@ def _generate_code(prefix: str, length: int = 6) -> str:
     return f"{prefix}{suffix}"
 
 
+ORG_ROLE_CHOICES = (("ADMIN", "Admin"), ("MANAGER", "Manager"), ("DEVELOPER", "Developer"))
+
+
 class Organization(models.Model):
     name = models.CharField(max_length=255)
     owner = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="owned_organization")
@@ -19,7 +22,14 @@ class Organization(models.Model):
 
     # --- Invite code fields ---
     join_code = models.CharField(max_length=20, unique=True, blank=True)
+    join_role = models.CharField(
+        max_length=20, 
+        choices=ORG_ROLE_CHOICES, 
+        default="DEVELOPER"
+    )
     code_is_active = models.BooleanField(default=True)
+
+
     code_expires_at = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -35,7 +45,8 @@ class Organization(models.Model):
 
     def regenerate_join_code(self):
         self.join_code = self._unique_code()
-        self.save(update_fields=["join_code"])
+        self.save(update_fields=["join_code", "join_role"])
+
 
     def is_code_valid(self):
         if not self.code_is_active:
@@ -52,12 +63,12 @@ class Organization(models.Model):
 
 
 class OrganizationMembership(models.Model):
-    ROLE_CHOICES = (("ADMIN", "Admin"), ("MANAGER", "Manager"), ("DEVELOPER", "Developer"))
 
     user = models.ForeignKey("users.User", on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="memberships")
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    role = models.CharField(max_length=20, choices=ORG_ROLE_CHOICES)
     joined_at = models.DateTimeField(auto_now_add=True)
+
 
     class Meta:
         unique_together = ("user", "organization")

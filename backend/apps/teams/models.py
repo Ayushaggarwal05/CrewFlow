@@ -11,6 +11,12 @@ def _generate_code(prefix: str, length: int = 6) -> str:
     return f"{prefix}{suffix}"
 
 
+TEAM_ROLE_CHOICES = [
+    ("LEAD", "Lead"),
+    ("MEMBER", "Member"),
+]
+
+
 class Team(models.Model):
     name = models.CharField(max_length=255)
     organization = models.ForeignKey("organizations.Organization", on_delete=models.CASCADE, related_name="teams")
@@ -19,7 +25,14 @@ class Team(models.Model):
 
     # --- Invite code fields ---
     join_code = models.CharField(max_length=20, unique=True, blank=True)
+    join_role = models.CharField(
+        max_length=20,
+        choices=TEAM_ROLE_CHOICES,
+        default="MEMBER"
+    )
     code_is_active = models.BooleanField(default=True)
+
+
     code_expires_at = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -35,7 +48,8 @@ class Team(models.Model):
 
     def regenerate_join_code(self):
         self.join_code = self._unique_code()
-        self.save(update_fields=["join_code"])
+        self.save(update_fields=["join_code", "join_role"])
+
 
     def is_code_valid(self):
         if not self.code_is_active:
@@ -52,14 +66,11 @@ class Team(models.Model):
 
 
 class TeamMembership(models.Model):
-    ROLE_CHOICES = [
-        ("LEAD", "Lead"),
-        ("MEMBER", "Member"),
-    ]
     user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="team_memberships")
     team = models.ForeignKey("teams.Team", on_delete=models.CASCADE, related_name="memberships")
-    role = models.CharField(max_length=50, choices=ROLE_CHOICES)
+    role = models.CharField(max_length=50, choices=TEAM_ROLE_CHOICES)
     joined_at = models.DateTimeField(auto_now_add=True)
+
 
     class Meta:
         unique_together = ("user", "team")

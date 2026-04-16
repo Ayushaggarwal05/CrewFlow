@@ -95,8 +95,9 @@ class JoinViaCodeView(APIView):
         membership, created = OrganizationMembership.objects.get_or_create(
             user=user,
             organization=org,
-            defaults={"role": "DEVELOPER"},
+            defaults={"role": org.join_role or "DEVELOPER"},
         )
+
 
         if not created:
             return Response(
@@ -143,8 +144,9 @@ class JoinViaCodeView(APIView):
         membership, created = TeamMembership.objects.get_or_create(
             user=user,
             team=team,
-            defaults={"role": "MEMBER"},
+            defaults={"role": team.join_role or "MEMBER"},
         )
+
 
         if not created:
             return Response(
@@ -196,8 +198,9 @@ class JoinViaCodeView(APIView):
         team_membership, team_created = TeamMembership.objects.get_or_create(
             user=user,
             team=team,
-            defaults={"role": "MEMBER"},
+            defaults={"role": project.join_role or "MEMBER"},
         )
+
 
         already_in_team = not team_created
 
@@ -240,15 +243,28 @@ class GenerateOrgCodeView(APIView):
             )
 
 
+        role = request.data.get("role")
+        if role:
+            # Basic validation
+            allowed_roles = [r[0] for r in org._meta.get_field("join_role").choices]
+            if role not in allowed_roles:
+                return Response(
+                    {"detail": f"Invalid role. Choices are: {', '.join(allowed_roles)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            org.join_role = role
+
         org.regenerate_join_code()
         return Response(
             {
                 "detail": "Join code regenerated.",
                 "join_code": org.join_code,
+                "join_role": org.join_role,
                 "code_is_active": org.code_is_active,
             },
             status=status.HTTP_200_OK,
         )
+
 
 
 class GenerateTeamCodeView(APIView):
@@ -269,15 +285,27 @@ class GenerateTeamCodeView(APIView):
             )
 
 
+        role = request.data.get("role")
+        if role:
+            allowed_roles = [r[0] for r in team._meta.get_field("join_role").choices]
+            if role not in allowed_roles:
+                return Response(
+                    {"detail": f"Invalid role. Choices are: {', '.join(allowed_roles)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            team.join_role = role
+
         team.regenerate_join_code()
         return Response(
             {
                 "detail": "Join code regenerated.",
                 "join_code": team.join_code,
+                "join_role": team.join_role,
                 "code_is_active": team.code_is_active,
             },
             status=status.HTTP_200_OK,
         )
+
 
 
 class GenerateProjectCodeView(APIView):
@@ -298,12 +326,24 @@ class GenerateProjectCodeView(APIView):
             )
 
 
+        role = request.data.get("role")
+        if role:
+            allowed_roles = [r[0] for r in project._meta.get_field("join_role").choices]
+            if role not in allowed_roles:
+                return Response(
+                    {"detail": f"Invalid role. Choices are: {', '.join(allowed_roles)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            project.join_role = role
+
         project.regenerate_join_code()
         return Response(
             {
                 "detail": "Join code regenerated.",
                 "join_code": project.join_code,
+                "join_role": project.join_role,
                 "code_is_active": project.code_is_active,
             },
             status=status.HTTP_200_OK,
         )
+
