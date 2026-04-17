@@ -12,7 +12,16 @@ def _generate_code(prefix: str, length: int = 6) -> str:
     return f"{prefix}{suffix}"
 
 
-ORG_ROLE_CHOICES = (("ADMIN", "Admin"), ("MANAGER", "Manager"), ("DEVELOPER", "Developer"))
+from django.core.exceptions import ValidationError
+
+
+ORG_ROLE_CHOICES = (
+    ("OWNER", "Owner"),
+    ("ADMIN", "Admin"),
+    ("MANAGER", "Manager"),
+    ("LEAD", "Lead"),
+    ("MEMBER", "Member"),
+)
 
 
 class Organization(models.Model):
@@ -20,46 +29,12 @@ class Organization(models.Model):
     owner = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="owned_organization")
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # --- Invite code fields ---
-    join_code = models.CharField(max_length=20, unique=True, blank=True)
-    join_role = models.CharField(
-        max_length=20, 
-        choices=ORG_ROLE_CHOICES, 
-        default="DEVELOPER"
-    )
-    code_is_active = models.BooleanField(default=True)
-
-
-    code_expires_at = models.DateTimeField(null=True, blank=True)
-
-    def save(self, *args, **kwargs):
-        if not self.join_code:
-            self.join_code = self._unique_code()
-        super().save(*args, **kwargs)
-
-    def _unique_code(self):
-        code = _generate_code("ORG-")
-        while Organization.objects.filter(join_code=code).exists():
-            code = _generate_code("ORG-")
-        return code
-
-    def regenerate_join_code(self):
-        self.join_code = self._unique_code()
-        self.save(update_fields=["join_code", "join_role"])
-
-
-    def is_code_valid(self):
-        if not self.code_is_active:
-            return False
-        if self.code_expires_at and self.code_expires_at < timezone.now():
-            return False
-        return True
-
     def __str__(self):
         return self.name
 
     class Meta:
         ordering = ["-created_at"]
+
 
 
 class OrganizationMembership(models.Model):
@@ -69,7 +44,40 @@ class OrganizationMembership(models.Model):
     role = models.CharField(max_length=20, choices=ORG_ROLE_CHOICES)
     joined_at = models.DateTimeField(auto_now_add=True)
 
+    # --- Hierarchy ---
+    manager = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="subordinates"
+    )
 
     class Meta:
         unique_together = ("user", "organization")
+
+    def clean(self):
+        if self.manager:
+            # 1. Same organization check
+            if self.manager.organization != self.organization:
+                raise ValidationError("The manager must belong to the same organization.")
+            
+            # 2. Prevent being own manager
+            if self.manager == self:
+                raise ValidationError("A user cannot be their own manager.")
+            
+            # 3. Prevent circular hierarchy (A -> B -> A)
+            curr = self.manager
+            while curr is not None:
+                if curr == self:
+                    raise ValidationError("Circular hierarchy detected: A user cannot be managed by their subordinate.")
+                curr = curr.manager
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.organization.name} ({self.role})"
+
 

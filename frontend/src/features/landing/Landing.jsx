@@ -195,15 +195,18 @@ const Landing = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="card p-6">
-                <div className="w-10 h-10 bg-brand-600/20 rounded-xl flex items-center justify-center mb-4">
-                  <Icon size={20} className="text-brand-400" />
+            {features.map(({ icon, title, desc }) => {
+              const FeatureIcon = icon;
+              return (
+                <div key={title} className="card p-6">
+                  <div className="w-10 h-10 bg-brand-600/20 rounded-xl flex items-center justify-center mb-4">
+                    <FeatureIcon size={20} className="text-brand-400" />
                 </div>
                 <h3 className="font-semibold text-dark-50">{title}</h3>
                 <p className="text-dark-400 text-sm">{desc}</p>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

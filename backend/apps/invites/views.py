@@ -40,79 +40,79 @@ def _is_org_admin_or_manager(user, organization):
 # POST /api/join/
 # ─────────────────────────────────────────────────────────────────────────────
 
+from apps.invites.models import InviteCode
+
+# ─────────────────────────────────────────────────────────────────────────────
+# POST /api/join/
+# ─────────────────────────────────────────────────────────────────────────────
+
 class JoinViaCodeView(APIView):
     """
     Allow any authenticated user to join an Organization, Team, or Project
     by submitting a join code.
 
     Logic:
-    - Code prefix determines entity type (ORG- / TEAM- / PROJ-)
-    - Validates code is active and not expired
-    - Creates membership with default role (no-op if already a member)
-    - Returns entity info so the frontend can navigate to it
+    1. Validate code exists and is active.
+    2. Check if user is already a member (Return 409 Conflict).
+    3. Create membership with the role predefined in the InviteCode.
     """
 
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        code = (request.data.get("code") or "").strip().upper()
+        code_str = (request.data.get("code") or "").strip().upper()
+        user = request.user
 
-        if not code:
+        if not code_str:
             return Response(
                 {"detail": "A join code is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user = request.user
-
-        # ── Detect entity ────────────────────────────────────────────────────
-        if code.startswith("ORG-"):
-            return self._join_organization(user, code)
-        elif code.startswith("TEAM-"):
-            return self._join_team(user, code)
-        elif code.startswith("PROJ-"):
-            return self._join_project(user, code)
-        else:
+        # 1. Look up the code
+        try:
+            invite = InviteCode.objects.get(code=code_str)
+        except InviteCode.DoesNotExist:
             return Response(
-                {"detail": "Invalid code format. Expected ORG-…, TEAM-…, or PROJ-…."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"detail": "Invalid join code."}, 
+                status=status.HTTP_404_NOT_FOUND
             )
 
-    # ── Organization join ────────────────────────────────────────────────────
-
-    def _join_organization(self, user, code):
-        try:
-            org = Organization.objects.get(join_code=code)
-        except Organization.DoesNotExist:
-            return Response({"detail": "Invalid code."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not org.is_code_valid():
+        # 2. Check validity
+        if not invite.is_valid():
             return Response(
                 {"detail": "This invite code is inactive or has expired."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        membership, created = OrganizationMembership.objects.get_or_create(
+        # 3. Handle by entity type
+        if invite.entity_type == "ORG":
+            return self._join_organization(user, invite)
+        elif invite.entity_type == "TEAM":
+            return self._join_team(user, invite)
+        elif invite.entity_type == "PROJECT":
+            return self._join_project(user, invite)
+        
+        return Response({"detail": "Unknown entity type."}, status=400)
+
+    def _join_organization(self, user, invite):
+        org = invite.organization
+        if OrganizationMembership.objects.filter(user=user, organization=org).exists():
+            return Response(
+                {"detail": "You are already a member of this organization."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        # REDESIGN: Always join as MEMBER
+        OrganizationMembership.objects.create(
             user=user,
             organization=org,
-            defaults={"role": org.join_role or "DEVELOPER"},
+            role="MEMBER",
         )
-
-
-        if not created:
-            return Response(
-                {
-                    "detail": "You are already a member of this organization.",
-                    "entity_type": "organization",
-                    "entity_id": org.id,
-                    "entity_name": org.name,
-                },
-                status=status.HTTP_200_OK,
-            )
 
         return Response(
             {
-                "detail": f"Successfully joined organization '{org.name}'.",
+                "detail": f"Successfully joined organization '{org.name}' as MEMBER.",
                 "entity_type": "organization",
                 "entity_id": org.id,
                 "entity_name": org.name,
@@ -120,49 +120,31 @@ class JoinViaCodeView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
-    # ── Team join ─────────────────────────────────────────────────────────────
-
-    def _join_team(self, user, code):
-        try:
-            team = Team.objects.select_related("organization").get(join_code=code)
-        except Team.DoesNotExist:
-            return Response({"detail": "Invalid code."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not team.is_code_valid():
+    def _join_team(self, user, invite):
+        team = invite.team
+        if TeamMembership.objects.filter(user=user, team=team).exists():
             return Response(
-                {"detail": "This invite code is inactive or has expired."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"detail": "You are already a member of this team."},
+                status=status.HTTP_409_CONFLICT,
             )
 
-        # Ensure user is in the parent organization first
+        # Ensure user is in org first (as MEMBER by default if not there)
         OrganizationMembership.objects.get_or_create(
             user=user,
             organization=team.organization,
-            defaults={"role": "DEVELOPER"},
+            defaults={"role": "MEMBER"},
         )
 
-        membership, created = TeamMembership.objects.get_or_create(
+        # REDESIGN: Always join as MEMBER
+        TeamMembership.objects.create(
             user=user,
             team=team,
-            defaults={"role": team.join_role or "MEMBER"},
+            role="MEMBER",
         )
-
-
-        if not created:
-            return Response(
-                {
-                    "detail": "You are already a member of this team.",
-                    "entity_type": "team",
-                    "entity_id": team.id,
-                    "entity_name": team.name,
-                    "org_id": team.organization.id,
-                },
-                status=status.HTTP_200_OK,
-            )
 
         return Response(
             {
-                "detail": f"Successfully joined team '{team.name}'.",
+                "detail": f"Successfully joined team '{team.name}' as MEMBER.",
                 "entity_type": "team",
                 "entity_id": team.id,
                 "entity_name": team.name,
@@ -171,44 +153,34 @@ class JoinViaCodeView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
-    # ── Project join ──────────────────────────────────────────────────────────
-
-    def _join_project(self, user, code):
-        try:
-            project = Project.objects.select_related("team__organization").get(join_code=code)
-        except Project.DoesNotExist:
-            return Response({"detail": "Invalid code."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not project.is_code_valid():
-            return Response(
-                {"detail": "This invite code is inactive or has expired."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+    def _join_project(self, user, invite):
+        project = invite.project
         team = project.team
         org = team.organization
+
+        if TeamMembership.objects.filter(user=user, team=team).exists():
+             return Response(
+                {"detail": "You are already a member of this team/project."},
+                status=status.HTTP_409_CONFLICT,
+            )
 
         # Ensure memberships up the chain
         OrganizationMembership.objects.get_or_create(
             user=user,
             organization=org,
-            defaults={"role": "DEVELOPER"},
+            defaults={"role": "MEMBER"},
         )
 
-        team_membership, team_created = TeamMembership.objects.get_or_create(
+        # REDESIGN: Always join as MEMBER
+        TeamMembership.objects.create(
             user=user,
             team=team,
-            defaults={"role": project.join_role or "MEMBER"},
+            role="MEMBER",
         )
-
-
-        already_in_team = not team_created
 
         return Response(
             {
-                "detail": f"Successfully joined project '{project.name}'" + (
-                    " (already in team)" if already_in_team else " and its team"
-                ) + ".",
+                "detail": f"Successfully joined project '{project.name}' as MEMBER.",
                 "entity_type": "project",
                 "entity_id": project.id,
                 "entity_name": project.name,
@@ -219,14 +191,17 @@ class JoinViaCodeView(APIView):
         )
 
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # POST /api/organizations/<id>/generate-code/
 # POST /api/teams/<id>/generate-code/
 # POST /api/projects/<id>/generate-code/
 # ─────────────────────────────────────────────────────────────────────────────
 
+from apps.organizations.utils import can_generate_join_codes, get_user_role
+
 class GenerateOrgCodeView(APIView):
-    """Regenerate join code for an organization. ADMIN only."""
+    """Regenerate join code for an organization. OWNER/ADMIN only."""
 
     permission_classes = [IsAuthenticated]
 
@@ -236,31 +211,31 @@ class GenerateOrgCodeView(APIView):
         except Organization.DoesNotExist:
             return Response({"detail": "Organization not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        if not is_admin_or_owner(request.user, org):
+        user_role = get_user_role(request.user, org)
+        if not can_generate_join_codes(user_role):
             return Response(
-                {"detail": "Only organization admins or owners can regenerate the join code."},
+                {"detail": "Only organization admins or owners can generate join codes."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        # REDESIGN: Always generate for MEMBER role
+        role = "MEMBER"
 
-        role = request.data.get("role")
-        if role:
-            # Basic validation
-            allowed_roles = [r[0] for r in org._meta.get_field("join_role").choices]
-            if role not in allowed_roles:
-                return Response(
-                    {"detail": f"Invalid role. Choices are: {', '.join(allowed_roles)}"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            org.join_role = role
+        # Deactivate previous code for this role if it exists
+        InviteCode.objects.filter(organization=org, role=role).update(is_active=False)
 
-        org.regenerate_join_code()
+        # Create new code
+        invite = InviteCode.objects.create(
+            entity_type="ORG",
+            organization=org,
+            role=role,
+        )
+
         return Response(
             {
-                "detail": "Join code regenerated.",
-                "join_code": org.join_code,
-                "join_role": org.join_role,
-                "code_is_active": org.code_is_active,
+                "detail": "Join code generated.",
+                "join_code": invite.code,
+                "join_role": invite.role,
             },
             status=status.HTTP_200_OK,
         )
@@ -272,36 +247,35 @@ class GenerateTeamCodeView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, pk):
+    def post(self, request, pk, **kwargs):
         try:
             team = Team.objects.select_related("organization").get(pk=pk)
         except Team.DoesNotExist:
             return Response({"detail": "Team not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        if not is_admin_or_owner(request.user, team.organization):
+        user_role = get_user_role(request.user, team.organization)
+        if not can_generate_join_codes(user_role):
             return Response(
-                {"detail": "Only organization admins or owners can regenerate the team join code."},
+                {"detail": "Only organization admins or owners can generate join codes."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        # REDESIGN: Always generate for MEMBER role
+        role = "MEMBER"
 
-        role = request.data.get("role")
-        if role:
-            allowed_roles = [r[0] for r in team._meta.get_field("join_role").choices]
-            if role not in allowed_roles:
-                return Response(
-                    {"detail": f"Invalid role. Choices are: {', '.join(allowed_roles)}"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            team.join_role = role
+        InviteCode.objects.filter(team=team, role=role).update(is_active=False)
+        
+        invite = InviteCode.objects.create(
+            entity_type="TEAM",
+            team=team,
+            role=role,
+        )
 
-        team.regenerate_join_code()
         return Response(
             {
-                "detail": "Join code regenerated.",
-                "join_code": team.join_code,
-                "join_role": team.join_role,
-                "code_is_active": team.code_is_active,
+                "detail": "Join code generated.",
+                "join_code": invite.code,
+                "join_role": invite.role,
             },
             status=status.HTTP_200_OK,
         )
@@ -313,37 +287,37 @@ class GenerateProjectCodeView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, pk):
+    def post(self, request, pk, **kwargs):
         try:
             project = Project.objects.select_related("team__organization").get(pk=pk)
         except Project.DoesNotExist:
             return Response({"detail": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        if not is_admin_or_owner(request.user, project.team.organization):
+        user_role = get_user_role(request.user, project.team.organization)
+        if not can_generate_join_codes(user_role):
             return Response(
-                {"detail": "Only organization admins or owners can regenerate the project join code."},
+                {"detail": "Only organization admins or owners can generate join codes."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        # REDESIGN: Always generate for MEMBER role
+        role = "MEMBER"
 
-        role = request.data.get("role")
-        if role:
-            allowed_roles = [r[0] for r in project._meta.get_field("join_role").choices]
-            if role not in allowed_roles:
-                return Response(
-                    {"detail": f"Invalid role. Choices are: {', '.join(allowed_roles)}"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            project.join_role = role
+        InviteCode.objects.filter(project=project, role=role).update(is_active=False)
 
-        project.regenerate_join_code()
+        invite = InviteCode.objects.create(
+            entity_type="PROJECT",
+            project=project,
+            role=role,
+        )
+
         return Response(
             {
-                "detail": "Join code regenerated.",
-                "join_code": project.join_code,
-                "join_role": project.join_role,
-                "code_is_active": project.code_is_active,
+                "detail": "Join code generated.",
+                "join_code": invite.code,
+                "join_role": invite.role,
             },
             status=status.HTTP_200_OK,
         )
+
 

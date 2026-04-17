@@ -12,71 +12,78 @@ from apps.organizations.models import Organization, OrganizationMembership
 from apps.organizations.serializers import OrganizationSerializer
 from apps.teams.models import Team
 from apps.teams.serializers import TeamSerializer
+from apps.projects.models import Project
+from apps.projects.serializers import ProjectSerializer
+from apps.invites.views import GenerateProjectCodeView
 from django.contrib.auth import get_user_model
-from rest_framework.test import APIRequestFactory
+from rest_framework.test import APIRequestFactory, force_authenticate
 
 User = get_user_model()
 
 def debug():
     factory = APIRequestFactory()
     
-    # Try to find an existing organization
-    org = Organization.objects.first()
-    if not org:
-        print("No organization found. Creating one...")
-        owner = User.objects.get_or_create(email="owner@test.local", defaults={"full_name":"Owner"})[0]
-        org = Organization.objects.create(name="Test Org", owner=owner)
-    else:
-        owner = org.owner
-
-    member = User.objects.get_or_create(email="member@test.local", defaults={"full_name":"Member"})[0]
-    # Ensure they are a member
-    OrganizationMembership.objects.get_or_create(user=member, organization=org, role="DEVELOPER")
-    
-    print(f"Testing with Organization: {org.name} (ID: {org.id}) as Member: {member.email}")
-    
-    # 1. Test Organization Serializer
-    request = factory.get('/')
-    request.user = member
-
-    
+    # Target our specific owner who reported issues
+    target_email = "aayushaggarwal348@gmail.com"
     try:
-        print("Serializing Organization...")
-        serializer = OrganizationSerializer(org, context={'request': request})
-        print(f"Result: {serializer.data}")
-    except Exception as e:
-        print(f"OrganizationSerializer failed: {e}")
-        import traceback
-        traceback.print_exc()
+        user = User.objects.get(email=target_email)
+        print(f"Testing with user: {target_email} (ID: {user.id})")
+    except User.DoesNotExist:
+        print(f"User {target_email} not found, using first user.")
+        user = User.objects.first()
 
-    # 2. Test Team Serializer
+    # Find an org for this user
+    membership = OrganizationMembership.objects.filter(user=user).first()
+    if not membership:
+        print("User has no memberships.")
+        return
+    
+    org = membership.organization
+    print(f"\n--- Checking Organization: {org.name} ---")
+    print(f"Membership Role: {membership.role}")
+    
+    request = factory.get('/')
+    request.user = user
+    serializer = OrganizationSerializer(org, context={'request': request})
+    print(f"Serializer Result (join_code): {serializer.data.get('join_code')}")
+    print(f"Serializer Result (user_role): {serializer.data.get('user_role')}")
+
+    # Check Team
     team = Team.objects.filter(organization=org).first()
     if not team:
-        print("No team found for this org. Creating one...")
-        team = Team.objects.create(name="Test Team", organization=org)
+        print("No team found.")
+        return
     
-    print(f"Testing with Team: {team.name} (ID: {team.id})")
+    print(f"\n--- Checking Team: {team.name} ---")
+    serializer = TeamSerializer(team, context={'request': request})
+    print(f"Serializer Result (join_code): {serializer.data.get('join_code')}")
+    print(f"Serializer Result (user_role): {serializer.data.get('user_role')}")
     
-    # 3. Test View Permissions
-    from apps.organizations.views import OrganizationDetailView
-    from rest_framework.test import force_authenticate
-    print("\n--- Testing OrganizationDetailView Permissions ---")
-    view = OrganizationDetailView.as_view()
+    project = Project.objects.filter(team=team).first()
+    if not project:
+        print("No project found. Creating one...")
+        project = Project.objects.create(name="Debug Project", team=team, created_by=user)
+    
+    print(f"\n--- Checking Project: {project.name} ---")
+    serializer = ProjectSerializer(project, context={'request': request})
+    print(f"Serializer Result (join_code): {serializer.data.get('join_code')}")
+    print(f"Serializer Result (user_role): {serializer.data.get('user_role')}")
+
+    # Test Project Regeneration (The thing that was failing)
+    print("\n--- Testing Project Code Regeneration ---")
+    view = GenerateProjectCodeView.as_view()
+    # Mocking the nested URL parameter team_pk
+    request = factory.post(f'/api/projects/teams/{team.id}/projects/{project.id}/generate-code/', {"role": "MEMBER"})
+    force_authenticate(request, user=user)
     
     try:
-        # Re-mock the request but use force_authenticate
-        request = factory.get('/')
-        force_authenticate(request, user=member)
-        response = view(request, pk=org.id)
+        response = view(request, team_pk=team.id, pk=project.id)
         print(f"Response Status: {response.status_code}")
-        if response.status_code == 200:
-            print("SUCCESS: Member can now view organization details (permissions relaxed).")
-        elif response.status_code == 403:
-            print("ALERT: Member is still FORBIDDEN from viewing organization details!")
+        print(f"Response Data: {response.data}")
+    except TypeError as te:
+        print(f"FAILED: TypeError still exists: {te}")
     except Exception as e:
-        print(f"View execution failed: {e}")
-
-
+        print(f"FAILED: {e}")
 
 if __name__ == "__main__":
     debug()

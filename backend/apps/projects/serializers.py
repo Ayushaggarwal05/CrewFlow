@@ -2,10 +2,14 @@ from rest_framework import serializers
 from rest_framework.exceptions import NotFound, PermissionDenied
 from .models import Project
 from apps.teams.models import Team
+from apps.organizations.utils import is_admin_or_owner, get_user_role, can_view_join_codes, get_effective_role
 
 
 #-----------------Base_----------------
 class ProjectBaseSerializer(serializers.ModelSerializer):
+    join_code = serializers.SerializerMethodField()
+    user_role = serializers.SerializerMethodField()
+
     class Meta:
         model = Project
         fields = [
@@ -18,8 +22,7 @@ class ProjectBaseSerializer(serializers.ModelSerializer):
             "status",
             "created_at",
             "join_code",
-            "code_is_active",
-            "code_expires_at",
+            "user_role",
         ]
         read_only_fields = [
             "id",
@@ -27,9 +30,25 @@ class ProjectBaseSerializer(serializers.ModelSerializer):
             "created_by",
             "created_at",
             "join_code",
-            "code_is_active",
-            "code_expires_at",
+            "user_role",
         ]
+
+    def get_join_code(self, obj):
+        request = self.context.get("request")
+        if not request:
+            return None
+        
+        user_role = get_user_role(request.user, obj.team.organization)
+        if can_view_join_codes(user_role):
+            invite = obj.invite_codes.filter(is_active=True).first()
+            return invite.code if invite else None
+        return None
+
+    def get_user_role(self, obj):
+        request = self.context.get("request")
+        if not (request and request.user.is_authenticated):
+            return None
+        return get_effective_role(request.user, obj.team.organization, team=obj.team)
 
 #_-------------------------READ-----------------
 class ProjectSerializer(ProjectBaseSerializer):

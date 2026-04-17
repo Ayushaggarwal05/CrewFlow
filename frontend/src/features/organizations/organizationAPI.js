@@ -35,3 +35,13 @@ export const deleteOrgMembership = (orgId, membershipId) =>
 // GET users in org
 export const getOrgUsers = (orgId) =>
   api.get(`/api/users/organizations/${orgId}/users/`);
+
+// GET My Team (subordinates)
+export const getMyTeam = (orgId) => {
+    const url = orgId ? `/organizations/${orgId}/my-team/` : `/organizations/my-team/`;
+    return api.get(url);
+};
+
+export const getOrgStats = (orgId) => {
+    return api.get(`/organizations/stats/?org_id=${orgId}`);
+};

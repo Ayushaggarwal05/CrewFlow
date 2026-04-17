@@ -42,7 +42,6 @@ const Sidebar = ({ open, onClose }) => {
     }
 
     const lastTeamId = localStorage.getItem("last_team_id");
-    const lastProjectId = localStorage.getItem("last_project_id");
 
     // Projects
     if (item.action === "projects") {

@@ -2,12 +2,13 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from .models import Comment
 from .serializers import CommentSerializer, CommentWriteSerializer
-from apps.common.permissions import IsDeveloperOrAbove , IsManagerOrAdmin
+from apps.common.permissions import IsMemberOrAbove , IsManagerOrAdmin
 
 
 #-------------------list and create-----------------
 class CommentListCreateView(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated , IsDeveloperOrAbove]
+    permission_classes = [IsAuthenticated , IsMemberOrAbove]
+
 
     def get_queryset(self):
         user = self.request.user

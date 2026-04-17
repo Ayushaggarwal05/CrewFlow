@@ -11,14 +11,15 @@ import {
   Activity,
 } from "lucide-react";
 import { fetchCurrentUser } from "../auth/authSlice";
-import { getOrganizations } from "../organizations/organizationAPI";
+import { getOrganizations, getOrgStats, getMyTeam } from "../organizations/organizationAPI";
 import { CardSkeleton } from "../../components/ui/Spinner";
 import Badge from "../../components/ui/Badge";
 import { formatDate } from "../../utils/helpers";
 import { getTeams } from "../teams/teamAPI";
 import { getProjects } from "../projects/projectAPI";
 
-const StatCard = ({ icon: Icon, label, value, color = "brand" }) => {
+const StatCard = ({ icon, label, value, color = "brand" }) => {
+  const Icon = icon;
   const colorMap = {
     brand: "bg-brand-600/20 text-brand-400",
     green: "bg-green-600/20 text-green-400",
@@ -57,68 +58,88 @@ const Dashboard = () => {
     }
   }, [dispatch, user]);
 
+  const [selectedOrgId, setSelectedOrgId] = useState(() => {
+    const saved = localStorage.getItem("dashboard_org_id");
+    return saved && saved !== "null" ? Number(saved) : null;
+  });
   const [teamsCount, setTeamsCount] = useState(0);
   const [projectsCount, setProjectsCount] = useState(0);
+  const [membersCount, setMembersCount] = useState(0);
   const [recentProjects, setRecentProjects] = useState([]);
+  const [subordinates, setSubordinates] = useState([]);
 
-  // Fetch organizations & compute stats globally
+  // 1. Fetch organizations
   useEffect(() => {
-    let mounted = true;
-
-    const load = async () => {
+    const loadOrgs = async () => {
       try {
         const response = await getOrganizations();
-        const payload =
-          response.data?.data?.results ||
-          response.data?.data ||
-          response.data ||
-          [];
+        const payload = response.data?.data?.results || response.data?.data || response.data || [];
         const validOrgs = Array.isArray(payload) ? payload : [];
-        if (!mounted) return;
         setOrgs(validOrgs);
-
-        const teamsResponses = await Promise.all(
-          validOrgs.map((org) => getTeams(org.id).catch(() => ({ data: [] }))),
-        );
-
-        const allTeams = teamsResponses.flatMap((res) =>
-          Array.isArray(res.data) ? res.data : [],
-        );
-
-        if (mounted) setTeamsCount(allTeams.length);
-
-        const projectResponses = await Promise.all(
-          allTeams.map((team) =>
-            getProjects(team.id).catch(() => ({ data: [] })),
-          ),
-        );
-
-        const allProjects = projectResponses.flatMap((res) =>
-          Array.isArray(res.data) ? res.data : [],
-        );
-
-        if (mounted) {
-          setProjectsCount(allProjects.length);
-          setRecentProjects(
-            allProjects
-              .slice()
-              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-              .slice(0, 5),
-          );
+        
+        if (validOrgs.length > 0 && !selectedOrgId) {
+          setSelectedOrgId(validOrgs[0].id);
         }
       } catch (err) {
-        console.log("Failed to fetch orgs:", err);
+        console.error("Failed to fetch organizations", err);
+      }
+    };
+    loadOrgs();
+  }, [user, selectedOrgId]);
+
+  // 2. Fetch scoped stats & data when selectedOrgId changes
+  useEffect(() => {
+    if (!selectedOrgId) return;
+    localStorage.setItem("dashboard_org_id", selectedOrgId);
+    
+    let mounted = true;
+    const loadScopedData = async () => {
+      setLoading(true);
+      try {
+        // Fetch stats
+        const statsRes = await getOrgStats(selectedOrgId);
+        if (!mounted) return;
+        setTeamsCount(statsRes.data.teams_count);
+        setProjectsCount(statsRes.data.projects_count);
+        setMembersCount(statsRes.data.members_count);
+
+        // Fetch My Team for this org
+        const userRole = user?.org_role ?? user?.role;
+        if (userRole === "MANAGER" || userRole === "LEAD") {
+          const myTeamRes = await getMyTeam(selectedOrgId);
+          if (mounted) setSubordinates(myTeamRes.data || []);
+        }
+
+        // Fetch recent projects (limited by teams in this org)
+        const teamsRes = await getTeams(selectedOrgId);
+        const teams = Array.isArray(teamsRes.data) ? teamsRes.data : [];
+        if (teams.length > 0) {
+          const projectResponses = await Promise.all(
+            teams.slice(0, 5).map(team => getProjects(team.id).catch(() => ({ data: [] })))
+          );
+          const allProjects = projectResponses.flatMap(res => Array.isArray(res.data) ? res.data : []);
+          if (mounted) {
+            setRecentProjects(
+              allProjects
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                .slice(0, 5)
+            );
+          }
+        } else {
+          if (mounted) setRecentProjects([]);
+        }
+
+      } catch (err) {
+        console.error("Failed to load scoped dashboard data", err);
       } finally {
         if (mounted) setLoading(false);
       }
     };
 
-    load();
+    loadScopedData();
+    return () => { mounted = false; };
+  }, [selectedOrgId, user]);
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   // Role (safe fallback)
   const role = user?.org_role ?? user?.role ?? null;
@@ -134,16 +155,38 @@ const Dashboard = () => {
     }
   }, [user, loading, navigate]);
 
+  // Find the selected organization object to get its join_code and user_role
+  const selectedOrg = orgs.find(o => Number(o.id) === Number(selectedOrgId));
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="page-header">Welcome back, {firstName}</h1>
-        <p className="text-dark-400 mt-1">
-          Here's what's happening across your workspace.
-        </p>
-      </div>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="page-header">Welcome back, {firstName}</h1>
+          <p className="text-dark-400 mt-1">
+            Here's what's happening in your workspace.
+          </p>
+        </div>
 
+        {/* Org Selector */}
+        {orgs.length > 0 && (
+          <div className="flex items-center gap-3 bg-dark-800 p-2 rounded-xl border border-dark-700">
+            <Building2 size={18} className="text-dark-400" />
+            <select
+              className="bg-transparent text-sm font-medium text-dark-100 outline-none cursor-pointer pr-4"
+              value={selectedOrgId || ""}
+              onChange={(e) => setSelectedOrgId(Number(e.target.value))}
+            >
+              {orgs.map((org) => (
+                <option key={org.id} value={org.id} className="bg-dark-800">
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
       {/* Stats */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -154,26 +197,27 @@ const Dashboard = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
+            label="Current Org"
+            value={orgs.find(o => Number(o.id) === Number(selectedOrgId))?.name?.split(' ')[0] || "..."}
             icon={Building2}
-            label="Organizations"
-            value={orgs.length}
+            color="brand"
           />
           <StatCard
             icon={Users}
-            label="Teams"
-            value={teamsCount || "0"}
+            label="Total Members"
+            value={membersCount}
             color="purple"
           />
           <StatCard
             icon={FolderKanban}
-            label="Projects"
-            value={projectsCount || "0"}
+            label="Teams"
+            value={teamsCount}
             color="blue"
           />
           <StatCard
             icon={CheckSquare}
-            label="Open Tasks"
-            value="—"
+            label="Projects"
+            value={projectsCount}
             color="green"
           />
         </div>
@@ -181,60 +225,87 @@ const Dashboard = () => {
 
       {/* Main Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Organizations */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-semibold text-dark-100">Your Organizations</h2>
-            <button
-              onClick={() => navigate("/app/organizations")}
-              className="text-sm text-brand-400 hover:text-brand-300"
-            >
-              View all
-            </button>
-          </div>
+        {/* Organizations & Subordinates */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* My Team Section for Managers/Leads */}
+          {(role === "MANAGER" || role === "LEAD") && subordinates.length > 0 && (
+              <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                      <h2 className="font-semibold text-dark-100 flex items-center gap-2">
+                          <Users size={18} className="text-brand-400" />
+                          My Team ({subordinates.length})
+                      </h2>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {subordinates.map(sub => (
+                          <div key={sub.id} className="card p-4 flex items-center gap-3 bg-dark-800/50">
+                              <div className="w-10 h-10 rounded-full bg-dark-700 flex items-center justify-center text-brand-400 font-bold border border-dark-600">
+                                  {sub.user_full_name?.charAt(0) || sub.user_email?.charAt(0)}
+                              </div>
+                              <div className="min-w-0">
+                                  <p className="font-medium text-dark-100 truncate">{sub.user_full_name}</p>
+                                  <p className="text-xs text-dark-500 truncate">{sub.role} • {sub.user_email}</p>
+                              </div>
+                          </div>
+                      ))}
+                  </div>
+              </div>
+          )}
 
-          {loading ? (
-            <CardSkeleton count={3} />
-          ) : orgs.length === 0 ? (
-            <div className="card p-8 text-center">
-              <Building2 size={36} className="mx-auto text-dark-600 mb-3" />
-              <p className="text-dark-400 font-medium">No organizations yet</p>
-              <p className="text-dark-500 text-sm mt-1">
-                Create your first organization to get started
-              </p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-semibold text-dark-100">Your Organizations</h2>
               <button
                 onClick={() => navigate("/app/organizations")}
-                className="btn-primary mt-4 mx-auto"
+                className="text-sm text-brand-400 hover:text-brand-300"
               >
-                Create Organization
+                View all
               </button>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {orgs.slice(0, 5).map((org) => (
-                <div
-                  key={org.id}
-                  className="card-hover p-4 cursor-pointer"
-                  onClick={() => navigate(`/app/organizations/${org.id}/teams`)}
+
+            {loading ? (
+              <CardSkeleton count={3} />
+            ) : orgs.length === 0 ? (
+              <div className="card p-8 text-center">
+                <Building2 size={36} className="mx-auto text-dark-600 mb-3" />
+                <p className="text-dark-400 font-medium">No organizations yet</p>
+                <p className="text-dark-500 text-sm mt-1">
+                  Create your first organization to get started
+                </p>
+                <button
+                  onClick={() => navigate("/app/organizations")}
+                  className="btn-primary mt-4 mx-auto"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-brand-600/20 rounded-xl flex items-center justify-center">
-                        <Building2 size={18} className="text-brand-400" />
+                  Create Organization
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {orgs.slice(0, 5).map((org) => (
+                  <div
+                    key={org.id}
+                    className="card-hover p-4 cursor-pointer"
+                    onClick={() => navigate(`/app/organizations/${org.id}/teams`)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-brand-600/20 rounded-xl flex items-center justify-center">
+                          <Building2 size={18} className="text-brand-400" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-dark-100">{org.name}</p>
+                          <p className="text-xs text-dark-500">
+                            Created {formatDate(org.created_at)}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-dark-100">{org.name}</p>
-                        <p className="text-xs text-dark-500">
-                          Created {formatDate(org.created_at)}
-                        </p>
-                      </div>
+                      <TrendingUp size={16} className="text-dark-600" />
                     </div>
-                    <TrendingUp size={16} className="text-dark-600" />
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right Panel */}
@@ -249,7 +320,7 @@ const Dashboard = () => {
                     <Users size={18} className="text-brand-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-dark-400">Your role</p>
+                    <p className="text-sm text-dark-400">Your current role</p>
                     <Badge variant={role} label={role} />
                   </div>
                 </div>
@@ -258,8 +329,10 @@ const Dashboard = () => {
                   {role === "ADMIN" && (
                     <p>Full access to organizations, teams, and members.</p>
                   )}
-                  {role === "MANAGER" && <p>Manage teams and projects.</p>}
-                  {role === "DEVELOPER" && <p>Work on assigned tasks.</p>}
+                  {(role === "MANAGER" || role === "LEAD") && (
+                      <p>Manage your assigned team and projects.</p>
+                  )}
+                  {role === "MEMBER" && <p>Work on tasks assigned to you.</p>}
                 </div>
               </>
             ) : (
@@ -269,6 +342,7 @@ const Dashboard = () => {
               </div>
             )}
           </div>
+
 
           {/* Recent Projects */}
           <div className="flex items-center justify-between">
@@ -335,16 +409,19 @@ const Dashboard = () => {
                 icon: Building2,
                 path: "/app/organizations",
               },
-            ].map(({ label, icon: Icon, path }) => (
+            ].map(({ label, icon, path }) => {
+              const QuickIcon = icon;
+              return (
               <button
                 key={path}
                 onClick={() => navigate(path)}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-dark-300 hover:text-dark-100 hover:bg-dark-700"
               >
-                <Icon size={16} className="text-dark-500" />
+                <QuickIcon size={16} className="text-dark-500" />
                 {label}
               </button>
-            ))}
+            );
+          })}
           </div>
         </div>
       </div>

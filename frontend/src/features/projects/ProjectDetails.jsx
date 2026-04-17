@@ -194,7 +194,7 @@ const ProjectDetails = () => {
         </div>
       </div>
 
-      {project && (
+      {project && (project.user_role === 'OWNER' || project.user_role === 'ADMIN' || project.user_role === 'MANAGER') && (
         <div className="mb-4">
           <JoinCodeCard
             entityType="projects"

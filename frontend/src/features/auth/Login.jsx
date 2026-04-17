@@ -50,7 +50,7 @@ const Login = () => {
         setForm({ email: form.email, password: "" }); // clear password
         navigate(from, { replace: true });
       }
-    } catch (err) {
+    } catch {
       toast.error("Something went wrong");
     }
   };

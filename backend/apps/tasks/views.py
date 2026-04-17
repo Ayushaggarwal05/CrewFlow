@@ -2,14 +2,15 @@ from django.shortcuts import render
 from rest_framework import generics
 from .serializers import TaskWriteSerializer , TaskSerializer
 from .models import Task
-from apps.common.permissions import IsDeveloperOrAbove
+from apps.common.permissions import IsMemberOrAbove
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter , OrderingFilter
 # Create your views here.
 
 class TaskListCreateView(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated , IsDeveloperOrAbove]
+    permission_classes = [IsAuthenticated , IsMemberOrAbove]
+
 
     filter_backends = [DjangoFilterBackend , SearchFilter , OrderingFilter]
 
@@ -47,7 +48,8 @@ class TaskListCreateView(generics.ListCreateAPIView):
 
 
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthenticated , IsDeveloperOrAbove]
+    permission_classes = [IsAuthenticated , IsMemberOrAbove]
+
 
     def get_queryset(self):
 

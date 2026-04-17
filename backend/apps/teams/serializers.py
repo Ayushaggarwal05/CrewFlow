@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Team , TeamMembership
 from apps.organizations.models import Organization
-from apps.organizations.utils import is_admin_or_owner
+from apps.organizations.utils import is_admin_or_owner, get_user_role, can_view_join_codes, get_effective_role
 from apps.users.models import User
 
 
@@ -12,6 +12,7 @@ class TeamBaseSerializer(serializers.ModelSerializer):
 
     members = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     join_code = serializers.SerializerMethodField()
+    user_role = serializers.SerializerMethodField()
 
 
     class Meta:
@@ -23,8 +24,7 @@ class TeamBaseSerializer(serializers.ModelSerializer):
             "members",
             "created_at",
             "join_code",
-            "code_is_active",
-            "code_expires_at",
+            "user_role",
         ]
 
         read_only_fields = [
@@ -33,8 +33,7 @@ class TeamBaseSerializer(serializers.ModelSerializer):
             "members",
             "created_at",
             "join_code",
-            "code_is_active",
-            "code_expires_at",
+            "user_role",
         ]
 
     def get_join_code(self, obj):
@@ -42,10 +41,17 @@ class TeamBaseSerializer(serializers.ModelSerializer):
         if not request:
             return None
         
-        # Team permissions depend on organization roles
-        if is_admin_or_owner(request.user, obj.organization):
-            return obj.join_code
+        user_role = get_user_role(request.user, obj.organization)
+        if can_view_join_codes(user_role):
+            invite = obj.invite_codes.filter(is_active=True).first()
+            return invite.code if invite else None
         return None
+
+    def get_user_role(self, obj):
+        request = self.context.get("request")
+        if not (request and request.user.is_authenticated):
+            return None
+        return get_effective_role(request.user, obj.organization, team=obj)
 
 
 class TeamSerializer(TeamBaseSerializer):
@@ -93,10 +99,24 @@ class TeamMembershipBaseSerializer(serializers.ModelSerializer):
         ]
 
 #---------------------READ-------------
-class TeamMembershipSerializer(
-    TeamMembershipBaseSerializer
-):
-    pass
+class TeamMembershipSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    user_full_name = serializers.CharField(source="user.full_name", read_only=True)
+    role_display = serializers.CharField(source="get_role_display", read_only=True)
+
+    class Meta:
+        model = TeamMembership
+        fields = [
+            "id",
+            "team",
+            "user",
+            "user_email",
+            "user_full_name",
+            "role",
+            "role_display",
+            "joined_at",
+        ]
+        read_only_fields = ["joined_at"]
 
 
 #-------------------Write---------------
