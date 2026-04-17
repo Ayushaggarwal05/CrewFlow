@@ -188,12 +188,18 @@ const Sidebar = ({ open, onClose }) => {
                 </div>
 
                 <div className="py-1">
-                  <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-dark-300 hover:bg-dark-700">
+                  <button 
+                    onClick={() => { navigate("/app/profile"); setProfileOpen(false); }}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-dark-300 hover:bg-dark-700"
+                  >
                     <User size={14} />
                     View Profile
                   </button>
 
-                  <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-dark-300 hover:bg-dark-700">
+                  <button 
+                    onClick={() => { navigate("/app/profile"); setProfileOpen(false); }}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-dark-300 hover:bg-dark-700"
+                  >
                     <Settings size={14} />
                     Settings
                   </button>

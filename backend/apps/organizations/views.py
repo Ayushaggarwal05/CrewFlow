@@ -187,10 +187,12 @@ class DashboardStatsView(APIView):
 
         from apps.teams.models import Team, TeamMembership
         from apps.projects.models import Project
+        from apps.tasks.models import Task
 
         # Base querysets
         teams_qs = Team.objects.filter(organization_id=org_id)
         projects_qs = Project.objects.filter(team__organization_id=org_id)
+        tasks_qs = Task.objects.filter(project__team__organization_id=org_id)
 
         # Filtering based on role for accuracy of what THEY can see
         if membership.role not in ["OWNER", "ADMIN"]:
@@ -198,10 +200,24 @@ class DashboardStatsView(APIView):
             my_team_ids = TeamMembership.objects.filter(user=user, team__organization_id=org_id).values_list("team_id", flat=True)
             teams_qs = teams_qs.filter(id__in=my_team_ids)
             projects_qs = projects_qs.filter(team_id__in=my_team_ids)
+            tasks_qs = tasks_qs.filter(project__team_id__in=my_team_ids)
+
+        total_tasks = tasks_qs.count()
+        completed_tasks = tasks_qs.filter(status="DONE").count()
+        completion_percentage = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+
+        # Active projects (at least one non-DONE task)
+        # Note: In a real system, projects might have their own status, 
+        # but here we follow the "actually useful" requirement based on task completion.
+        active_projects_count = projects_qs.filter(tasks__status__in=["TODO", "IN_PROGRESS"]).distinct().count()
 
         return Response({
             "teams_count": teams_qs.count(),
             "projects_count": projects_qs.count(),
             "members_count": OrganizationMembership.objects.filter(organization_id=org_id).count(),
+            "total_tasks": total_tasks,
+            "completed_tasks": completed_tasks,
+            "completion_percentage": round(completion_percentage, 1),
+            "active_projects_count": active_projects_count,
         })
 

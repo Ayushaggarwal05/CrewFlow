@@ -43,7 +43,10 @@ const ProjectDetails = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!teamId || !projectId) return;
+    if (!teamId || !projectId) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -53,9 +56,9 @@ const ProjectDetails = () => {
         getTeamUsers(teamId),
       ]);
 
-      setProject(projRes.data);
-      setTasks(tasksRes.data);
-      setTeamUsers(usersRes.data);
+      setProject(projRes.data?.data || projRes.data);
+      setTasks(tasksRes.data?.results || tasksRes.data?.data || tasksRes.data || []);
+      setTeamUsers(usersRes.data?.results || usersRes.data?.data || usersRes.data || []);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load project");

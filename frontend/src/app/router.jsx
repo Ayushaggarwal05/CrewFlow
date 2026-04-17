@@ -14,6 +14,7 @@ import TaskBoard from "../features/tasks/TaskBoard";
 import ActivityLog from "../features/activity/ActivityLog";
 import MyActivity from "../features/activity/MyActivity";
 import JoinViaCode from "../features/invites/JoinViaCode";
+import Profile from "../features/profile/Profile";
 
 const AppRouter = () => {
   return (
@@ -52,6 +53,7 @@ const AppRouter = () => {
         <Route path="activity" element={<MyActivity />} />
 
         <Route path="join" element={<JoinViaCode />} />
+        <Route path="profile" element={<Profile />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

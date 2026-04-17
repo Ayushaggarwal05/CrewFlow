@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../services/api";
-import { loginUser, registerUser, logoutUser, getCurrentUser } from "./authAPI";
+import { loginUser, registerUser, logoutUser, getCurrentUser, updateProfile } from "./authAPI";
 
 // Backend response format: { success, message, data }
 // Success: { success: true, message: '', data: <payload> }
@@ -120,10 +120,22 @@ export const fetchCurrentUser = createAsyncThunk(
   },
 );
 
+export const updateUserProfile = createAsyncThunk(
+  "auth/updateUserProfile",
+  async (userData, { rejectWithValue }) => {
+    try {
+      const res = await updateProfile(userData);
+      return extractData(res);
+    } catch (err) {
+      return rejectWithValue(extractError(err));
+    }
+  },
+);
+
 // ─── Initial State ────────────────────────────────────────────────────────────
 
 const initialState = {
-  user: null,
+  user: null, // Should contain { id, name, email } + other fields if available
   isAuthenticated: !!localStorage.getItem("access_token"),
   loading: false,
   error: null,
@@ -183,6 +195,10 @@ const authSlice = createSlice({
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.user = action.payload;
         state.isAuthenticated = true;
+      })
+      .addCase(updateUserProfile.fulfilled, (state, action) => {
+        state.user = { ...state.user, ...action.payload };
+        state.error = null;
       })
       .addCase(fetchCurrentUser.rejected, (state) => {
         // Token invalid/expired — clear auth

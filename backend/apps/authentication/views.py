@@ -28,3 +28,23 @@ class LogoutView(APIView):
                 {"detail" : "Invalid token"},
                 status=400,
             )
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        old_password = request.data.get("old_password")
+        new_password = request.data.get("new_password")
+
+        if not old_password or not new_password:
+            return Response({"detail": "Both old and new passwords are required."}, status=400)
+
+        if not user.check_password(old_password):
+            return Response({"detail": "Incorrect current password."}, status=400)
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response({"detail": "Password updated successfully."}, status=200)

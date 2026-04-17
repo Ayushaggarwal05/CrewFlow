@@ -20,3 +20,9 @@ export const refreshToken = (refresh) =>
   api.post("/api/auth/refresh/", { refresh });
 
 export const getCurrentUser = () => api.get("/api/users/users/me/");
+
+export const updateProfile = (data) => api.patch("/api/users/users/me/", data);
+
+export const changePassword = (data) => api.post("/api/auth/change-password/", data);
+
+export const getUserStats = () => api.get("/api/users/stats/");

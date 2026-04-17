@@ -9,6 +9,10 @@ import {
   UserPlus,
   Clock,
 } from "lucide-react";
+
+import useRole from "../../hooks/useRole";
+import useCurrentOrg from "../../hooks/useCurrentOrg";
+
 import {
   getTeam,
   getTeamMemberships,
@@ -32,6 +36,8 @@ import JoinCodeCard from "../invites/JoinCodeCard";
 const TeamDetails = () => {
   const { orgId, teamId } = useParams();
   const navigate = useNavigate();
+  const { isAdmin, isManager } = useRole();
+  const { orgId: currentOrgId } = useCurrentOrg();
 
   const [team, setTeam] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -61,7 +67,7 @@ const TeamDetails = () => {
       setLoading(true);
       try {
         const [teamRes, projectsRes, membersRes] = await Promise.all([
-          getTeam(orgId, teamId),
+          getTeam(orgId || currentOrgId, teamId),
           getProjects(teamId),
           getTeamMemberships(teamId),
         ]);
@@ -77,7 +83,7 @@ const TeamDetails = () => {
     };
 
     fetchData();
-  }, [teamId, orgId]);
+  }, [teamId, orgId, currentOrgId]);
 
   //  Controlled input helper
   const pfChange = (k) => (e) =>
@@ -197,12 +203,12 @@ const TeamDetails = () => {
         </div>
       </div>
 
-      {team && (team.user_role === 'OWNER' || team.user_role === 'ADMIN' || team.user_role === 'MANAGER') && (
+      {team && (isAdmin || isManager || team.user_role === 'OWNER') && (
         <div className="mb-4">
           <JoinCodeCard
             entityType="teams"
             entityId={teamId}
-            parentEntityId={orgId}
+            parentEntityId={orgId || currentOrgId}
             initialCode={team.join_code}
           />
         </div>
