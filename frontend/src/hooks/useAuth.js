@@ -1,23 +1,19 @@
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { logout as logoutAction } from "../features/auth/authSlice";
 
 const useAuth = () => {
+  const dispatch = useDispatch();
   const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
 
-  const role = user?.role || null;
-  const isAdmin = role === "ADMIN";
-  const isManager = role === "MANAGER";
-  const isDeveloper = role === "DEVELOPER";
-  const hasRole = (...roles) => roles.includes(role);
+  const logout = () => {
+    dispatch(logoutAction());
+  };
 
   return {
     user,
     isAuthenticated,
     loading,
-    role,
-    isAdmin,
-    isManager,
-    isDeveloper,
-    hasRole,
+    logout,
   };
 };
 

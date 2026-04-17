@@ -1,428 +1,472 @@
-import { useEffect, useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
   Users,
   FolderKanban,
-  CheckSquare,
+  CheckCircle2,
   TrendingUp,
   Clock,
   Activity,
+  Plus,
+  Calendar,
+  ArrowRight,
+  UserPlus,
+  Rocket,
+  LayoutDashboard,
 } from "lucide-react";
-import { fetchCurrentUser } from "../auth/authSlice";
-import { getOrganizations, getOrgStats, getMyTeam } from "../organizations/organizationAPI";
-import { CardSkeleton } from "../../components/ui/Spinner";
-import Badge from "../../components/ui/Badge";
-import { formatDate } from "../../utils/helpers";
+
+import useAuth from "../../hooks/useAuth";
+import useCurrentOrg from "../../hooks/useCurrentOrg";
+import useRole from "../../hooks/useRole";
+import { getMyTeam } from "../organizations/organizationAPI";
 import { getTeams } from "../teams/teamAPI";
 import { getProjects } from "../projects/projectAPI";
+import { getMyOrgTasks, updateTask } from "../tasks/taskAPI";
 
-const StatCard = ({ icon, label, value, color = "brand" }) => {
+import Spinner, { CardSkeleton } from "../../components/ui/Spinner";
+import Badge from "../../components/ui/Badge";
+import Button from "../../components/ui/Button";
+import { formatDate, getInitials } from "../../utils/helpers";
+import toast from "react-hot-toast";
+
+// --- Visual Components ---
+
+const GlassCard = ({ children, className = "" }) => (
+  <div className={`glass-panel p-5 relative overflow-hidden group transition-all duration-300 hover:shadow-brand-500/10 ${className}`}>
+    {children}
+  </div>
+);
+
+const StatCard = ({ icon, label, value, subtext, color = "brand", loading = false }) => {
   const Icon = icon;
   const colorMap = {
-    brand: "bg-brand-600/20 text-brand-400",
-    green: "bg-green-600/20 text-green-400",
-    blue: "bg-blue-600/20 text-blue-400",
-    purple: "bg-purple-600/20 text-purple-400",
+    brand: "bg-brand-600/20 text-brand-400 border-brand-500/20",
+    green: "bg-green-600/20 text-green-400 border-green-500/20",
+    blue: "bg-blue-600/20 text-blue-400 border-blue-500/20",
+    purple: "bg-purple-600/20 text-purple-400 border-purple-500/20",
   };
 
+  if (loading) return <div className="skeleton h-32 rounded-2xl" />;
+
   return (
-    <div className="card p-5 flex items-center gap-4">
-      <div
-        className={`w-11 h-11 rounded-xl flex items-center justify-center ${colorMap[color]}`}
-      >
-        <Icon size={22} />
+    <GlassCard className="border border-dark-700/50">
+      <div className="flex items-start justify-between">
+        <div className={`p-3 rounded-xl border ${colorMap[color]}`}>
+          <Icon size={24} />
+        </div>
+        {subtext && (
+          <span className="text-xs font-medium text-dark-500 bg-dark-800 px-2 py-1 rounded-full border border-dark-700">
+            {subtext}
+          </span>
+        )}
       </div>
-      <div>
-        <p className="text-2xl font-bold text-dark-50">{value}</p>
-        <p className="text-sm text-dark-400">{label}</p>
+      <div className="mt-4">
+        <p className="text-3xl font-bold text-dark-50 tracking-tight">{value}</p>
+        <p className="text-sm font-medium text-dark-400 mt-1">{label}</p>
       </div>
-    </div>
+      <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+        <Icon size={80} />
+      </div>
+    </GlassCard>
   );
 };
 
+const SectionHeader = ({ title, icon: Icon, children }) => (
+  <div className="flex items-center justify-between mb-5">
+    <h2 className="text-lg font-bold text-dark-50 flex items-center gap-2.5">
+      {Icon && <Icon size={20} className="text-brand-500" />}
+      {title}
+    </h2>
+    {children}
+  </div>
+);
+
+const EmptyState = ({ icon: Icon, title, description, actionText, onAction }) => (
+  <div className="flex flex-col items-center justify-center py-12 px-4 text-center glass-panel border-dashed border-2 border-dark-700/50">
+    <div className="w-16 h-16 bg-dark-800 rounded-2xl flex items-center justify-center mb-4 text-dark-500">
+      <Icon size={32} />
+    </div>
+    <h3 className="text-lg font-semibold text-dark-100">{title}</h3>
+    <p className="text-dark-400 text-sm mt-2 max-w-xs">{description}</p>
+    {actionText && (
+      <Button onClick={onAction} className="mt-6" variant="secondary" size="sm">
+        {actionText}
+      </Button>
+    )}
+  </div>
+);
+
+// --- Main Dashboard ---
+
 const Dashboard = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { 
+    orgId, 
+    organizations, 
+    stats: orgStats, 
+    activityFeed,
+    loading: orgLoading,
+    setSelectedOrg,
+    refreshOrgs,
+    refreshStats,
+    refreshActivity
+  } = useCurrentOrg();
+  const { role } = useRole();
 
-  const { user } = useSelector((state) => state.auth);
-
-  const [orgs, setOrgs] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch user if not available
-  useEffect(() => {
-    if (!user) {
-      dispatch(fetchCurrentUser());
-    }
-  }, [dispatch, user]);
-
-  const [selectedOrgId, setSelectedOrgId] = useState(() => {
-    const saved = localStorage.getItem("dashboard_org_id");
-    return saved && saved !== "null" ? Number(saved) : null;
-  });
-  const [teamsCount, setTeamsCount] = useState(0);
-  const [projectsCount, setProjectsCount] = useState(0);
-  const [membersCount, setMembersCount] = useState(0);
+  // Local State for non-centralized data
+  const [myTasks, setMyTasks] = useState([]);
   const [recentProjects, setRecentProjects] = useState([]);
   const [subordinates, setSubordinates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tasksLoading, setTasksLoading] = useState(false);
 
-  // 1. Fetch organizations
+  // Computed
+  const firstName = useMemo(() => user?.full_name?.split(" ")?.[0] || "there", [user?.full_name]);
+  const currentOrg = useMemo(() => organizations.find(o => Number(o.id) === Number(orgId)), [organizations, orgId]);
+
+  // Initial Data
   useEffect(() => {
-    const loadOrgs = async () => {
-      try {
-        const response = await getOrganizations();
-        const payload = response.data?.data?.results || response.data?.data || response.data || [];
-        const validOrgs = Array.isArray(payload) ? payload : [];
-        setOrgs(validOrgs);
-        
-        if (validOrgs.length > 0 && !selectedOrgId) {
-          setSelectedOrgId(validOrgs[0].id);
-        }
-      } catch (err) {
-        console.error("Failed to fetch organizations", err);
-      }
-    };
-    loadOrgs();
-  }, [user, selectedOrgId]);
+    if (organizations.length === 0) {
+      refreshOrgs();
+    }
+  }, []);
 
-  // 2. Fetch scoped stats & data when selectedOrgId changes
+  // Sync Global Data when Org Changes
   useEffect(() => {
-    if (!selectedOrgId) return;
-    localStorage.setItem("dashboard_org_id", selectedOrgId);
-    
-    let mounted = true;
-    const loadScopedData = async () => {
-      setLoading(true);
-      try {
-        // Fetch stats
-        const statsRes = await getOrgStats(selectedOrgId);
-        if (!mounted) return;
-        setTeamsCount(statsRes.data.teams_count);
-        setProjectsCount(statsRes.data.projects_count);
-        setMembersCount(statsRes.data.members_count);
+    if (orgId) {
+      refreshStats(orgId);
+      refreshActivity(orgId);
+    }
+  }, [orgId]);
 
-        // Fetch My Team for this org
-        const userRole = user?.org_role ?? user?.role;
-        if (userRole === "MANAGER" || userRole === "LEAD") {
-          const myTeamRes = await getMyTeam(selectedOrgId);
-          if (mounted) setSubordinates(myTeamRes.data || []);
-        }
+  // Scoped Data Fetching (Keep local for now as per requirement granularity)
+  const loadDashboardData = useCallback(async () => {
+    if (!orgId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
 
-        // Fetch recent projects (limited by teams in this org)
-        const teamsRes = await getTeams(selectedOrgId);
-        const teams = Array.isArray(teamsRes.data) ? teamsRes.data : [];
-        if (teams.length > 0) {
-          const projectResponses = await Promise.all(
-            teams.slice(0, 5).map(team => getProjects(team.id).catch(() => ({ data: [] })))
-          );
-          const allProjects = projectResponses.flatMap(res => Array.isArray(res.data) ? res.data : []);
-          if (mounted) {
-            setRecentProjects(
-              allProjects
-                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                .slice(0, 5)
-            );
-          }
-        } else {
-          if (mounted) setRecentProjects([]);
-        }
+    try {
+      const [tasksRes, teamsRes] = await Promise.all([
+        getMyOrgTasks(orgId),
+        getTeams(orgId)
+      ]);
 
-      } catch (err) {
-        console.error("Failed to load scoped dashboard data", err);
-      } finally {
-        if (mounted) setLoading(false);
+      setMyTasks(tasksRes.data || []);
+      
+      const teams = Array.isArray(teamsRes.data) ? teamsRes.data : [];
+      if (teams.length > 0) {
+        const projectRes = await Promise.all(
+          teams.slice(0, 3).map(t => getProjects(t.id).catch(() => ({ data: [] })))
+        );
+        const allProj = projectRes.flatMap(r => Array.isArray(r.data) ? r.data : []);
+        setRecentProjects(allProj.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5));
       }
-    };
 
-    loadScopedData();
-    return () => { mounted = false; };
-  }, [selectedOrgId, user]);
+      if (role === "MANAGER" || role === "LEAD" || role === "ADMIN" || role === "OWNER") {
+        const teamRes = await getMyTeam(orgId);
+        setSubordinates(teamRes.data || []);
+      }
+    } catch (err) {
+      console.error("Dashboard load failed", err);
+      toast.error("Failed to sync dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  }, [orgId, role]);
 
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
-  // Role (safe fallback)
-  const role = user?.org_role ?? user?.role ?? null;
-  const firstName = useMemo(
-    () => user?.full_name?.split(" ")?.[0] || "there",
-    [user?.full_name],
+  // Actions
+  const handleMarkDone = async (task) => {
+    setTasksLoading(true);
+    try {
+      await updateTask(task.project, task.id, { status: "DONE" });
+      setMyTasks(prev => prev.filter(t => t.id !== task.id));
+      toast.success("Task completed! 🎉");
+      // Refresh stats in Redux
+      refreshStats(orgId);
+    } catch (err) {
+      toast.error("Failed to update task");
+    } finally {
+      setTasksLoading(false);
+    }
+  };
+
+  // --- Render Sections ---
+
+  const renderStats = () => {
+    if (!orgStats && loading) return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => <div key={i} className="skeleton h-32 rounded-2xl" />)}
+      </div>
+    );
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={FolderKanban}
+          label="Active Projects"
+          value={orgStats?.active_projects_count || 0}
+          subtext={`of ${orgStats?.projects_count || 0}`}
+          color="brand"
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label="Total Tasks"
+          value={orgStats?.total_tasks || 0}
+          subtext="Org Volume"
+          color="blue"
+        />
+        <StatCard
+          icon={TrendingUp}
+          label="Completion"
+          value={`${orgStats?.completion_percentage || 0}%`}
+          subtext={`${orgStats?.completed_tasks || 0} done`}
+          color="green"
+        />
+        <StatCard
+          icon={Users}
+          label="Team Size"
+          value={orgStats?.members_count || 0}
+          subtext="Active Members"
+          color="purple"
+        />
+      </div>
+    );
+  };
+
+  const renderMyTasks = () => (
+    <div className="space-y-4">
+      <SectionHeader title="Your Focus" icon={LayoutDashboard} />
+      {myTasks.length === 0 ? (
+        <EmptyState
+          icon={Rocket}
+          title="All caught up!"
+          description="No tasks assigned to you right now. Take a break or check other projects."
+        />
+      ) : (
+        <div className="space-y-3">
+          {myTasks.slice(0, 5).map(task => (
+            <GlassCard key={task.id} className="p-4 border border-dark-700/30 flex items-center justify-between hover:border-brand-500/30">
+              <div className="flex items-start gap-3 min-w-0">
+                <button 
+                  onClick={() => handleMarkDone(task)}
+                  className="mt-1 w-5 h-5 rounded-full border-2 border-dark-600 flex items-center justify-center hover:border-brand-500 hover:text-brand-500 transition-colors"
+                  disabled={tasksLoading}
+                >
+                  <CheckCircle2 size={12} className="opacity-0 hover:opacity-100" />
+                </button>
+                <div className="min-w-0">
+                  <p className="font-semibold text-dark-50 truncate hover:text-brand-400 transition-colors cursor-pointer" onClick={() => navigate(`/app/projects/${task.project}/tasks`)}>
+                    {task.title}
+                  </p>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <Badge variant={task.status} size="sm" />
+                    <span className="flex items-center gap-1.5 text-xs text-dark-500 font-medium">
+                      <Calendar size={12} />
+                      {task.due_date ? formatDate(task.due_date) : "No date"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button 
+                onClick={() => navigate(`/app/projects/${task.project}/tasks`)}
+                className="p-2 text-dark-500 hover:text-dark-100 transition-colors"
+              >
+                <ArrowRight size={18} />
+              </button>
+            </GlassCard>
+          ))}
+        </div>
+      )}
+    </div>
   );
 
-  // Optional: redirect if not authenticated (extra safety)
-  useEffect(() => {
-    if (!user && !loading) {
-      navigate("/login");
-    }
-  }, [user, loading, navigate]);
-
-  // Find the selected organization object to get its join_code and user_role
-  const selectedOrg = orgs.find(o => Number(o.id) === Number(selectedOrgId));
+  const renderActivityFeed = () => (
+    <div className="space-y-4">
+      <SectionHeader title="Recent Activity" icon={Activity} />
+      <div className="relative pl-6 space-y-6 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-dark-800">
+        {activityFeed.length === 0 ? (
+          <p className="text-sm text-dark-500 py-4">No recent team activities.</p>
+        ) : (
+          activityFeed.map((log, idx) => (
+            <div key={idx} className="relative">
+              <div className="absolute -left-[30px] top-1.5 w-4 h-4 rounded-full border-4 border-dark-900 bg-brand-500" />
+              <div className="flex flex-col">
+                <p className="text-sm text-dark-100 font-medium leading-relaxed">
+                  <span className="text-brand-400">{log.user?.full_name || "Someone"}</span> {log.action}
+                </p>
+                <span className="text-[10px] uppercase tracking-wider text-dark-500 mt-1 font-bold">
+                  {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' })} • {formatDate(log.timestamp)}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="max-w-[1600px] mx-auto space-y-10 animate-fade-in pb-10">
+      {/* Top Bar */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="page-header">Welcome back, {firstName}</h1>
-          <p className="text-dark-400 mt-1">
-            Here's what's happening in your workspace.
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-black text-white tracking-tight">Bonjour, {firstName}</h1>
+            <Rocket className="text-brand-500 animate-bounce" size={24} />
+          </div>
+          <p className="text-dark-400 font-medium">
+            Project status: <span className="text-brand-400">{orgStats?.completion_percentage || 0}% Complete</span> in {currentOrg?.name || "Workspace"}
           </p>
         </div>
 
-        {/* Org Selector */}
-        {orgs.length > 0 && (
-          <div className="flex items-center gap-3 bg-dark-800 p-2 rounded-xl border border-dark-700">
-            <Building2 size={18} className="text-dark-400" />
-            <select
-              className="bg-transparent text-sm font-medium text-dark-100 outline-none cursor-pointer pr-4"
-              value={selectedOrgId || ""}
-              onChange={(e) => setSelectedOrgId(Number(e.target.value))}
-            >
-              {orgs.map((org) => (
-                <option key={org.id} value={org.id} className="bg-dark-800">
-                  {org.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
-      {/* Stats */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="skeleton h-24 rounded-xl" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            label="Current Org"
-            value={orgs.find(o => Number(o.id) === Number(selectedOrgId))?.name?.split(' ')[0] || "..."}
-            icon={Building2}
-            color="brand"
-          />
-          <StatCard
-            icon={Users}
-            label="Total Members"
-            value={membersCount}
-            color="purple"
-          />
-          <StatCard
-            icon={FolderKanban}
-            label="Teams"
-            value={teamsCount}
-            color="blue"
-          />
-          <StatCard
-            icon={CheckSquare}
-            label="Projects"
-            value={projectsCount}
-            color="green"
-          />
-        </div>
-      )}
-
-      {/* Main Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Organizations & Subordinates */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* My Team Section for Managers/Leads */}
-          {(role === "MANAGER" || role === "LEAD") && subordinates.length > 0 && (
-              <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                      <h2 className="font-semibold text-dark-100 flex items-center gap-2">
-                          <Users size={18} className="text-brand-400" />
-                          My Team ({subordinates.length})
-                      </h2>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {subordinates.map(sub => (
-                          <div key={sub.id} className="card p-4 flex items-center gap-3 bg-dark-800/50">
-                              <div className="w-10 h-10 rounded-full bg-dark-700 flex items-center justify-center text-brand-400 font-bold border border-dark-600">
-                                  {sub.user_full_name?.charAt(0) || sub.user_email?.charAt(0)}
-                              </div>
-                              <div className="min-w-0">
-                                  <p className="font-medium text-dark-100 truncate">{sub.user_full_name}</p>
-                                  <p className="text-xs text-dark-500 truncate">{sub.role} • {sub.user_email}</p>
-                              </div>
-                          </div>
-                      ))}
-                  </div>
+        <div className="flex items-center gap-4">
+          {/* Org Selector Swish */}
+          {organizations.length > 0 && (
+            <div className="relative">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-dark-500">
+                <Building2 size={16} />
               </div>
-          )}
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-semibold text-dark-100">Your Organizations</h2>
-              <button
-                onClick={() => navigate("/app/organizations")}
-                className="text-sm text-brand-400 hover:text-brand-300"
+              <select
+                className="pl-10 pr-10 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm font-bold text-dark-100 outline-none hover:border-brand-500 transition-all appearance-none cursor-pointer"
+                value={orgId || ""}
+                onChange={(e) => setSelectedOrg(Number(e.target.value))}
               >
-                View all
-              </button>
-            </div>
-
-            {loading ? (
-              <CardSkeleton count={3} />
-            ) : orgs.length === 0 ? (
-              <div className="card p-8 text-center">
-                <Building2 size={36} className="mx-auto text-dark-600 mb-3" />
-                <p className="text-dark-400 font-medium">No organizations yet</p>
-                <p className="text-dark-500 text-sm mt-1">
-                  Create your first organization to get started
-                </p>
-                <button
-                  onClick={() => navigate("/app/organizations")}
-                  className="btn-primary mt-4 mx-auto"
-                >
-                  Create Organization
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {orgs.slice(0, 5).map((org) => (
-                  <div
-                    key={org.id}
-                    className="card-hover p-4 cursor-pointer"
-                    onClick={() => navigate(`/app/organizations/${org.id}/teams`)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-brand-600/20 rounded-xl flex items-center justify-center">
-                          <Building2 size={18} className="text-brand-400" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-dark-100">{org.name}</p>
-                          <p className="text-xs text-dark-500">
-                            Created {formatDate(org.created_at)}
-                          </p>
-                        </div>
-                      </div>
-                      <TrendingUp size={16} className="text-dark-600" />
-                    </div>
-                  </div>
+                {organizations.map((org) => (
+                  <option key={org.id} value={org.id}>{org.name}</option>
                 ))}
-              </div>
-            )}
-          </div>
+              </select>
+            </div>
+          )}
+          
+          <Button variant="primary" icon={Plus} size="sm" onClick={() => navigate("/app/organizations")}>
+            New Workspace
+          </Button>
         </div>
+      </div>
 
-        {/* Right Panel */}
-        <div className="space-y-4">
-          <h2 className="font-semibold text-dark-100">Your Role</h2>
+      {renderStats()}
 
-          <div className="card p-5 space-y-4">
-            {role ? (
-              <>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-brand-600/20 flex items-center justify-center">
-                    <Users size={18} className="text-brand-400" />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Main Content Areas */}
+        <div className="lg:col-span-8 space-y-10">
+          
+          {/* My Team (For Admins/Managers) */}
+          {(role !== "MEMBER") && (
+            <div className="space-y-4">
+              <SectionHeader title="Team Members" icon={Users}>
+                <button onClick={() => navigate("/app/organizations")} className="text-xs font-bold text-brand-500 uppercase tracking-widest hover:text-brand-400">Invite More</button>
+              </SectionHeader>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {subordinates.length === 0 ? (
+                  <div className="md:col-span-3">
+                    <EmptyState 
+                      icon={UserPlus}
+                      title="Lone Wolf?"
+                      description="You don't have any direct subordinates in this workspace."
+                    />
                   </div>
-                  <div>
-                    <p className="text-sm text-dark-400">Your current role</p>
-                    <Badge variant={role} label={role} />
-                  </div>
-                </div>
-
-                <div className="text-sm text-dark-400 space-y-2 border-t border-dark-700 pt-3">
-                  {role === "ADMIN" && (
-                    <p>Full access to organizations, teams, and members.</p>
-                  )}
-                  {(role === "MANAGER" || role === "LEAD") && (
-                      <p>Manage your assigned team and projects.</p>
-                  )}
-                  {role === "MEMBER" && <p>Work on tasks assigned to you.</p>}
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-4 text-dark-500 text-sm">
-                <Clock size={24} className="mx-auto mb-2 text-dark-600" />
-                Join an organization to see your role
+                ) : (
+                  subordinates.slice(0, 6).map(sub => (
+                    <GlassCard key={sub.id} className="p-4 flex items-center gap-3 border border-dark-700/40">
+                      <div className="w-10 h-10 rounded-full bg-dark-700 flex items-center justify-center text-brand-400 font-black border border-dark-600">
+                        {getInitials(sub.user_full_name)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-dark-50 truncate text-sm">{sub.user_full_name}</p>
+                        <p className="text-[10px] font-bold text-dark-500 uppercase tracking-tighter truncate">{sub.role_display || sub.role}</p>
+                      </div>
+                    </GlassCard>
+                  ))
+                )}
               </div>
-            )}
-          </div>
-
-
-          {/* Recent Projects */}
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-dark-100">Recent Projects</h2>
-            <button
-              onClick={() => navigate("/app/projects")}
-              className="text-sm text-brand-400 hover:text-brand-300"
-            >
-              View all
-            </button>
-          </div>
-
-          {loading ? (
-            <div className="card p-5">
-              <div className="skeleton h-4 w-2/3 rounded mb-3" />
-              <div className="skeleton h-4 w-1/2 rounded mb-3" />
-              <div className="skeleton h-4 w-3/4 rounded" />
-            </div>
-          ) : recentProjects.length === 0 ? (
-            <div className="card p-5 text-sm text-dark-500">
-              No projects yet. Create one from a team page.
-            </div>
-          ) : (
-            <div className="card divide-y divide-dark-700">
-              {recentProjects.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => {
-                    localStorage.setItem("last_project_id", String(p.id));
-                    navigate(`/app/projects/${p.id}/tasks`);
-                  }}
-                  className="w-full text-left px-4 py-3 hover:bg-dark-700/60 transition-colors"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm text-dark-100 font-medium truncate">
-                        {p.name}
-                      </p>
-                      <p className="text-xs text-dark-500">
-                        Created {formatDate(p.created_at)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <Badge variant={p.status} />
-                      <Activity size={14} className="text-dark-600" />
-                    </div>
-                  </div>
-                </button>
-              ))}
             </div>
           )}
 
-          {/* Quick Links */}
-          <h2 className="font-semibold text-dark-100">Quick Access</h2>
-          <div className="card divide-y divide-dark-700">
-            {[
-              {
-                label: "Go to Projects",
-                icon: FolderKanban,
-                path: "/app/projects",
-              },
-              {
-                label: "Organizations",
-                icon: Building2,
-                path: "/app/organizations",
-              },
-            ].map(({ label, icon, path }) => {
-              const QuickIcon = icon;
-              return (
-              <button
-                key={path}
-                onClick={() => navigate(path)}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-dark-300 hover:text-dark-100 hover:bg-dark-700"
-              >
-                <QuickIcon size={16} className="text-dark-500" />
-                {label}
-              </button>
-            );
-          })}
+          {/* Quick Actions Grid */}
+          <div className="space-y-4 font-inter">
+            <SectionHeader title="Quick Actions" icon={TrendingUp} />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: "New Task", icon: Plus, color: "brand", action: () => navigate("/app/projects") },
+                  { label: "Add Member", icon: UserPlus, color: "purple", action: () => navigate("/app/organizations") },
+                  { label: "Teams", icon: Users, color: "blue", action: () => navigate(`/app/organizations/${orgId}/teams`) },
+                  { label: "All Projects", icon: FolderKanban, color: "green", action: () => navigate("/app/projects") },
+                ].map((act, i) => (
+                  <button 
+                    key={i} 
+                    onClick={act.action}
+                    className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-dark-800/40 border border-dark-700/50 hover:border-brand-500/50 hover:bg-dark-700/50 transition-all group"
+                  >
+                    <div className={`p-2.5 rounded-xl bg-dark-800 text-${act.color}-400 group-hover:scale-110 transition-transform`}>
+                      <act.icon size={20} />
+                    </div>
+                    <span className="text-xs font-bold text-dark-300">{act.label}</span>
+                  </button>
+                ))}
+            </div>
           </div>
+
+          {/* Your Organizations */}
+          <div className="space-y-4">
+            <SectionHeader title="Your Workspaces" icon={Building2} />
+            <div className="grid md:grid-cols-2 gap-4">
+              {organizations.map(org => (
+                <GlassCard 
+                  key={org.id} 
+                  className="p-6 cursor-pointer border border-dark-700/60 hover:border-brand-500/50 group"
+                  onClick={() => { setSelectedOrg(org.id); navigate(`/app/organizations/${org.id}/teams`); }}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-12 h-12 bg-dark-900 border border-dark-700 rounded-2xl flex items-center justify-center text-brand-500 group-hover:scale-110 group-hover:bg-brand-500/10 transition-all">
+                      <Building2 size={24} />
+                    </div>
+                    <Badge variant={org.user_role === 'OWNER' ? 'ADMIN' : org.user_role} label={org.user_role} size="sm" />
+                  </div>
+                  <h3 className="text-lg font-black text-white group-hover:text-brand-400 transition-colors uppercase tracking-tight">{org.name}</h3>
+                  <div className="flex items-center gap-4 mt-4 text-[11px] font-bold text-dark-500 uppercase tracking-widest">
+                    <span className="flex items-center gap-1.5"><Users size={12} /> {org.members_count || 0} Members</span>
+                    <span className="flex items-center gap-1.5 font-inter"><Clock size={12} /> {formatDate(org.created_at)}</span>
+                  </div>
+                </GlassCard>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar Widgets - Activity Feed & My Tasks */}
+        <div className="lg:col-span-4 space-y-10">
+          
+          {/* Dynamic Progress Indicator (Sidebar Top) */}
+          <GlassCard className="bg-gradient-to-br from-brand-600/10 to-transparent border-brand-500/20">
+            <h4 className="text-xs font-black text-brand-400 uppercase tracking-widest mb-4">Workspace Velocity</h4>
+            <div className="flex items-end gap-2 mb-2">
+              <span className="text-4xl font-black text-white">{orgStats?.completion_percentage || 0}%</span>
+              <span className="text-sm font-bold text-brand-500 mb-1.5 flex items-center gap-0.5"><TrendingUp size={14}/> +12%</span>
+            </div>
+            <div className="w-full h-3 bg-dark-900 rounded-full overflow-hidden border border-dark-700/50">
+              <div 
+                className="h-full bg-gradient-to-r from-brand-600 to-brand-400 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(var(--brand-500-rgb),0.5)]"
+                style={{ width: `${orgStats?.completion_percentage || 0}%` }}
+              />
+            </div>
+            <p className="text-[10px] text-dark-500 mt-4 leading-relaxed font-inter">
+              Your team has completed <b>{orgStats?.completed_tasks || 0}</b> total milestones this month. Keep pushing toward the 100% mark!
+            </p>
+          </GlassCard>
+
+          {renderMyTasks()}
+
+          <hr className="border-dark-800" />
+
+          {renderActivityFeed()}
         </div>
       </div>
     </div>

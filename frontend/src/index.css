@@ -6,6 +6,7 @@
   :root {
     --scrollbar-thumb: #334155;
     --scrollbar-track: #0f172a;
+    --brand-500-rgb: 99, 102, 241;
   }
 
   * {
@@ -76,6 +77,28 @@
   }
   .skeleton {
     @apply bg-dark-700 rounded animate-pulse;
+  }
+
+  /* Glassmorphism & Modern UI */
+  .glass-panel {
+    @apply bg-dark-800/40 backdrop-blur-md border border-dark-700/50 rounded-2xl shadow-xl transition-all duration-300;
+  }
+
+  .glass-panel:hover {
+    @apply border-brand-500/30 bg-dark-800/60;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .brand-glow {
+    box-shadow: 0 0 20px rgba(var(--brand-500-rgb), 0.15);
   }
 }
 

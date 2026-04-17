@@ -123,7 +123,7 @@ export const fetchCurrentUser = createAsyncThunk(
 // ─── Initial State ────────────────────────────────────────────────────────────
 
 const initialState = {
-  user: null,
+  user: null, // Should contain { id, name, email } + other fields if available
   isAuthenticated: !!localStorage.getItem("access_token"),
   loading: false,
   error: null,

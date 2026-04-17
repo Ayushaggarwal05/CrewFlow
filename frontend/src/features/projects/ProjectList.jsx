@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FolderKanban, ArrowRight } from "lucide-react";
 
-import { getOrganizations } from "../organizations/organizationAPI";
+import useCurrentOrg from "../../hooks/useCurrentOrg";
 import { getTeams } from "../teams/teamAPI";
 import { getProjects } from "./projectAPI";
 
@@ -15,29 +15,29 @@ import toast from "react-hot-toast";
 
 const ProjectList = () => {
   const navigate = useNavigate();
+  const { organizations, refreshOrgs } = useCurrentOrg();
   const [allProjects, setAllProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
 
   const loadAll = useCallback(async () => {
+    if (organizations.length === 0) return;
     setLoading(true);
 
     try {
-      const { data: orgs } = await getOrganizations();
-
-      // Fetch all teams in parallel
+      // Fetch all teams in parallel for the organizations we have in Redux
       const teamsResponses = await Promise.all(
-        orgs.map((org) =>
+        organizations.map((org) =>
           getTeams(org.id)
             .then((res) => ({ org, teams: res.data }))
             .catch((err) => {
-              console.error("Teams error:", err);
+              console.error(`Teams error for org ${org.id}:`, err);
               return { org, teams: [] };
             }),
         ),
       );
 
-      //  Flatten teams
+      // Flatten teams
       const allTeams = teamsResponses.flatMap(({ org, teams }) =>
         teams.map((team) => ({
           ...team,
@@ -46,7 +46,7 @@ const ProjectList = () => {
         })),
       );
 
-      //  Fetch all projects in parallel
+      // Fetch all projects in parallel
       const projectResponses = await Promise.all(
         allTeams.map((team) =>
           getProjects(team.id)
@@ -60,20 +60,25 @@ const ProjectList = () => {
               })),
             )
             .catch((err) => {
-              console.error("Projects error:", err);
+              console.error(`Projects error for team ${team.id}:`, err);
               return [];
             }),
         ),
       );
 
       const projectList = projectResponses.flat();
-
       setAllProjects(projectList);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load projects");
     } finally {
       setLoading(false);
+    }
+  }, [organizations]);
+
+  useEffect(() => {
+    if (organizations.length === 0) {
+      refreshOrgs();
     }
   }, []);
 

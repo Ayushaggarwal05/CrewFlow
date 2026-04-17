@@ -45,6 +45,26 @@ class TaskListCreateView(generics.ListCreateAPIView):
         return TaskSerializer
 
 
+class MyOrgTasksListView(generics.ListAPIView):
+    """
+    Returns tasks assigned to the current user, filtered by organization.
+    Useful for the dashboard widget.
+    """
+    serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        org_id = self.request.query_params.get("org_id")
+        
+        queryset = Task.objects.filter(assigned_to=user).order_by("due_date", "-created_at")
+        
+        if org_id:
+            queryset = queryset.filter(project__team__organization_id=org_id)
+            
+        return queryset
+
+
 
 
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):

@@ -38,10 +38,10 @@ export const getOrgUsers = (orgId) =>
 
 // GET My Team (subordinates)
 export const getMyTeam = (orgId) => {
-    const url = orgId ? `/organizations/${orgId}/my-team/` : `/organizations/my-team/`;
+    const url = orgId ? `/api/organizations/${orgId}/my-team/` : `/api/organizations/my-team/`;
     return api.get(url);
 };
 
 export const getOrgStats = (orgId) => {
-    return api.get(`/organizations/stats/?org_id=${orgId}`);
+    return api.get(`/api/organizations/stats/?org_id=${orgId}`);
 };

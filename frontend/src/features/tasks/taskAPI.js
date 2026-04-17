@@ -19,3 +19,6 @@ export const updateTask = (projectId, taskId, data) =>
 
 export const deleteTask = (projectId, taskId) =>
   api.delete(`/api/tasks/projects/${projectId}/tasks/${taskId}/`);
+
+export const getMyOrgTasks = (orgId) =>
+  api.get(`/api/tasks/my-tasks/`, { params: { org_id: orgId } });

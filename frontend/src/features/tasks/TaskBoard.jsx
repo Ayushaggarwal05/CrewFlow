@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, X, GripVertical } from "lucide-react";
+
+import useRole from "../../hooks/useRole";
+
 import {
   DndContext,
   DragOverlay,
@@ -102,6 +105,7 @@ const TaskCard = ({ task, onDelete, isDragging }) => {
 const TaskBoard = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
+  const { isAdmin, isManager } = useRole();
 
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
