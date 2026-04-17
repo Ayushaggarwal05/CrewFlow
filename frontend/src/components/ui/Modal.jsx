@@ -9,15 +9,15 @@ const sizeMap = {
   xl: "max-w-4xl",
 };
 
-const Modal = ({ open, onClose, title, children, size = "md ", footer }) => {
-  const overlatRef = useRef(null);
+const Modal = ({ open, onClose, title, children, size = "md", footer }) => {
+  const overlayRef = useRef(null);
 
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e) => {
       if (e.key === "Escape") onClose();
     };
-    document.addEventListener("keyword", handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
@@ -33,7 +33,7 @@ const Modal = ({ open, onClose, title, children, size = "md ", footer }) => {
       <div
         className={clsx(
           "w-full bg-dark-800 border border-dark-700 rounded-2xl shadow-2xl animate-slide-in",
-          sizeMap[size],
+          sizeMap[size] || sizeMap.md,
         )}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-dark-700">

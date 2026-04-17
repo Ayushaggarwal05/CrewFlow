@@ -19,6 +19,30 @@ It handles:
 
 const extractData = (response) => response.data?.data ?? response.data;
 
+export const AUTH_USER_STORAGE_KEY = "crewflow_auth_user";
+
+const loadPersistedUser = () => {
+  try {
+    const raw = localStorage.getItem(AUTH_USER_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const persistUser = (user) => {
+  if (!user) {
+    localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+    return;
+  }
+  try {
+    localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
+  } catch {
+    /* ignore quota / private mode */
+  }
+};
+
 const extractError = (err) => {
   const body = err.response?.data;
   if (!body) return { detail: "Network error. Is the server running?" };
@@ -122,10 +146,16 @@ export const fetchCurrentUser = createAsyncThunk(
 
 // ─── Initial State ────────────────────────────────────────────────────────────
 
+const hasToken = () =>
+  typeof localStorage !== "undefined" && !!localStorage.getItem("access_token");
+
+const initialUser = loadPersistedUser();
+
 const initialState = {
-  user: null,
-  isAuthenticated: !!localStorage.getItem("access_token"),
-  loading: false,
+  user: initialUser,
+  isAuthenticated: hasToken(),
+  // Avoid a one-frame "logged out" flash when a token exists but profile isn't hydrated yet.
+  loading: hasToken() && !initialUser,
   error: null,
 };
 
@@ -153,6 +183,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
+        persistUser(action.payload.user ?? null);
         state.error = null;
       })
       .addCase(login.rejected, (state, action) => {
@@ -178,16 +209,24 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
         state.error = null;
+        persistUser(null);
       })
       // Fetch current user
+      .addCase(fetchCurrentUser.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+        state.loading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        persistUser(action.payload);
       })
       .addCase(fetchCurrentUser.rejected, (state) => {
+        state.loading = false;
         // Token invalid/expired — clear auth
         state.isAuthenticated = false;
         state.user = null;
+        persistUser(null);
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
       });

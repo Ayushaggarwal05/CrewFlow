@@ -1,24 +1,30 @@
+import { useMemo } from "react";
 import { useSelector } from "react-redux";
 
-const useAuth = () => {
-  const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
+/**
+ * Global auth profile (JWT user + persisted cache).
+ * For organization-scoped roles use `useRole`.
+ */
+export function useAuth() {
+  const { user, isAuthenticated, loading, error } = useSelector((state) => state.auth);
 
-  const role = user?.role || null;
-  const isAdmin = role === "ADMIN";
-  const isManager = role === "MANAGER";
-  const isDeveloper = role === "DEVELOPER";
-  const hasRole = (...roles) => roles.includes(role);
+  const profile = useMemo(() => {
+    if (!user) return null;
+    return {
+      id: user.id,
+      full_name: user.full_name,
+      name: user.full_name,
+      email: user.email,
+      ...user,
+    };
+  }, [user]);
 
   return {
-    user,
+    user: profile,
     isAuthenticated,
     loading,
-    role,
-    isAdmin,
-    isManager,
-    isDeveloper,
-    hasRole,
+    error,
   };
-};
+}
 
 export default useAuth;

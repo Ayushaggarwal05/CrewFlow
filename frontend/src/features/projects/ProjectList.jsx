@@ -1,94 +1,38 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { FolderKanban, ArrowRight } from "lucide-react";
 
-import { getOrganizations } from "../organizations/organizationAPI";
-import { getTeams } from "../teams/teamAPI";
-import { getProjects } from "./projectAPI";
+import { fetchWorkspaceSnapshot } from "../organizations/orgSlice";
 
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 import { CardSkeleton } from "../../components/ui/Spinner";
 import { formatDate } from "../../utils/helpers";
 
-import toast from "react-hot-toast";
-
 const ProjectList = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [allProjects, setAllProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  const allProjects = useSelector((state) => state.org.allProjectsEnriched);
+  const loading = useSelector((state) => state.org.workspaceSnapshotLoading);
+
   const [filter, setFilter] = useState("ALL");
 
-  const loadAll = useCallback(async () => {
-    setLoading(true);
-
-    try {
-      const { data: orgs } = await getOrganizations();
-
-      // Fetch all teams in parallel
-      const teamsResponses = await Promise.all(
-        orgs.map((org) =>
-          getTeams(org.id)
-            .then((res) => ({ org, teams: res.data }))
-            .catch((err) => {
-              console.error("Teams error:", err);
-              return { org, teams: [] };
-            }),
-        ),
-      );
-
-      //  Flatten teams
-      const allTeams = teamsResponses.flatMap(({ org, teams }) =>
-        teams.map((team) => ({
-          ...team,
-          orgName: org.name,
-          orgId: org.id,
-        })),
-      );
-
-      //  Fetch all projects in parallel
-      const projectResponses = await Promise.all(
-        allTeams.map((team) =>
-          getProjects(team.id)
-            .then((res) =>
-              res.data.map((p) => ({
-                ...p,
-                teamName: team.name,
-                orgName: team.orgName,
-                teamId: team.id,
-                orgId: team.orgId,
-              })),
-            )
-            .catch((err) => {
-              console.error("Projects error:", err);
-              return [];
-            }),
-        ),
-      );
-
-      const projectList = projectResponses.flat();
-
-      setAllProjects(projectList);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load projects");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    loadAll();
-  }, [loadAll]);
+    dispatch(fetchWorkspaceSnapshot());
+  }, [dispatch]);
 
-  const filtered =
-    filter === "ALL"
-      ? allProjects
-      : allProjects.filter((p) => p.status === filter);
+  const filtered = useMemo(
+    () =>
+      filter === "ALL"
+        ? allProjects
+        : allProjects.filter((p) => p.status === filter),
+    [allProjects, filter],
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="page-header">Projects</h1>
@@ -101,6 +45,7 @@ const ProjectList = () => {
           {["ALL", "ACTIVE", "COMPLETED", "ARCHIVED"].map((s) => (
             <button
               key={s}
+              type="button"
               onClick={() => setFilter(s)}
               className={`px-3 py-1.5 rounded-lg text-xs ${
                 filter === s
@@ -114,7 +59,6 @@ const ProjectList = () => {
         </div>
       </div>
 
-      {/* Content */}
       {loading ? (
         <CardSkeleton count={4} />
       ) : filtered.length === 0 ? (
@@ -136,8 +80,15 @@ const ProjectList = () => {
               key={proj.id}
               className="card-hover p-5"
               onClick={() =>
-                navigate(`/app/projects/${proj.teamId}/${proj.id}`)
+                navigate(`/app/teams/${proj.teamId}/projects/${proj.id}`)
               }
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  navigate(`/app/teams/${proj.teamId}/projects/${proj.id}`);
+                }
+              }}
+              role="button"
+              tabIndex={0}
             >
               <Badge variant={proj.status} />
 

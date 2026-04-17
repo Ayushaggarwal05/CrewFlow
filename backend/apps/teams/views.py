@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from apps.common.permissions import (
     IsManagerOrAdmin,
     IsOrganizationAdmin,
+    IsOrganizationMember,
 )
 
 
@@ -41,7 +42,7 @@ class TeamListCreateView(generics.ListCreateAPIView):
 
 
 class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthenticated , IsManagerOrAdmin]
+    permission_classes = [IsAuthenticated, IsOrganizationMember]
     def get_queryset(self):
         user = self.request.user
         org_id = self.kwargs["org_id"]
@@ -50,6 +51,13 @@ class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
             organization__id=org_id,
             organization__memberships__user=user,
         ).distinct()
+
+    def get_permissions(self):
+        # GET: any org member can view team details (join-code fields are stripped server-side).
+        # PUT/PATCH/DELETE: org ADMIN/MANAGER only.
+        if self.request.method in ["PUT", "PATCH", "DELETE"]:
+            return [IsAuthenticated(), IsManagerOrAdmin()]
+        return [IsAuthenticated(), IsOrganizationMember()]
     
     def get_serializer_class(self):
         if self.request.method in ["PUT" , "PATCH"]:

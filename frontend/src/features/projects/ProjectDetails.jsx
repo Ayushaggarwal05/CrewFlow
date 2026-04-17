@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, X, Send } from "lucide-react";
 
@@ -12,12 +13,24 @@ import Input from "../../components/ui/Input";
 import Modal from "../../components/ui/Modal";
 import { CardSkeleton } from "../../components/ui/Spinner";
 import { formatDate } from "../../utils/helpers";
-
 import toast from "react-hot-toast";
+import JoinCodeCard from "../invites/JoinCodeCard";
+import {
+  fetchOrgStats,
+  fetchWorkspaceSnapshot,
+  selectOrgIdForTeam,
+} from "../organizations/orgSlice";
+import useRole from "../../hooks/useRole";
 
 const ProjectDetails = () => {
   const { teamId, projectId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const resolvedOrgId = useSelector(
+    (s) => selectOrgIdForTeam(s, teamId) ?? s.org.selectedOrgId,
+  );
+  const { canManageJoinCodes } = useRole(resolvedOrgId);
   // for data handling
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
@@ -67,6 +80,16 @@ const ProjectDetails = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    dispatch(fetchWorkspaceSnapshot());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (resolvedOrgId != null && Number.isFinite(Number(resolvedOrgId))) {
+      dispatch(fetchOrgStats(Number(resolvedOrgId)));
+    }
+  }, [resolvedOrgId, dispatch]);
 
   const loadComments = async (taskId) => {
     setLoadingComments(true);
@@ -193,6 +216,19 @@ const ProjectDetails = () => {
           )}
         </div>
       </div>
+
+      {project && (
+        <div className="mb-4">
+          {project.join_code && canManageJoinCodes && (
+            <JoinCodeCard
+              entityType="projects"
+              entityId={projectId}
+              parentEntityId={teamId}
+              initialCode={project.join_code}
+            />
+          )}
+        </div>
+      )}
 
       {/* Task Header */}
       <div className="flex justify-between">

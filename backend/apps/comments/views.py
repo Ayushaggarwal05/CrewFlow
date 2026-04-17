@@ -1,6 +1,5 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
 from .models import Comment
 from .serializers import CommentSerializer, CommentWriteSerializer
 from apps.common.permissions import IsDeveloperOrAbove , IsManagerOrAdmin
@@ -23,6 +22,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
 #----------------------------Detal ,update----------------------
 class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    # Keep stricter access for update/delete for now; frontend currently only uses list/create.
     permission_classes = [IsAuthenticated , IsManagerOrAdmin ]
 
     def get_queryset(self):

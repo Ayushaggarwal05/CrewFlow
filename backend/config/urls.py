@@ -37,4 +37,7 @@ urlpatterns = [
     path('api/tasks/' , include("apps.tasks.urls")),
     path('api/comments/' , include("apps.comments.urls")),
     path('api/activity/', include("apps.activity.urls")),
+
+    # Invite / Join-code routes
+    path('api/', include("apps.invites.urls")),
 ]

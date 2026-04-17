@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -8,13 +8,19 @@ import {
   CheckSquare,
   TrendingUp,
   Clock,
-  AlertCircle,
+  Activity,
 } from "lucide-react";
 import { fetchCurrentUser } from "../auth/authSlice";
-import { getOrganizations } from "../organizations/organizationAPI";
+import {
+  fetchWorkspaceSnapshot,
+  fetchOrgStats,
+  selectWorkspaceTeamCount,
+} from "../organizations/orgSlice";
 import { CardSkeleton } from "../../components/ui/Spinner";
 import Badge from "../../components/ui/Badge";
 import { formatDate } from "../../utils/helpers";
+import useAuth from "../../hooks/useAuth";
+import useRole from "../../hooks/useRole";
 
 const StatCard = ({ icon: Icon, label, value, color = "brand" }) => {
   const colorMap = {
@@ -43,63 +49,65 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { user } = useSelector((state) => state.auth);
+  const { user, loading: authLoading } = useAuth();
+  const organizations = useSelector((state) => state.org.organizations);
+  const workspaceLoading = useSelector((state) => state.org.workspaceSnapshotLoading);
+  const allProjectsEnriched = useSelector((state) => state.org.allProjectsEnriched);
+  const selectedOrgId = useSelector((state) => state.org.selectedOrgId);
+  const teamCount = useSelector(selectWorkspaceTeamCount);
 
-  const [orgs, setOrgs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const loading = authLoading || workspaceLoading;
 
-  // Fetch user if not available
   useEffect(() => {
     if (!user) {
       dispatch(fetchCurrentUser());
     }
   }, [dispatch, user]);
 
-  // Fetch organizations
   useEffect(() => {
-    let mounted = true;
+    dispatch(fetchWorkspaceSnapshot());
+  }, [dispatch]);
 
-    const load = async () => {
-      try {
-        const { data } = await getOrganizations(); // ✅ FIXED
-        if (mounted) setOrgs(data || []);
-      } catch (err) {
-        console.log("Failed to fetch orgs:", err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
+  const orgIdForRole = selectedOrgId ?? organizations[0]?.id ?? null;
 
-    load();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  // Role (safe fallback)
-  const role = user?.org_role ?? user?.role ?? null;
-
-  // Optional: redirect if not authenticated (extra safety)
   useEffect(() => {
-    if (!user && !loading) {
+    if (orgIdForRole != null) {
+      dispatch(fetchOrgStats(orgIdForRole));
+    }
+  }, [dispatch, orgIdForRole]);
+
+  const { role, rawRole } = useRole(orgIdForRole);
+
+  const recentProjects = useMemo(
+    () =>
+      [...allProjectsEnriched]
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 5),
+    [allProjectsEnriched],
+  );
+
+  const projectsCount = allProjectsEnriched.length;
+
+  const firstName = useMemo(
+    () => user?.full_name?.split(" ")?.[0] || "there",
+    [user?.full_name],
+  );
+
+  useEffect(() => {
+    if (!authLoading && !user) {
       navigate("/login");
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Header */}
       <div>
-        <h1 className="page-header">
-          Welcome back, {user?.full_name?.split(" ")[0] || "there"} 👋
-        </h1>
+        <h1 className="page-header">Welcome back, {firstName}</h1>
         <p className="text-dark-400 mt-1">
-          Here's what's happening across your workspace.
+          Here&apos;s what&apos;s happening across your workspace.
         </p>
       </div>
 
-      {/* Stats */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
@@ -111,13 +119,13 @@ const Dashboard = () => {
           <StatCard
             icon={Building2}
             label="Organizations"
-            value={orgs.length}
+            value={organizations.length}
           />
-          <StatCard icon={Users} label="Teams" value="—" color="purple" />
+          <StatCard icon={Users} label="Teams" value={teamCount || "0"} color="purple" />
           <StatCard
             icon={FolderKanban}
             label="Projects"
-            value="—"
+            value={projectsCount || "0"}
             color="blue"
           />
           <StatCard
@@ -129,13 +137,12 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Main Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Organizations */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <h2 className="font-semibold text-dark-100">Your Organizations</h2>
             <button
+              type="button"
               onClick={() => navigate("/app/organizations")}
               className="text-sm text-brand-400 hover:text-brand-300"
             >
@@ -145,7 +152,7 @@ const Dashboard = () => {
 
           {loading ? (
             <CardSkeleton count={3} />
-          ) : orgs.length === 0 ? (
+          ) : organizations.length === 0 ? (
             <div className="card p-8 text-center">
               <Building2 size={36} className="mx-auto text-dark-600 mb-3" />
               <p className="text-dark-400 font-medium">No organizations yet</p>
@@ -153,6 +160,7 @@ const Dashboard = () => {
                 Create your first organization to get started
               </p>
               <button
+                type="button"
                 onClick={() => navigate("/app/organizations")}
                 className="btn-primary mt-4 mx-auto"
               >
@@ -161,11 +169,18 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {orgs.slice(0, 5).map((org) => (
+              {organizations.slice(0, 5).map((org) => (
                 <div
                   key={org.id}
                   className="card-hover p-4 cursor-pointer"
                   onClick={() => navigate(`/app/organizations/${org.id}/teams`)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      navigate(`/app/organizations/${org.id}/teams`);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -187,7 +202,6 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Right Panel */}
         <div className="space-y-4">
           <h2 className="font-semibold text-dark-100">Your Role</h2>
 
@@ -200,16 +214,18 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <p className="text-sm text-dark-400">Your role</p>
-                    <Badge variant={role} label={role} />
+                    <Badge variant={rawRole || role} label={role} />
                   </div>
                 </div>
 
                 <div className="text-sm text-dark-400 space-y-2 border-t border-dark-700 pt-3">
-                  {role === "ADMIN" && (
+                  {(rawRole === "ADMIN" || role === "ADMIN") && (
                     <p>Full access to organizations, teams, and members.</p>
                   )}
-                  {role === "MANAGER" && <p>Manage teams and projects.</p>}
-                  {role === "DEVELOPER" && <p>Work on assigned tasks.</p>}
+                  {rawRole === "MANAGER" && <p>Manage teams and projects.</p>}
+                  {(rawRole === "DEVELOPER" || role === "MEMBER") && (
+                    <p>Work on assigned tasks.</p>
+                  )}
                 </div>
               </>
             ) : (
@@ -220,7 +236,58 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* Quick Links */}
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-dark-100">Recent Projects</h2>
+            <button
+              type="button"
+              onClick={() => navigate("/app/projects")}
+              className="text-sm text-brand-400 hover:text-brand-300"
+            >
+              View all
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="card p-5">
+              <div className="skeleton h-4 w-2/3 rounded mb-3" />
+              <div className="skeleton h-4 w-1/2 rounded mb-3" />
+              <div className="skeleton h-4 w-3/4 rounded" />
+            </div>
+          ) : recentProjects.length === 0 ? (
+            <div className="card p-5 text-sm text-dark-500">
+              No projects yet. Create one from a team page.
+            </div>
+          ) : (
+            <div className="card divide-y divide-dark-700">
+              {recentProjects.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem("last_project_id", String(p.id));
+                    navigate(`/app/projects/${p.id}/tasks`);
+                  }}
+                  className="w-full text-left px-4 py-3 hover:bg-dark-700/60 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm text-dark-100 font-medium truncate">
+                        {p.name}
+                      </p>
+                      <p className="text-xs text-dark-500">
+                        Created {formatDate(p.created_at)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge variant={p.status} />
+                      <Activity size={14} className="text-dark-600" />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
           <h2 className="font-semibold text-dark-100">Quick Access</h2>
           <div className="card divide-y divide-dark-700">
             {[
@@ -237,6 +304,7 @@ const Dashboard = () => {
             ].map(({ label, icon: Icon, path }) => (
               <button
                 key={path}
+                type="button"
                 onClick={() => navigate(path)}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-dark-300 hover:text-dark-100 hover:bg-dark-700"
               >

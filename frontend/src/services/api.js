@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
 const api = axios.create({
   baseURL: BASE_URL, // ✅ fixed
@@ -34,7 +34,18 @@ const addSubscriber = (cb) => {
 
 //  Response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Globally handle DRF pagination + CustomRenderer
+    const payload = response.data;
+    if (payload && typeof payload === "object" && "success" in payload) {
+      if (payload.data && payload.data.results !== undefined) {
+        response.data = payload.data.results;
+      } else {
+        response.data = payload.data;
+      }
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 

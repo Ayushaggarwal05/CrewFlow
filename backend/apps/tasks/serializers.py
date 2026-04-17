@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import NotFound
 from .models import Task
 from apps.projects.models import Project
 
@@ -40,6 +41,8 @@ class TaskWriteSerializer(TaskBaseSerializer):
 
     def create(self, validated_data):
         project_id = self.context["view"].kwargs["project_id"]
-        project = Project.objects.get(id = project_id)
+        project = Project.objects.filter(id=project_id).first()
+        if not project:
+            raise NotFound(detail="Project not found")
         task = Task.objects.create(project = project , **validated_data)
         return task

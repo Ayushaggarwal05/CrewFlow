@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Building2, Plus, Users, Trash2, ExternalLink } from "lucide-react";
-import {
-  getOrganizations,
-  createOrganization,
-  deleteOrganization,
-} from "./organizationAPI";
+import { createOrganization, deleteOrganization } from "./organizationAPI";
+import { fetchOrganizations, fetchWorkspaceSnapshot } from "./orgSlice";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
 import Input from "../../components/ui/Input";
@@ -15,36 +13,19 @@ import toast from "react-hot-toast";
 
 const OrganizationList = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const [orgs, setOrgs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const orgs = useSelector((state) => state.org.organizations);
+  const loading = useSelector((state) => state.org.organizationsLoading);
+
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
 
-  // Load organizations
   useEffect(() => {
-    let mounted = true;
+    dispatch(fetchOrganizations());
+  }, [dispatch]);
 
-    const load = async () => {
-      try {
-        const { data } = await getOrganizations();
-        if (mounted) setOrgs(data?.data || data || []);
-      } catch {
-        toast.error("Failed to load organizations");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    load();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  // Create organization
   const handleCreate = async (e) => {
     e.preventDefault();
 
@@ -61,9 +42,8 @@ const OrganizationList = () => {
       setShowCreate(false);
       setName("");
 
-      // reload list
-      const { data } = await getOrganizations();
-      setOrgs(data?.data || data || []);
+      await dispatch(fetchOrganizations({ force: true }));
+      dispatch(fetchWorkspaceSnapshot({ force: true }));
     } catch {
       toast.error("Failed to create organization");
     } finally {
@@ -71,7 +51,6 @@ const OrganizationList = () => {
     }
   };
 
-  // Delete organization
   const handleDelete = async (e, orgId) => {
     e.stopPropagation();
 
@@ -82,8 +61,8 @@ const OrganizationList = () => {
       await deleteOrganization(orgId);
       toast.success("Organization deleted");
 
-      // safe state update
-      setOrgs((prev) => prev.filter((o) => o.id !== orgId));
+      await dispatch(fetchOrganizations({ force: true }));
+      dispatch(fetchWorkspaceSnapshot({ force: true }));
     } catch {
       toast.error("Failed to delete organization");
     }
@@ -91,7 +70,6 @@ const OrganizationList = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-header">Organizations</h1>
@@ -105,7 +83,6 @@ const OrganizationList = () => {
         </Button>
       </div>
 
-      {/* List */}
       {loading ? (
         <CardSkeleton count={4} />
       ) : orgs.length === 0 ? (
@@ -128,6 +105,13 @@ const OrganizationList = () => {
               key={org.id}
               className="card-hover p-5 group cursor-pointer"
               onClick={() => navigate(`/app/organizations/${org.id}/teams`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  navigate(`/app/organizations/${org.id}/teams`);
+                }
+              }}
+              role="button"
+              tabIndex={0}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="w-10 h-10 bg-brand-600/20 rounded-xl flex items-center justify-center">
@@ -170,23 +154,12 @@ const OrganizationList = () => {
         </div>
       )}
 
-      {/* Create Modal */}
       <Modal
         open={showCreate}
         onClose={() => setShowCreate(false)}
         title="Create Organization"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setShowCreate(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" loading={creating} icon={Plus}>
-              Create
-            </Button>
-          </>
-        }
       >
-        <form onSubmit={handleCreate}>
+        <form onSubmit={handleCreate} className="space-y-6">
           <Input
             label="Organization Name"
             placeholder="Acme Corporation"
@@ -195,6 +168,14 @@ const OrganizationList = () => {
             required
             autoFocus
           />
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-dark-700 -mx-6 px-6">
+            <Button variant="ghost" onClick={() => setShowCreate(false)} type="button">
+              Cancel
+            </Button>
+            <Button type="submit" loading={creating} icon={Plus}>
+              Create
+            </Button>
+          </div>
         </form>
       </Modal>
     </div>

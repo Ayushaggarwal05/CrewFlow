@@ -3,7 +3,7 @@ from rest_framework import generics
 from .models import Organization , OrganizationMembership
 from .serializers import OrganizationSerializer , OrganizationWriteSerializer , OrganizationMembershipSerializer , OrganizationMembershipWriteSerializer
 from rest_framework.permissions import IsAuthenticated
-from apps.common.permissions import IsAuthenticatedAndMember,IsOrganizationAdmin
+from apps.common.permissions import IsAuthenticatedAndMember,IsOrganizationAdmin, IsOrganizationMember
 # Create your views here.
 
 
@@ -34,11 +34,18 @@ class OrganizationListCreateView(generics.ListCreateAPIView):
 #----------------Update , Delete , Detail-------------
 
 class OrganizationDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthenticated , IsOrganizationAdmin]
+    permission_classes = [IsAuthenticated, IsOrganizationMember]
 
     def get_queryset(self):
         user = self.request.user
         return Organization.objects.filter(memberships__user = user)
+
+    def get_permissions(self):
+        # GET: any org member can view details (join-code fields are stripped server-side).
+        # PUT/PATCH/DELETE: admins only.
+        if self.request.method in ["PUT", "PATCH", "DELETE"]:
+            return [IsAuthenticated(), IsOrganizationAdmin()]
+        return [IsAuthenticated(), IsOrganizationMember()]
 
     def get_serializer_class(self):
         if self.request.method in ["PUT", "PATCH"]:

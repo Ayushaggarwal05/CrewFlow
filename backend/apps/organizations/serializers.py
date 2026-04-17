@@ -5,18 +5,48 @@ from .models import Organization , OrganizationMembership
 # --------------BASE---------------
 
 class OrganizationBaseSerializer(serializers.ModelSerializer):
-    class Meta :
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+
+        # Only OWNER / ADMIN / MANAGER can view join-code fields.
+        can_view_codes = False
+        if user and user.is_authenticated:
+            if getattr(instance, "owner_id", None) == getattr(user, "id", None):
+                can_view_codes = True
+            else:
+                can_view_codes = OrganizationMembership.objects.filter(
+                    user=user,
+                    organization=instance,
+                    role__in=["ADMIN", "MANAGER"],
+                ).exists()
+
+        if not can_view_codes:
+            data["join_code"] = None
+            data["code_is_active"] = None
+            data["code_expires_at"] = None
+
+        return data
+
+    class Meta:
         model = Organization
         fields = [
             "id",
             "name",
             "owner",
-            "created_at"
+            "created_at",
+            "join_code",
+            "code_is_active",
+            "code_expires_at",
         ]
         read_only_fields = [
             "id",
             "owner",
             "created_at",
+            "join_code",
+            "code_is_active",
+            "code_expires_at",
         ]
 
 #--------------READ----------------        

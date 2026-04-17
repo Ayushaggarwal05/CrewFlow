@@ -4,18 +4,22 @@ import { Navigate, useLocation } from "react-router-dom";
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
   const location = useLocation();
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
-  if (loading) {
+  if (token && loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-dark-400">
-        {" "}
-        Checking authentication...{" "}
+        Checking authentication...
       </div>
     );
   }
 
-  // Not authenticated → redirect
-  if (!isAuthenticated && !user) {
+  if (!isAuthenticated && !user && !token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (token && !user && !loading) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

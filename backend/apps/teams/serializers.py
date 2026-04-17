@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Team , TeamMembership
 from apps.organizations.models import Organization
+from apps.organizations.models import OrganizationMembership
 from apps.users.models import User
 
 
@@ -8,22 +9,54 @@ from apps.users.models import User
 
 class TeamBaseSerializer(serializers.ModelSerializer):
 
-    members = serializers.PrimaryKeyRelatedField(many = True , read_only = True)
-    class Meta :
+    members = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+
+        # Only ORG OWNER / ADMIN / MANAGER can view team join-code fields.
+        can_view_codes = False
+        if user and user.is_authenticated:
+            org = getattr(instance, "organization", None)
+            if org and getattr(org, "owner_id", None) == getattr(user, "id", None):
+                can_view_codes = True
+            elif org:
+                can_view_codes = OrganizationMembership.objects.filter(
+                    user=user,
+                    organization=org,
+                    role__in=["ADMIN", "MANAGER"],
+                ).exists()
+
+        if not can_view_codes:
+            data["join_code"] = None
+            data["code_is_active"] = None
+            data["code_expires_at"] = None
+
+        return data
+
+    class Meta:
         model = Team
         fields = [
             "id",
             "name",
             "organization",
             "members",
-            "created_at"
+            "created_at",
+            "join_code",
+            "code_is_active",
+            "code_expires_at",
         ]
 
         read_only_fields = [
             "id",
             "organization",
             "members",
-            "created_at"
+            "created_at",
+            "join_code",
+            "code_is_active",
+            "code_expires_at",
         ]
 
 class TeamSerializer(TeamBaseSerializer):

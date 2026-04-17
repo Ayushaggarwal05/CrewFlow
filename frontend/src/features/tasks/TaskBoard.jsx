@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, X, GripVertical } from "lucide-react";
 import {
@@ -15,7 +16,13 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { getTasks, createTask, updateTask, deleteTask } from "./taskAPI";
+import { createTask, updateTask, deleteTask } from "./taskAPI";
+import {
+  fetchProjectTasks,
+  patchProjectTaskStatus,
+  addProjectTask,
+  removeProjectTask,
+} from "../organizations/orgSlice";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 import Modal from "../../components/ui/Modal";
@@ -67,6 +74,7 @@ const TaskCard = ({ task, onDelete, isDragging }) => {
       <div className="flex justify-between gap-2">
         <div className="flex items-center gap-1 flex-1">
           <button
+            type="button"
             {...attributes}
             {...listeners}
             className="cursor-grab active:cursor-grabbing"
@@ -76,6 +84,7 @@ const TaskCard = ({ task, onDelete, isDragging }) => {
           <p className="text-sm text-dark-100">{task.title}</p>
         </div>
         <button
+          type="button"
           onClick={() => onDelete(task.id)}
           className="opacity-0 group-hover:opacity-100"
         >
@@ -102,9 +111,19 @@ const TaskCard = ({ task, onDelete, isDragging }) => {
 const TaskBoard = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const pid = projectId ? Number(projectId) : null;
+  const tasks = useSelector((s) =>
+    pid != null ? s.org.tasksByProjectId[pid]?.items ?? [] : [],
+  );
+  const bucket = useSelector((s) =>
+    pid != null ? s.org.tasksByProjectId[pid] : null,
+  );
+  const loading = useSelector((s) =>
+    pid != null ? s.org.tasksLoadingByProjectId[pid] ?? false : false,
+  );
+
   const [activeTask, setActiveTask] = useState(null);
 
   const [showCreate, setShowCreate] = useState(false);
@@ -122,36 +141,21 @@ const TaskBoard = () => {
   );
 
   useEffect(() => {
-    if (!projectId) return;
-    // 🔥 Load tasks
-    const loadTasks = async () => {
-      setLoading(true);
-      try {
-        const { data } = await getTasks(projectId);
-        setTasks(data);
-      } catch (err) {
-        console.error(err);
-        toast.error("Failed to load tasks");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadTasks();
-  }, [projectId]);
+    if (!projectId || pid == null) return;
+    dispatch(fetchProjectTasks({ projectId: pid }));
+  }, [projectId, pid, dispatch]);
 
   const tasksByColumn = (colId) => tasks.filter((t) => t.status === colId);
 
-  // 🔥 Drag Start
   const handleDragStart = (event) => {
     const task = tasks.find((t) => t.id === event.active.id);
     setActiveTask(task);
   };
 
-  // 🔥 Drag End
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     setActiveTask(null);
-    if (!over) return;
+    if (!over || pid == null) return;
 
     const draggedTask = tasks.find((t) => t.id === active.id);
     if (!draggedTask) return;
@@ -165,11 +169,14 @@ const TaskBoard = () => {
 
     if (!targetStatus || draggedTask.status === targetStatus) return;
 
-    // ✅ Optimistic update
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === draggedTask.id ? { ...t, status: targetStatus } : t,
-      ),
+    const prevStatus = draggedTask.status;
+
+    dispatch(
+      patchProjectTaskStatus({
+        projectId: pid,
+        taskId: draggedTask.id,
+        status: targetStatus,
+      }),
     );
 
     try {
@@ -177,19 +184,17 @@ const TaskBoard = () => {
       toast.success(`Moved to ${targetStatus}`);
     } catch (err) {
       console.error(err);
-
-      // ❌ Revert
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === draggedTask.id ? { ...t, status: draggedTask.status } : t,
-        ),
+      dispatch(
+        patchProjectTaskStatus({
+          projectId: pid,
+          taskId: draggedTask.id,
+          status: prevStatus,
+        }),
       );
-
       toast.error("Failed to update task");
     }
   };
 
-  // 🔥 Create Task
   const handleCreate = async (e) => {
     e.preventDefault();
     setCreating(true);
@@ -200,7 +205,7 @@ const TaskBoard = () => {
 
       const { data } = await createTask(projectId, payload);
 
-      setTasks((prev) => [...prev, data]);
+      dispatch(addProjectTask({ projectId: pid, task: data }));
 
       toast.success("Task created!");
       setShowCreate(false);
@@ -213,13 +218,13 @@ const TaskBoard = () => {
     }
   };
 
-  // 🔥 Delete Task
   const handleDelete = async (taskId) => {
     if (!confirm("Delete this task?")) return;
+    if (pid == null) return;
 
     try {
       await deleteTask(projectId, taskId);
-      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      dispatch(removeProjectTask({ projectId: pid, taskId }));
       toast.success("Task deleted");
     } catch (err) {
       console.error(err);
@@ -230,13 +235,12 @@ const TaskBoard = () => {
   const fc = (k) => (e) =>
     setForm((prev) => ({ ...prev, [k]: e.target.value }));
 
-  if (loading) return <CardSkeleton count={3} />;
+  if (loading && !bucket) return <CardSkeleton count={3} />;
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex justify-between">
-        <button onClick={() => navigate(-1)}>
+        <button type="button" onClick={() => navigate(-1)}>
           <ArrowLeft />
         </button>
         <Button
@@ -250,7 +254,6 @@ const TaskBoard = () => {
         </Button>
       </div>
 
-      {/* Board */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -295,7 +298,6 @@ const TaskBoard = () => {
         </DragOverlay>
       </DndContext>
 
-      {/* Modal */}
       <Modal
         open={showCreate}
         onClose={() => setShowCreate(false)}

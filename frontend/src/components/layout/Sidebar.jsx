@@ -11,24 +11,29 @@ import {
   User,
   Settings,
   X,
+  Rocket
 } from "lucide-react";
 import { logout } from "../../features/auth/authSlice";
 import { getInitials, getAvatarColor } from "../../utils/helpers";
 import Badge from "../ui/Badge";
 import toast from "react-hot-toast";
+import useRole from "../../hooks/useRole";
 
 //  navItems
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/app/dashboard" },
   { label: "Organizations", icon: Building2, to: "/app/organizations" },
   { label: "Projects", icon: FolderKanban, action: "projects" },
-  { label: "Activity", icon: Activity, action: "activity" },
+  { label: "Activity", icon: Activity, to: "/app/activity" },
+  { label: "Join with Code", icon: Rocket, to: "/app/join" },
 ];
 
 const Sidebar = ({ open, onClose }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
+  const selectedOrgId = useSelector((state) => state.org.selectedOrgId);
+  const { role } = useRole(selectedOrgId);
   const [profileOpen, setProfileOpen] = useState(false);
 
   //  Navigation handler
@@ -51,15 +56,7 @@ const Sidebar = ({ open, onClose }) => {
       }
     }
 
-    // Activity
-    if (item.action === "activity") {
-      if (lastProjectId) {
-        navigate(`/app/projects/${lastProjectId}/activity`);
-      } else {
-        toast.error("Select a project first");
-        navigate("/app/organizations");
-      }
-    }
+    // Activity is a normal route now (global feed).
 
     onClose?.();
   };
@@ -78,8 +75,6 @@ const Sidebar = ({ open, onClose }) => {
       toast.error("Something went wrong during logout");
     }
   };
-
-  const role = user?.org_role || user?.role || null;
 
   return (
     <>

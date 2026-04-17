@@ -11,7 +11,7 @@ export const loginUser = (credentials) =>
   api.post("/api/auth/login/", credentials);
 
 export const registerUser = (data) =>
-  api.post("api/users/auth/register/", data);
+  api.post("/api/users/auth/register/", data);
 
 export const logoutUser = (refresh) =>
   api.post("/api/auth/logout/", { refresh });
