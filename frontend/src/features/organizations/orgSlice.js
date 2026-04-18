@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getOrganizations, getOrganization, getOrgStats } from "./organizationAPI";
+import { getOrganizations, getOrganization, getOrgStats, createOrganization, deleteOrganization } from "./organizationAPI";
 import { getOrgActivityFeed } from "../activity/activityAPI";
 
 // Thunks
@@ -48,6 +48,30 @@ export const fetchOrgActivity = createAsyncThunk(
       return response.data?.data || response.data || [];
     } catch (err) {
       return rejectWithValue(err.response?.data || "Failed to fetch activity feed");
+    }
+  }
+);
+
+export const addOrganization = createAsyncThunk(
+  "org/addOrganization",
+  async (orgData, { rejectWithValue }) => {
+    try {
+      const response = await createOrganization(orgData);
+      return response.data?.data || response.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to create organization");
+    }
+  }
+);
+
+export const removeOrganization = createAsyncThunk(
+  "org/removeOrganization",
+  async (orgId, { rejectWithValue, getState }) => {
+    try {
+      await deleteOrganization(orgId);
+      return orgId;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to delete organization");
     }
   }
 );
@@ -119,6 +143,21 @@ const orgSlice = createSlice({
       })
       .addCase(fetchOrgActivity.fulfilled, (state, action) => {
         state.activityFeed = action.payload;
+      })
+      .addCase(addOrganization.fulfilled, (state, action) => {
+        state.organizations.unshift(action.payload);
+      })
+      .addCase(removeOrganization.fulfilled, (state, action) => {
+        const deletedId = action.payload;
+        state.organizations = state.organizations.filter(o => o.id !== deletedId);
+        if (state.selectedOrgId === deletedId) {
+          state.selectedOrgId = state.organizations.length > 0 ? state.organizations[0].id : null;
+          if (state.selectedOrgId) {
+            localStorage.setItem("selected_org_id", state.selectedOrgId);
+          } else {
+            localStorage.removeItem("selected_org_id");
+          }
+        }
       });
   },
 });

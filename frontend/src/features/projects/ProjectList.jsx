@@ -21,6 +21,10 @@ const ProjectList = () => {
   const [filter, setFilter] = useState("ALL");
 
   const loadAll = useCallback(async () => {
+    if (organizations.length === 0) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
 
     try {

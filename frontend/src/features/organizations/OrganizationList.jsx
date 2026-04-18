@@ -1,11 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Building2, Plus, Users, Trash2, ExternalLink } from "lucide-react";
-import {
-  getOrganizations,
-  createOrganization,
-  deleteOrganization,
-} from "./organizationAPI";
+import { useDispatch, useSelector } from "react-redux";
+import { Building2, Plus, Users, Trash2, ExternalLink, AlertTriangle } from "lucide-react";
+import { fetchOrganizations, addOrganization, removeOrganization } from "./orgSlice";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
 import Input from "../../components/ui/Input";
@@ -15,34 +12,21 @@ import toast from "react-hot-toast";
 
 const OrganizationList = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const [orgs, setOrgs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { organizations: orgs, loading } = useSelector((state) => state.org);
+  
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
 
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // orgId to delete
+  const [deleting, setDeleting] = useState(false);
+
   // Load organizations
   useEffect(() => {
-    let mounted = true;
-
-    const load = async () => {
-      try {
-        const { data } = await getOrganizations();
-        if (mounted) setOrgs(data?.data || data || []);
-      } catch {
-        toast.error("Failed to load organizations");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    load();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    dispatch(fetchOrganizations());
+  }, [dispatch]);
 
   // Create organization
   const handleCreate = async (e) => {
@@ -54,38 +38,39 @@ const OrganizationList = () => {
     }
 
     setCreating(true);
-
     try {
-      await createOrganization({ name: name.trim() });
-      toast.success("Organization created!");
-      setShowCreate(false);
-      setName("");
-
-      // reload list
-      const { data } = await getOrganizations();
-      setOrgs(data?.data || data || []);
-    } catch {
-      toast.error("Failed to create organization");
+      const result = await dispatch(addOrganization({ name: name.trim() }));
+      if (addOrganization.fulfilled.match(result)) {
+        toast.success("Organization created!");
+        setShowCreate(false);
+        setName("");
+      } else {
+        throw new Error(result.payload?.detail || "Failed to create organization");
+      }
+    } catch (err) {
+      toast.error(err.message);
     } finally {
       setCreating(false);
     }
   };
 
   // Delete organization
-  const handleDelete = async (e, orgId) => {
-    e.stopPropagation();
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
 
-    if (!window.confirm("Delete this organization? This cannot be undone."))
-      return;
-
+    setDeleting(true);
     try {
-      await deleteOrganization(orgId);
-      toast.success("Organization deleted");
-
-      // safe state update
-      setOrgs((prev) => prev.filter((o) => o.id !== orgId));
-    } catch {
-      toast.error("Failed to delete organization");
+      const result = await dispatch(removeOrganization(deleteConfirm));
+      if (removeOrganization.fulfilled.match(result)) {
+        toast.success("Organization deleted");
+        setDeleteConfirm(null);
+      } else {
+        throw new Error(result.payload?.detail || "Failed to delete organization");
+      }
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -106,7 +91,7 @@ const OrganizationList = () => {
       </div>
 
       {/* List */}
-      {loading ? (
+      {loading && orgs.length === 0 ? (
         <CardSkeleton count={4} />
       ) : orgs.length === 0 ? (
         <div className="card p-12 text-center">
@@ -146,13 +131,18 @@ const OrganizationList = () => {
                     <ExternalLink size={14} />
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={(e) => handleDelete(e, org.id)}
-                    className="p-1.5 rounded-lg text-dark-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  {(org.user_role === "OWNER" || org.user_role === "ADMIN") && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteConfirm(org.id);
+                      }}
+                      className="p-1.5 rounded-lg text-dark-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -189,15 +179,50 @@ const OrganizationList = () => {
             <Button variant="ghost" onClick={() => setShowCreate(false)} type="button">
               Cancel
             </Button>
-
             <Button type="submit" loading={creating} icon={Plus}>
               Create
             </Button>
           </div>
         </form>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        title="Delete Organization"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-4 bg-red-500/10 rounded-xl text-red-500">
+            <AlertTriangle size={24} />
+            <div>
+              <p className="font-bold text-sm">Warning: Critical Action</p>
+              <p className="text-xs opacity-80">Deleting an organization will permanently remove all associated teams, projects, and tasks. This cannot be undone.</p>
+            </div>
+          </div>
+          
+          <p className="text-dark-300 text-sm">
+            Are you absolutely sure you want to delete this organization?
+          </p>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-dark-700 -mx-6 px-6">
+            <Button variant="ghost" onClick={() => setDeleteConfirm(null)} type="button">
+              Cancel
+            </Button>
+            <Button 
+              variant="danger" 
+              onClick={handleDelete} 
+              loading={deleting} 
+              icon={Trash2}
+            >
+              Confirm Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
 
 export default OrganizationList;
+

@@ -28,12 +28,17 @@ def log_task_delete(sender, instance, **kwargs):
         organization = instance.project.team.organization
     except Exception:
         organization = None
-    ActivityLog.objects.create(
-        user=actor,
-        project=None,
-        organization=organization,
-        action=f"Task deleted: {instance.title}"
-    )
+    
+    try:
+        ActivityLog.objects.create(
+            user=actor,
+            project=None,
+            organization=organization,
+            action=f"Task deleted: {instance.title}"
+        )
+    except Exception:
+        # Ignore errors if organization itself is being deleted
+        pass
 
 
 #-------------------------------COMMENT------------------------
@@ -55,12 +60,16 @@ def log_comment_delete(sender, instance, **kwargs):
         organization = instance.task.project.team.organization
     except Exception:
         organization = None
-    ActivityLog.objects.create(
-        user=instance.user,
-        project=None,
-        organization=organization,
-        action=f"Comment deleted on task: {instance.task.title}"
-    )
+    
+    try:
+        ActivityLog.objects.create(
+            user=instance.user,
+            project=None,
+            organization=organization,
+            action=f"Comment deleted on task: {instance.task.title}"
+        )
+    except Exception:
+        pass
 
 
 #-------------------------------PROJECT---------------------
@@ -84,12 +93,15 @@ def log_project_delete(sender, instance, **kwargs):
     except Exception:
         organization = None
 
-    ActivityLog.objects.create(
-        user=instance.created_by,
-        project=None,
-        organization=organization,
-        action=f"Project deleted: {instance.name}"
-    )
+    try:
+        ActivityLog.objects.create(
+            user=instance.created_by,
+            project=None,
+            organization=organization,
+            action=f"Project deleted: {instance.name}"
+        )
+    except Exception:
+        pass
 
 
 #---------------------------------ORGANISATION MEMBERSHIP-----------------

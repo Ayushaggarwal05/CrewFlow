@@ -11,20 +11,39 @@ import {
   User,
   Settings,
   X,
-  Rocket
+  Plus,
+  CheckSquare,
+  Users
 } from "lucide-react";
 import { logout } from "../../features/auth/authSlice";
 import { getInitials, getAvatarColor } from "../../utils/helpers";
 import Badge from "../ui/Badge";
+import Button from "../ui/Button";
 import toast from "react-hot-toast";
 
-//  navItems
-const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, to: "/app/dashboard" },
-  { label: "Organizations", icon: Building2, to: "/app/organizations" },
-  { label: "Projects", icon: FolderKanban, action: "projects" },
-  { label: "Activity", icon: Activity, to: "/app/activity" },
-  { label: "Join with Code", icon: Rocket, to: "/app/join" },
+//  navItems structure
+const navigationGroups = [
+  {
+    title: "Main",
+    items: [
+      { label: "Dashboard", icon: LayoutDashboard, to: "/app/dashboard" },
+      { label: "My Tasks", icon: CheckSquare, to: "/app/my-tasks" },
+      { label: "Projects", icon: FolderKanban, to: "/app/projects" },
+    ]
+  },
+  {
+    title: "Workspace",
+    items: [
+      { label: "Organizations", icon: Building2, to: "/app/organizations", roles: ["OWNER", "ADMIN", "MANAGER"] },
+      { label: "Teams", icon: Users, to: "/app/organizations" }, // Will navigate to organizations to select a team context
+    ]
+  },
+  {
+    title: "Productivity",
+    items: [
+      { label: "Activity", icon: Activity, to: "/app/activity" },
+    ]
+  }
 ];
 
 const Sidebar = ({ open, onClose }) => {
@@ -105,41 +124,63 @@ const Sidebar = ({ open, onClose }) => {
           </button>
         </div>
 
+        {/* Quick Create */}
+        <div className="px-4 py-4 pt-2">
+          <button 
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl shadow-glow transition-all duration-200 text-sm font-semibold group"
+            onClick={() => toast.success("Quick Create opened!")}
+          >
+            <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" />
+            <span>New</span>
+          </button>
+        </div>
+
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          <p className="section-title px-3 mb-3">Navigation</p>
+        <nav className="flex-1 px-3 py-2 space-y-6 overflow-y-auto custom-scrollbar">
+          {navigationGroups.map((group) => {
+            // Filter items based on role
+            const visibleItems = group.items.filter(item => {
+              if (!item.roles) return true;
+              return item.roles.includes(role);
+            });
 
-          {navItems.map((item) => {
-            const Icon = item.icon;
+            if (visibleItems.length === 0) return null;
 
-            //  Normal route
-            if (item.to) {
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === "/app/dashboard"}
-                  onClick={() => onClose?.()}
-                  className={({ isActive }) =>
-                    isActive ? "sidebar-link-active" : "sidebar-link"
-                  }
-                >
-                  <Icon size={18} />
-                  {item.label}
-                </NavLink>
-              );
-            }
-
-            //  Action-based
             return (
-              <button
-                key={item.label}
-                onClick={() => handleNavClick(item)}
-                className="sidebar-link w-full flex items-center gap-2"
-              >
-                <Icon size={18} />
-                {item.label}
-              </button>
+              <div key={group.title} className="space-y-1">
+                <p className="px-3 text-[10px] font-black uppercase tracking-[0.15em] text-dark-500 mb-2">
+                  {group.title}
+                </p>
+                
+                {visibleItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.to === "/app/dashboard"}
+                      onClick={() => onClose?.()}
+                      className={({ isActive }) =>
+                        `group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative ${
+                          isActive 
+                            ? "bg-brand-600/10 text-brand-400" 
+                            : "text-dark-400 hover:text-dark-100 hover:bg-dark-800"
+                        }`
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <Icon size={18} className={`${isActive ? "text-brand-400" : "text-dark-500 group-hover:text-dark-100"}`} />
+                          {item.label}
+                          {isActive && (
+                            <div className="absolute left-0 w-[3px] h-4 bg-brand-500 rounded-r-full shadow-[0_0_8px_rgba(var(--brand-500-rgb),0.8)]" />
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </div>
             );
           })}
         </nav>

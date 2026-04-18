@@ -11,6 +11,7 @@ import TeamDetails from "../features/teams/TeamDetails";
 import ProjectList from "../features/projects/ProjectList";
 import ProjectDetails from "../features/projects/ProjectDetails";
 import TaskBoard from "../features/tasks/TaskBoard";
+import MyTasks from "../features/tasks/MyTasks";
 import ActivityLog from "../features/activity/ActivityLog";
 import MyActivity from "../features/activity/MyActivity";
 import JoinViaCode from "../features/invites/JoinViaCode";
@@ -34,6 +35,7 @@ const AppRouter = () => {
       >
         <Route index element={<Navigate to="/app/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="my-tasks" element={<MyTasks />} />
         <Route path="organizations" element={<OrganizationList />} />
         <Route path="organizations/:orgId/teams" element={<TeamList />} />
         <Route
