@@ -21,10 +21,6 @@ const ProjectList = () => {
   const [filter, setFilter] = useState("ALL");
 
   const loadAll = useCallback(async () => {
-    if (organizations.length === 0) {
-      setLoading(false);
-      return;
-    }
     setLoading(true);
 
     try {
@@ -111,11 +107,10 @@ const ProjectList = () => {
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs ${
-                filter === s
+              className={`px-3 py-1.5 rounded-lg text-xs ${filter === s
                   ? "bg-brand-600 text-white"
                   : "bg-dark-700 text-dark-400"
-              }`}
+                }`}
             >
               {s}
             </button>
