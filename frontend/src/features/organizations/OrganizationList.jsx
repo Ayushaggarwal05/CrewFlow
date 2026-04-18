@@ -189,6 +189,7 @@ const OrganizationList = () => {
             <Button variant="ghost" onClick={() => setShowCreate(false)} type="button">
               Cancel
             </Button>
+
             <Button type="submit" loading={creating} icon={Plus}>
               Create
             </Button>
