@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Building2, Plus, Users, Trash2, ExternalLink, AlertTriangle } from "lucide-react";
+import { Building2, Plus, Users, Trash2, ExternalLink, AlertTriangle, Rocket } from "lucide-react";
 import { fetchOrganizations, addOrganization, removeOrganization } from "./orgSlice";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
@@ -85,9 +85,14 @@ const OrganizationList = () => {
           </p>
         </div>
 
-        <Button icon={Plus} onClick={() => setShowCreate(true)}>
-          New Organization
-        </Button>
+        <div className="flex gap-3">
+          <Button variant="secondary" icon={Rocket} onClick={() => navigate("/app/join")}>
+            Join Organization
+          </Button>
+          <Button icon={Plus} onClick={() => setShowCreate(true)}>
+            New Organization
+          </Button>
+        </div>
       </div>
 
       {/* List */}
@@ -102,9 +107,14 @@ const OrganizationList = () => {
           <p className="text-dark-500 text-sm mt-2 mb-6">
             Create your first organization to start managing teams and projects.
           </p>
-          <Button icon={Plus} onClick={() => setShowCreate(true)}>
-            Create Organization
-          </Button>
+          <div className="flex items-center justify-center gap-4 mt-6">
+            <Button icon={Plus} onClick={() => setShowCreate(true)}>
+              Create Organization
+            </Button>
+            <Button variant="secondary" icon={Rocket} onClick={() => navigate("/app/join")}>
+              Join with Code
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -131,7 +141,7 @@ const OrganizationList = () => {
                     <ExternalLink size={14} />
                   </button>
 
-                  {(org.user_role === "OWNER" || org.user_role === "ADMIN") && (
+                  {org.user_role === "ADMIN" && (
                     <button
                       type="button"
                       onClick={(e) => {

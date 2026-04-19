@@ -13,7 +13,8 @@ import {
   X,
   Plus,
   CheckSquare,
-  Users
+  Users,
+  Rocket
 } from "lucide-react";
 import { logout } from "../../features/auth/authSlice";
 import { getInitials, getAvatarColor } from "../../utils/helpers";
@@ -34,7 +35,8 @@ const navigationGroups = [
   {
     title: "Workspace",
     items: [
-      { label: "Organizations", icon: Building2, to: "/app/organizations", roles: ["OWNER", "ADMIN", "MANAGER"] },
+      { label: "Organizations", icon: Building2, to: "/app/organizations", roles: ["ADMIN", "MANAGER"] },
+      { label: "Join", icon: Rocket, to: "/app/join" },
       { label: "Teams", icon: Users, to: "/app/organizations" }, // Will navigate to organizations to select a team context
     ]
   },
@@ -91,7 +93,7 @@ const Sidebar = ({ open, onClose }) => {
     }
   };
 
-  const role = user?.org_role || user?.role || null;
+  const { userRole: role } = useSelector((state) => state.org);
 
   return (
     <>

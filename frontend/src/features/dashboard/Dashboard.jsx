@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Building2,
   Users,
@@ -20,9 +21,13 @@ import useAuth from "../../hooks/useAuth";
 import useCurrentOrg from "../../hooks/useCurrentOrg";
 import useRole from "../../hooks/useRole";
 import { getMyTeam } from "../organizations/organizationAPI";
+
 import { getTeams } from "../teams/teamAPI";
 import { getProjects } from "../projects/projectAPI";
-import { getMyOrgTasks, updateTask } from "../tasks/taskAPI";
+import { fetchOrgStats } from "../organizations/orgSlice";
+import { fetchMyTasks, toggleTaskDone } from "../tasks/taskSlice";
+import { fetchOrgActivity } from "../activity/activitySlice";
+import ActivityFeed from "../activity/ActivityFeed";
 
 import Spinner, { CardSkeleton } from "../../components/ui/Spinner";
 import Badge from "../../components/ui/Badge";
@@ -100,27 +105,25 @@ const EmptyState = ({ icon: Icon, title, description, actionText, onAction }) =>
 // --- Main Dashboard ---
 
 const Dashboard = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { 
     orgId, 
     organizations, 
     stats: orgStats, 
-    activityFeed,
     loading: orgLoading,
     setSelectedOrg,
     refreshOrgs,
-    refreshStats,
-    refreshActivity
   } = useCurrentOrg();
+  const { myTasks, loading: tasksLoading } = useSelector((state) => state.task);
+  const { activities, loading: activityLoading } = useSelector((state) => state.activity);
   const { role } = useRole();
 
-  // Local State for non-centralized data
-  const [myTasks, setMyTasks] = useState([]);
+  // Local State for non-centralized data (Teams/Projects)
   const [recentProjects, setRecentProjects] = useState([]);
   const [subordinates, setSubordinates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tasksLoading, setTasksLoading] = useState(false);
 
   // Computed
   const firstName = useMemo(() => user?.full_name?.split(" ")?.[0] || "there", [user?.full_name]);
@@ -136,10 +139,11 @@ const Dashboard = () => {
   // Sync Global Data when Org Changes
   useEffect(() => {
     if (orgId) {
-      refreshStats(orgId);
-      refreshActivity(orgId);
+      dispatch(fetchOrgStats(orgId));
+      dispatch(fetchOrgActivity(orgId));
+      dispatch(fetchMyTasks(orgId));
     }
-  }, [orgId]);
+  }, [orgId, dispatch]);
 
   // Scoped Data Fetching (Keep local for now as per requirement granularity)
   const loadDashboardData = useCallback(async () => {
@@ -150,13 +154,7 @@ const Dashboard = () => {
     setLoading(true);
 
     try {
-      const [tasksRes, teamsRes] = await Promise.all([
-        getMyOrgTasks(orgId),
-        getTeams(orgId)
-      ]);
-
-      setMyTasks(tasksRes.data || []);
-      
+      const teamsRes = await getTeams(orgId);
       const teams = Array.isArray(teamsRes.data) ? teamsRes.data : [];
       if (teams.length > 0) {
         const projectRes = await Promise.all(
@@ -166,13 +164,12 @@ const Dashboard = () => {
         setRecentProjects(allProj.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5));
       }
 
-      if (role === "MANAGER" || role === "LEAD" || role === "ADMIN" || role === "OWNER") {
+      if (role === "MANAGER" || role === "LEAD" || role === "ADMIN") {
         const teamRes = await getMyTeam(orgId);
         setSubordinates(teamRes.data || []);
       }
     } catch (err) {
-      console.error("Dashboard load failed", err);
-      toast.error("Failed to sync dashboard data");
+      console.error("Dashboard subsidiary load failed", err);
     } finally {
       setLoading(false);
     }
@@ -184,17 +181,16 @@ const Dashboard = () => {
 
   // Actions
   const handleMarkDone = async (task) => {
-    setTasksLoading(true);
     try {
-      await updateTask(task.project, task.id, { status: "DONE" });
-      setMyTasks(prev => prev.filter(t => t.id !== task.id));
-      toast.success("Task completed! 🎉");
-      // Refresh stats in Redux
-      refreshStats(orgId);
+      await dispatch(toggleTaskDone({ 
+        projectId: task.project, 
+        taskId: task.id, 
+        currentStatus: task.status 
+      })).unwrap();
+      toast.success("Task status updated! 🎉");
+      dispatch(fetchOrgStats(orgId));
     } catch (err) {
       toast.error("Failed to update task");
-    } finally {
-      setTasksLoading(false);
     }
   };
 
@@ -291,25 +287,7 @@ const Dashboard = () => {
   const renderActivityFeed = () => (
     <div className="space-y-4">
       <SectionHeader title="Recent Activity" icon={Activity} />
-      <div className="relative pl-6 space-y-6 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-dark-800">
-        {activityFeed.length === 0 ? (
-          <p className="text-sm text-dark-500 py-4">No recent team activities.</p>
-        ) : (
-          activityFeed.map((log, idx) => (
-            <div key={idx} className="relative">
-              <div className="absolute -left-[30px] top-1.5 w-4 h-4 rounded-full border-4 border-dark-900 bg-brand-500" />
-              <div className="flex flex-col">
-                <p className="text-sm text-dark-100 font-medium leading-relaxed">
-                  <span className="text-brand-400">{log.user?.full_name || "Someone"}</span> {log.action}
-                </p>
-                <span className="text-[10px] uppercase tracking-wider text-dark-500 mt-1 font-bold">
-                  {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' })} • {formatDate(log.timestamp)}
-                </span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      <ActivityFeed activities={activities} loading={activityLoading} />
     </div>
   );
 

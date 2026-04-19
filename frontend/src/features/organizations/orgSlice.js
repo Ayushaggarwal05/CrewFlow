@@ -40,17 +40,6 @@ export const fetchOrgStats = createAsyncThunk(
   }
 );
 
-export const fetchOrgActivity = createAsyncThunk(
-  "org/fetchOrgActivity",
-  async (orgId, { rejectWithValue }) => {
-    try {
-      const response = await getOrgActivityFeed(orgId);
-      return response.data?.data || response.data || [];
-    } catch (err) {
-      return rejectWithValue(err.response?.data || "Failed to fetch activity feed");
-    }
-  }
-);
 
 export const addOrganization = createAsyncThunk(
   "org/addOrganization",
@@ -82,7 +71,6 @@ const initialState = {
   selectedOrgDetails: null,
   userRole: null, 
   stats: null,
-  activityFeed: [],
   loading: false,
   error: null,
 };
@@ -105,7 +93,6 @@ const orgSlice = createSlice({
       state.selectedOrgDetails = null;
       state.userRole = null;
       state.stats = null;
-      state.activityFeed = [];
       localStorage.removeItem("selected_org_id");
     }
   },
@@ -140,9 +127,6 @@ const orgSlice = createSlice({
       })
       .addCase(fetchOrgStats.fulfilled, (state, action) => {
         state.stats = action.payload;
-      })
-      .addCase(fetchOrgActivity.fulfilled, (state, action) => {
-        state.activityFeed = action.payload;
       })
       .addCase(addOrganization.fulfilled, (state, action) => {
         state.organizations.unshift(action.payload);

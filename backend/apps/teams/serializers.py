@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Team , TeamMembership
 from apps.organizations.models import Organization
-from apps.organizations.utils import is_admin_or_owner, get_user_role, can_view_join_codes, get_effective_role
+from apps.organizations.utils import is_admin, get_user_role, can_view_join_codes, get_effective_role
 from apps.users.models import User
 
 

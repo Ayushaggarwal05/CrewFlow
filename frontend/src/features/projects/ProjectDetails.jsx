@@ -6,6 +6,7 @@ import { getProject } from "./projectAPI";
 import { getTasks, createTask, updateTask, deleteTask } from "../tasks/taskAPI";
 import { getComments, createComment } from "../comments/commentAPI";
 import { getTeamUsers } from "../teams/teamAPI";
+import useRole from "../../hooks/useRole";
 
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -18,6 +19,7 @@ import JoinCodeCard from "../invites/JoinCodeCard";
 const ProjectDetails = () => {
   const { teamId, projectId } = useParams();
   const navigate = useNavigate();
+  const { isAdmin } = useRole();
   // for data handling
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
@@ -197,7 +199,7 @@ const ProjectDetails = () => {
         </div>
       </div>
 
-      {project && (project.user_role === 'OWNER' || project.user_role === 'ADMIN' || project.user_role === 'MANAGER') && (
+      {project && isAdmin && (
         <div className="mb-4">
           <JoinCodeCard
             entityType="projects"

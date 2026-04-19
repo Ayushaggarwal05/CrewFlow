@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import NotFound, PermissionDenied
 from .models import Project
 from apps.teams.models import Team
-from apps.organizations.utils import is_admin_or_owner, get_user_role, can_view_join_codes, get_effective_role
+from apps.organizations.utils import is_admin, get_user_role, can_view_join_codes, get_effective_role
 
 
 #-----------------Base_----------------

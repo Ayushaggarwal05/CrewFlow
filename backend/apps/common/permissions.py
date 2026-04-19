@@ -52,7 +52,7 @@ class IsManagerOrAdmin(BasePermission):
         return OrganizationMembership.objects.filter(
             user=user,
             organization=organization,
-            role__in=["OWNER", "ADMIN", "MANAGER"]
+            role__in=["ADMIN", "MANAGER"]
         ).exists()
     
 class IsLeadOrAbove(BasePermission):
@@ -70,7 +70,7 @@ class IsLeadOrAbove(BasePermission):
         return OrganizationMembership.objects.filter(
             user=user,
             organization=organization,
-            role__in=["OWNER", "ADMIN", "MANAGER", "LEAD"]
+            role__in=["ADMIN", "MANAGER", "LEAD"]
         ).exists()
     
 class IsMemberOrAbove(BasePermission):
@@ -88,7 +88,7 @@ class IsMemberOrAbove(BasePermission):
         return OrganizationMembership.objects.filter(
             user=user,
             organization=organization,
-            role__in=["OWNER", "ADMIN", "MANAGER", "LEAD", "MEMBER"]
+            role__in=["ADMIN", "MANAGER", "LEAD", "MEMBER"]
         ).exists()
 
 class IsOrganizationAdmin(BasePermission):
@@ -106,7 +106,7 @@ class IsOrganizationAdmin(BasePermission):
         return OrganizationMembership.objects.filter(
             user=user,
             organization=organization,
-            role__in=["OWNER", "ADMIN"],
+            role="ADMIN",
         ).exists()
 
     
@@ -138,5 +138,5 @@ class IsTeamManagerOrAdminFromURL(BasePermission):
         return OrganizationMembership.objects.filter(
             user=request.user,
             organization=team.organization,
-            role__in=["OWNER", "ADMIN", "MANAGER", "LEAD"],
+            role__in=["ADMIN", "MANAGER", "LEAD"],
         ).exists()

@@ -14,7 +14,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
 from apps.organizations.models import Organization, OrganizationMembership
-from apps.organizations.utils import is_admin_or_owner
+from apps.organizations.utils import is_admin
 from apps.teams.models import Team, TeamMembership
 
 from apps.projects.models import Project
@@ -30,9 +30,10 @@ def _is_org_admin(user, organization):
     ).exists()
 
 
-def _is_org_admin_or_manager(user, organization):
+# MANAGER role no longer exists in rank 3
+def _is_org_admin_strictly(user, organization):
     return OrganizationMembership.objects.filter(
-        user=user, organization=organization, role__in=["ADMIN", "MANAGER"]
+        user=user, organization=organization, role="ADMIN"
     ).exists()
 
 
@@ -214,7 +215,7 @@ class GenerateOrgCodeView(APIView):
         user_role = get_user_role(request.user, org)
         if not can_generate_join_codes(user_role):
             return Response(
-                {"detail": "Only organization admins or owners can generate join codes."},
+                {"detail": "Only organization admins can generate join codes."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -256,7 +257,7 @@ class GenerateTeamCodeView(APIView):
         user_role = get_user_role(request.user, team.organization)
         if not can_generate_join_codes(user_role):
             return Response(
-                {"detail": "Only organization admins or owners can generate join codes."},
+                {"detail": "Only organization admins can generate join codes."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -296,7 +297,7 @@ class GenerateProjectCodeView(APIView):
         user_role = get_user_role(request.user, project.team.organization)
         if not can_generate_join_codes(user_role):
             return Response(
-                {"detail": "Only organization admins or owners can generate join codes."},
+                {"detail": "Only organization admins can generate join codes."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 

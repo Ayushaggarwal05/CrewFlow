@@ -2,28 +2,23 @@ from .models import OrganizationMembership
 
 # Hierarchy definition: Higher index = higher authority
 ROLE_RANK = {
-    'OWNER': 4,
     'ADMIN': 3,
     'MANAGER': 2,
     'LEAD': 1,
     'MEMBER': 0
 }
 
-def is_admin_or_owner(user, organization):
+def is_admin(user, organization):
     """
-    Checks if a user is an ADMIN or OWNER of an organization.
-    Useful for general access permissions.
+    Checks if a user is an ADMIN of an organization.
     """
     if not (user and user.is_authenticated):
         return False
         
-    if organization.owner_id == user.id:
-        return True
-        
     return OrganizationMembership.objects.filter(
         user=user,
         organization=organization,
-        role__in=["OWNER", "ADMIN"]
+        role="ADMIN"
     ).exists()
 
 def get_user_role(user, organization):
@@ -31,10 +26,6 @@ def get_user_role(user, organization):
     if not (user and user.is_authenticated):
         return None
     
-    # Direct owner check
-    if organization.owner_id == user.id:
-        return 'OWNER'
-        
     mem = OrganizationMembership.objects.filter(user=user, organization=organization).first()
     return mem.role if mem else None
 
@@ -47,12 +38,12 @@ def can_manage_role(requester_role, target_role):
     return req_rank > target_rank
 
 def can_view_join_codes(role):
-    """OWNER, ADMIN, and MANAGER can view join codes."""
-    return ROLE_RANK.get(role, -1) >= ROLE_RANK['MANAGER']
+    """Only ADMIN can view join codes."""
+    return role == 'ADMIN'
 
 def can_generate_join_codes(role):
-    """Only OWNER and ADMIN can generate join codes."""
-    return ROLE_RANK.get(role, -1) >= ROLE_RANK['ADMIN']
+    """Only ADMIN can generate join codes."""
+    return role == 'ADMIN'
 
 def get_effective_role(user, organization, team=None):
     """

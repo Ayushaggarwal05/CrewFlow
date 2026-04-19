@@ -3,8 +3,7 @@ import {
   setSelectedOrg as setSelectedOrgAction, 
   fetchOrganizations, 
   fetchOrgStats,
-  fetchOrgDetails,
-  fetchOrgActivity
+  fetchOrgDetails
 } from "../features/organizations/orgSlice";
 
 const useCurrentOrg = () => {
@@ -14,7 +13,6 @@ const useCurrentOrg = () => {
     selectedOrgId, 
     selectedOrgDetails, 
     stats, 
-    activityFeed,
     loading, 
     error 
   } = useSelector((state) => state.org);
@@ -37,9 +35,6 @@ const useCurrentOrg = () => {
       dispatch(fetchOrgDetails(orgId || selectedOrgId));
   };
 
-  const refreshActivity = (orgId) => {
-      dispatch(fetchOrgActivity(orgId || selectedOrgId));
-  };
 
   return {
     org,
@@ -47,14 +42,12 @@ const useCurrentOrg = () => {
     organizations,
     selectedOrgDetails,
     stats,
-    activityFeed,
     loading,
     error,
     setSelectedOrg,
     refreshOrgs,
     refreshStats,
-    refreshDetails,
-    refreshActivity
+    refreshDetails
   };
 };
 

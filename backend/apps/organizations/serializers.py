@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Organization , OrganizationMembership
-from .utils import is_admin_or_owner, get_user_role, can_manage_role, can_view_join_codes
+from .utils import is_admin, get_user_role, can_manage_role, can_view_join_codes
 
 
 
@@ -61,7 +61,7 @@ class OrganizationWriteSerializer(OrganizationBaseSerializer):
         user = self.context["request"].user
         org = Organization.objects.create(owner = user , **validated_data)
         
-        OrganizationMembership.objects.create(user= user , organization=org , role="OWNER")
+        OrganizationMembership.objects.create(user= user , organization=org , role="ADMIN")
 
         return org
 

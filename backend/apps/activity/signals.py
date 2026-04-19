@@ -14,11 +14,12 @@ from .models import ActivityLog
 def log_task(sender, instance, created, **kwargs):
     # Use assigned_to if available, otherwise fall back to None (user field is nullable)
     actor = instance.assigned_to
-    if created:
-        action = f"Task created: {instance.title}"
-    else:
-        action = f"Task updated: {instance.title}"
-    ActivityLog.objects.create(user=actor, project=instance.project, action=action)
+    ActivityLog.objects.create(
+        user=actor, 
+        project=instance.project, 
+        organization=instance.project.team.organization,
+        action=action
+    )
 
 @receiver(post_delete, sender=Task)
 def log_task_delete(sender, instance, **kwargs):
@@ -49,6 +50,7 @@ def log_comment(sender, instance, created, **kwargs):
         ActivityLog.objects.create(
             user=instance.user,
             project=instance.task.project,
+            organization=instance.task.project.team.organization,
             action=f"Comment added on task: {instance.task.title}"
         )
 
@@ -80,6 +82,7 @@ def log_project(sender, instance, created, **kwargs):
         ActivityLog.objects.create(
             user=instance.created_by,
             project=instance,
+            organization=instance.team.organization,
             action=f"Project created: {instance.name}"
         )
 

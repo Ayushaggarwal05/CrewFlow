@@ -7,9 +7,19 @@ class ActivityUserSerializer(serializers.Serializer):
     full_name = serializers.CharField()
     email = serializers.EmailField()
 
+class ActivityProjectSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+class ActivityOrgSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
 
 class ActivityLogSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
+    project = ActivityProjectSerializer(read_only=True)
+    organization = ActivityOrgSerializer(read_only=True)
 
     class Meta:
         model = ActivityLog
@@ -17,10 +27,11 @@ class ActivityLogSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "project",
+            "organization",
             "action",
             "timestamp"
         ]
-        read_only_fields = ["id", "timestamp", "user", "project", "action"]
+        read_only_fields = ["id", "timestamp", "user", "project", "organization", "action"]
 
     def get_user(self, obj):
         """

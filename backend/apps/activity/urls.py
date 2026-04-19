@@ -4,5 +4,5 @@ from .views import ActivityLogListView, MyActivityLogListView, OrgActivityFeedVi
 urlpatterns = [
     path("projects/<int:project_id>/activity/", ActivityLogListView.as_view(), name="activity-list"),
     path("me/", MyActivityLogListView.as_view(), name="my-activity"),
-    path("org/feed/", OrgActivityFeedView.as_view(), name="org-activity-feed"),
+    path("org/<int:org_id>/", OrgActivityFeedView.as_view(), name="org-activity-feed"),
 ]

@@ -8,6 +8,6 @@ export const getActivityLogs = (projectId) =>
 // GET /api/activity/me/
 export const getMyActivityLogs = () => api.get("/api/activity/me/");
 
-// GET /api/activity/org/feed/?org_id=<id>
+// GET /api/activity/org/<org_id>/
 export const getOrgActivityFeed = (orgId) => 
-  api.get("/api/activity/org/feed/", { params: { org_id: orgId } });
+  api.get(`/api/activity/org/${orgId}/`);

@@ -203,7 +203,7 @@ const TeamDetails = () => {
         </div>
       </div>
 
-      {team && (isAdmin || isManager || team.user_role === 'OWNER') && (
+      {team && isAdmin && (
         <div className="mb-4">
           <JoinCodeCard
             entityType="teams"

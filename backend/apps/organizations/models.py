@@ -16,7 +16,6 @@ from django.core.exceptions import ValidationError
 
 
 ORG_ROLE_CHOICES = (
-    ("OWNER", "Owner"),
     ("ADMIN", "Admin"),
     ("MANAGER", "Manager"),
     ("LEAD", "Lead"),
