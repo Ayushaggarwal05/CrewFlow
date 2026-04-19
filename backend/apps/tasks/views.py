@@ -29,15 +29,30 @@ class TaskListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         project_id = self.kwargs["project_id"]
+        
+        from django.shortcuts import get_object_or_404
+        from apps.organizations.utils import get_user_role
+        from .models import Task
+        from apps.projects.models import Project
 
-        return (
-            Task.objects.filter(
-                project__id=project_id,
-                project__team__organization__memberships__user=user,
-            )
-            .distinct()
-            .order_by("-created_at")
-        )
+        project = get_object_or_404(Project, id=project_id)
+        role = get_user_role(user, project.team.organization)
+
+        # ADMIN or MANAGER see all project tasks
+        if role in ["ADMIN", "MANAGER"]:
+            return Task.objects.filter(project_id=project_id).order_by("-created_at")
+
+        # LEAD/MEMBER: 
+        # If they created the project (Lead), they see all.
+        if project.created_by == user:
+             return Task.objects.filter(project_id=project_id).order_by("-created_at")
+
+        # Otherwise, strictly assigned tasks
+        return Task.objects.filter(
+            project_id=project_id,
+            assigned_to=user
+        ).order_by("-created_at")
+   
     
     def get_serializer_class(self):
         if self.request.method == "POST":

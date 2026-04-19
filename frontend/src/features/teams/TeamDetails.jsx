@@ -32,6 +32,8 @@ import { CardSkeleton } from "../../components/ui/Spinner";
 import { formatDate, getInitials, getAvatarColor } from "../../utils/helpers";
 import toast from "react-hot-toast";
 import JoinCodeCard from "../invites/JoinCodeCard";
+import JoinCodeModal from "../invites/JoinCodeModal";
+import { Rocket } from "lucide-react";
 
 const TeamDetails = () => {
   const { orgId, teamId } = useParams();
@@ -59,6 +61,7 @@ const TeamDetails = () => {
     role: "MEMBER",
   });
   const [addingMember, setAddingMember] = useState(false);
+  const [showJoin, setShowJoin] = useState(false);
 
   const [activeTab, setActiveTab] = useState("projects");
 
@@ -236,11 +239,18 @@ const TeamDetails = () => {
         <CardSkeleton count={3} />
       ) : activeTab === "projects" ? (
         <div className="space-y-4">
-          <div className="flex justify-between">
-            <p>{projects.length} projects</p>
-            <Button onClick={() => setShowCreateProject(true)} icon={Plus}>
-              New Project
-            </Button>
+          <div className="flex justify-between items-center">
+            <p className="text-dark-400 font-medium">{projects.length} projects</p>
+            <div className="flex gap-3">
+              <Button variant="secondary" icon={Rocket} onClick={() => setShowJoin(true)}>
+                Join
+              </Button>
+              {(isAdmin || isManager) && (
+                <Button onClick={() => setShowCreateProject(true)} icon={Plus}>
+                  New Project
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
@@ -254,9 +264,11 @@ const TeamDetails = () => {
                 <Badge variant={proj.status} />
                 {proj.deadline && <p>Due {formatDate(proj.deadline)}</p>}
 
-                <button onClick={(e) => handleDeleteProject(e, proj.id)}>
-                  <Trash2 size={14} />
-                </button>
+                {(isAdmin || isManager) && (
+                  <button onClick={(e) => handleDeleteProject(e, proj.id)}>
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -265,9 +277,11 @@ const TeamDetails = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <p className="text-dark-400 font-medium">{memberships.length} members</p>
-            <Button onClick={() => setShowAddMember(true)} icon={UserPlus}>
-              Add Member
-            </Button>
+            {(isAdmin || isManager) && (
+              <Button onClick={() => setShowAddMember(true)} icon={UserPlus}>
+                Add Member
+              </Button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -289,16 +303,16 @@ const TeamDetails = () => {
                       <Badge variant={m.role} label={m.role_display || m.role} />
                     </div>
                     <p className="text-sm text-dark-400 truncate">{m.user_email}</p>
-                    
+
                     <div className="mt-4 space-y-1.5 border-t border-dark-700/50 pt-3">
                       <div className="flex items-center gap-2 text-xs text-dark-500">
                         <Users size={12} className="text-brand-500" />
-                        <span className="font-medium text-dark-400">Manager:</span> 
+                        <span className="font-medium text-dark-400">Manager:</span>
                         <span className="text-dark-300">{m.manager_name || "None (Top Level)"}</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-dark-500">
                         <Clock size={12} className="text-green-500" />
-                        <span className="font-medium text-dark-400">Joined:</span> 
+                        <span className="font-medium text-dark-400">Joined:</span>
                         <span className="text-dark-300">{formatDate(m.joined_at)}</span>
                       </div>
                     </div>
@@ -306,13 +320,15 @@ const TeamDetails = () => {
                 </div>
 
                 {/* Remove Button - Visible on hover/group */}
-                <button 
-                  onClick={() => handleRemoveMember(m.id)}
-                  className="absolute top-4 right-4 p-2 rounded-lg bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
-                  title="Remove Member"
-                >
-                  <Trash2 size={16} />
-                </button>
+                {(isAdmin || isManager) && (
+                  <button
+                    onClick={() => handleRemoveMember(m.id)}
+                    className="absolute top-4 right-4 p-2 rounded-lg bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
+                    title="Remove Member"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -360,6 +376,15 @@ const TeamDetails = () => {
           </Button>
         </form>
       </Modal>
+
+      <JoinCodeModal
+        open={showJoin}
+        onClose={() => setShowJoin(false)}
+        onSuccess={() => {
+          // reload fresh data
+          getProjects(teamId).then(({ data }) => setProjects(data));
+        }}
+      />
     </div>
   );
 };

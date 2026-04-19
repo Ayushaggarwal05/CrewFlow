@@ -35,8 +35,16 @@ class TeamListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         org_id = self.kwargs["org_id"]
+        
+        from apps.organizations.utils import is_admin
+        if is_admin(user, org_id):
+            return Team.objects.filter(organization_id=org_id)
 
-        return Team.objects.filter(organization_id = org_id , organization__memberships__user = user).distinct()
+        # Non-admins: only teams they belong to
+        return Team.objects.filter(
+            organization_id=org_id, 
+            memberships__user=user
+        ).distinct()
 
     def get_serializer_class(self):
         if self.request.method == "POST":

@@ -10,6 +10,8 @@ import { CardSkeleton } from "../../components/ui/Spinner";
 import { formatDate } from "../../utils/helpers";
 import toast from "react-hot-toast";
 import JoinCodeCard from "../invites/JoinCodeCard";
+import JoinCodeModal from "../invites/JoinCodeModal";
+import { Rocket } from "lucide-react";
 
 const TeamList = () => {
   const { orgId } = useParams();
@@ -20,6 +22,7 @@ const TeamList = () => {
   const [loading, setLoading] = useState(true);
 
   const [showCreate, setShowCreate] = useState(false);
+  const [showJoin, setShowJoin] = useState(false);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
 
@@ -101,9 +104,14 @@ const TeamList = () => {
               <h1 className="page-header mt-0.5">Teams</h1>
             </div>
 
-            <Button icon={Plus} onClick={() => setShowCreate(true)}>
-              New Team
-            </Button>
+            <div className="flex gap-3">
+              <Button variant="secondary" icon={Rocket} onClick={() => setShowJoin(true)}>
+                Join
+              </Button>
+              <Button icon={Plus} onClick={() => setShowCreate(true)}>
+                New Team
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -128,9 +136,14 @@ const TeamList = () => {
           <p className="text-dark-500 text-sm mt-2 mb-6">
             Create a team to start organizing projects.
           </p>
-          <Button icon={Plus} onClick={() => setShowCreate(true)}>
-            Create Team
-          </Button>
+          <div className="flex items-center justify-center gap-4 mt-6">
+            <Button icon={Plus} onClick={() => setShowCreate(true)}>
+              Create Team
+            </Button>
+            <Button variant="secondary" icon={Rocket} onClick={() => setShowJoin(true)}>
+              Join
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -196,6 +209,12 @@ const TeamList = () => {
           />
         </form>
       </Modal>
+
+      <JoinCodeModal
+        open={showJoin}
+        onClose={() => setShowJoin(false)}
+        onSuccess={loadData}
+      />
     </div>
   );
 };

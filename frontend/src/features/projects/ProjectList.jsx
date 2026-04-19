@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FolderKanban, ArrowRight } from "lucide-react";
+import { FolderKanban, ArrowRight, Rocket } from "lucide-react";
 
 import useCurrentOrg from "../../hooks/useCurrentOrg";
 import { getTeams } from "../teams/teamAPI";
@@ -12,6 +12,7 @@ import { CardSkeleton } from "../../components/ui/Spinner";
 import { formatDate } from "../../utils/helpers";
 
 import toast from "react-hot-toast";
+import JoinCodeModal from "../invites/JoinCodeModal";
 
 const ProjectList = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const ProjectList = () => {
   const [allProjects, setAllProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
+  const [showJoin, setShowJoin] = useState(false);
 
   const loadAll = useCallback(async () => {
     if (organizations.length === 0) {
@@ -112,13 +114,16 @@ const ProjectList = () => {
               key={s}
               onClick={() => setFilter(s)}
               className={`px-3 py-1.5 rounded-lg text-xs ${filter === s
-                  ? "bg-brand-600 text-white"
-                  : "bg-dark-700 text-dark-400"
+                ? "bg-brand-600 text-white"
+                : "bg-dark-700 text-dark-400"
                 }`}
             >
               {s}
             </button>
           ))}
+          <Button variant="secondary" size="sm" icon={Rocket} onClick={() => setShowJoin(true)}>
+            Join
+          </Button>
         </div>
       </div>
 
@@ -130,12 +135,16 @@ const ProjectList = () => {
           <FolderKanban size={48} className="mx-auto text-dark-600 mb-4" />
           <p className="text-dark-300 font-medium text-lg">No projects found</p>
 
-          <Button
-            className="mt-4"
-            onClick={() => navigate("/app/organizations")}
-          >
-            Go to Organizations
-          </Button>
+          <div className="flex flex-col items-center gap-4 mt-6">
+            <Button
+              onClick={() => navigate("/app/organizations")}
+            >
+              Go to Organizations
+            </Button>
+            <Button variant="secondary" icon={Rocket} onClick={() => setShowJoin(true)}>
+              Join
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -168,6 +177,12 @@ const ProjectList = () => {
           ))}
         </div>
       )}
+
+      <JoinCodeModal
+        open={showJoin}
+        onClose={() => setShowJoin(false)}
+        onSuccess={loadAll}
+      />
     </div>
   );
 };

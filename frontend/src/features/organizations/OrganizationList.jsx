@@ -9,14 +9,16 @@ import Input from "../../components/ui/Input";
 import { CardSkeleton } from "../../components/ui/Spinner";
 import { formatDate } from "../../utils/helpers";
 import toast from "react-hot-toast";
+import JoinCodeModal from "../invites/JoinCodeModal";
 
 const OrganizationList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const { organizations: orgs, loading } = useSelector((state) => state.org);
-  
+
   const [showCreate, setShowCreate] = useState(false);
+  const [showJoin, setShowJoin] = useState(false);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
 
@@ -86,8 +88,8 @@ const OrganizationList = () => {
         </div>
 
         <div className="flex gap-3">
-          <Button variant="secondary" icon={Rocket} onClick={() => navigate("/app/join")}>
-            Join Organization
+          <Button variant="secondary" icon={Rocket} onClick={() => setShowJoin(true)}>
+            Join
           </Button>
           <Button icon={Plus} onClick={() => setShowCreate(true)}>
             New Organization
@@ -111,8 +113,8 @@ const OrganizationList = () => {
             <Button icon={Plus} onClick={() => setShowCreate(true)}>
               Create Organization
             </Button>
-            <Button variant="secondary" icon={Rocket} onClick={() => navigate("/app/join")}>
-              Join with Code
+            <Button variant="secondary" icon={Rocket} onClick={() => setShowJoin(true)}>
+              Join
             </Button>
           </div>
         </div>
@@ -210,7 +212,7 @@ const OrganizationList = () => {
               <p className="text-xs opacity-80">Deleting an organization will permanently remove all associated teams, projects, and tasks. This cannot be undone.</p>
             </div>
           </div>
-          
+
           <p className="text-dark-300 text-sm">
             Are you absolutely sure you want to delete this organization?
           </p>
@@ -219,10 +221,10 @@ const OrganizationList = () => {
             <Button variant="ghost" onClick={() => setDeleteConfirm(null)} type="button">
               Cancel
             </Button>
-            <Button 
-              variant="danger" 
-              onClick={handleDelete} 
-              loading={deleting} 
+            <Button
+              variant="danger"
+              onClick={handleDelete}
+              loading={deleting}
               icon={Trash2}
             >
               Confirm Delete
@@ -230,6 +232,12 @@ const OrganizationList = () => {
           </div>
         </div>
       </Modal>
+
+      <JoinCodeModal
+        open={showJoin}
+        onClose={() => setShowJoin(false)}
+        onSuccess={() => dispatch(fetchOrganizations())}
+      />
     </div>
   );
 };

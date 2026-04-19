@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { ArrowLeft, Plus, X, Send } from "lucide-react";
 
 import { getProject } from "./projectAPI";
@@ -19,7 +20,10 @@ import JoinCodeCard from "../invites/JoinCodeCard";
 const ProjectDetails = () => {
   const { teamId, projectId } = useParams();
   const navigate = useNavigate();
-  const { isAdmin } = useRole();
+  const { isAdmin, isManager, role } = useRole();
+  const { user } = useSelector((state) => state.auth);
+  
+  const isLead = role === "LEAD" || project?.created_by === user?.id;
   // for data handling
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
@@ -211,11 +215,13 @@ const ProjectDetails = () => {
       )}
 
       {/* Task Header */}
-      <div className="flex justify-between">
-        <p>{tasks.length} tasks</p>
-        <Button onClick={() => setShowCreateTask(true)} icon={Plus}>
-          Add Task
-        </Button>
+      <div className="flex justify-between items-center bg-dark-800/50 p-4 rounded-xl border border-dark-700/50">
+        <p className="text-dark-400 font-medium">{tasks.length} tasks</p>
+        {(isAdmin || isManager || isLead) && (
+          <Button onClick={() => setShowCreateTask(true)} icon={Plus}>
+            Add Task
+          </Button>
+        )}
       </div>
 
       {/* Kanban */}
@@ -258,14 +264,17 @@ const ProjectDetails = () => {
                     >
                       Done
                     </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteTask(task.id);
-                      }}
-                    >
-                      <X size={12} />
-                    </button>
+                    {(isAdmin || isManager || isLead) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTask(task.id);
+                        }}
+                        className="p-1 text-dark-500 hover:text-red-400 transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

@@ -27,7 +27,25 @@ class ProjectListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         team_id = self.kwargs["team_id"]
-        return Project.objects.filter(team__id = team_id , team__organization__memberships__user=user).distinct()
+        
+        from django.shortcuts import get_object_or_404
+        from django.db.models import Q
+        from apps.organizations.utils import is_admin, get_user_role
+        from apps.teams.models import Team
+        
+        team = get_object_or_404(Team, id=team_id)
+        from apps.organizations.utils import get_user_role
+        role = get_user_role(user, team.organization)
+
+        # Admin or Org Manager see all team projects
+        if role in ["ADMIN", "MANAGER"]:
+            return Project.objects.filter(team_id=team_id)
+
+        # Others: projects where they are created_by OR have an assigned task
+        return Project.objects.filter(
+            Q(team_id=team_id) & 
+            (Q(created_by=user) | Q(tasks__assigned_to=user))
+        ).distinct()
     
     def get_serializer_class(self):
         if self.request.method == "POST":

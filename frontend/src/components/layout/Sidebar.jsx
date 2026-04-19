@@ -37,9 +37,8 @@ const navigationGroups = [
     title: "Workspace",
     items: [
       { label: "Organizations", icon: Building2, to: "/app/organizations", roles: ["ADMIN", "MANAGER"] },
-      { label: "Join", icon: Rocket, to: "/app/join" },
       { label: "Members", icon: UserPlus, to: "/app/members", roles: ["ADMIN", "MANAGER"] },
-      { label: "Teams", icon: Users, to: "/app/organizations" }, // Will navigate to organizations to select a team context
+      { label: "Teams", icon: Users, to: "/app/organizations" }, 
     ]
   },
   {
@@ -160,7 +159,7 @@ const Sidebar = ({ open, onClose }) => {
                   const Icon = item.icon;
                   return (
                     <NavLink
-                      key={item.to}
+                      key={item.label}
                       to={item.to}
                       end={item.to === "/app/dashboard"}
                       onClick={() => onClose?.()}
