@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Plus, 
   RefreshCcw, 
@@ -11,6 +12,7 @@ import {
 import { formatDate, getInitials, getAvatarColor } from "../../utils/helpers";
 
 const ActivityItem = ({ log }) => {
+  const navigate = useNavigate();
   const { user, action, project, organization, timestamp } = log;
 
   // Determine Action Style & Icon
@@ -106,12 +108,15 @@ const ActivityItem = ({ log }) => {
               </div>
             )}
             {project && (
-              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-dark-900 border border-dark-700/50 rounded-lg group-hover:border-brand-500/30 transition-colors">
+              <button 
+                onClick={() => navigate(`/app/projects/${project.id}/tasks`)}
+                className="flex items-center gap-1.5 px-2 py-0.5 bg-dark-900 border border-dark-700/50 rounded-lg group-hover:border-brand-500/30 transition-colors cursor-pointer"
+              >
                 <ExternalLink size={10} className="text-brand-500" />
                 <span className="text-[10px] font-bold text-dark-300 uppercase tracking-tighter">
                   {project.name}
                 </span>
-              </div>
+              </button>
             )}
           </div>
         )}

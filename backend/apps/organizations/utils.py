@@ -31,11 +31,36 @@ def get_user_role(user, organization):
 
 def can_manage_role(requester_role, target_role):
     """
-    Returns True if requester_role is strictly higher than target_role.
+    Returns True if requester_role is higher than or equal to target_role.
+    Strictly forbids Non-Admins from managing Admins.
     """
     req_rank = ROLE_RANK.get(requester_role, -1)
     target_rank = ROLE_RANK.get(target_role, -1)
-    return req_rank > target_rank
+
+    if requester_role == 'ADMIN':
+        return True
+    
+    # Non-admins can only manage roles strictly lower than OR equal to their own, 
+    # but never an ADMIN.
+    if target_role == 'ADMIN':
+        return False
+        
+    return req_rank >= target_rank
+
+def can_assign_role(requester_role, new_role):
+    """
+    Checks if a requester can promote/demote someone to new_role.
+    """
+    req_rank = ROLE_RANK.get(requester_role, -1)
+    new_rank = ROLE_RANK.get(new_role, -1)
+
+    if requester_role == 'ADMIN':
+        return True
+    
+    if new_role == 'ADMIN':
+        return False
+
+    return req_rank >= new_rank
 
 def can_view_join_codes(role):
     """Only ADMIN can view join codes."""

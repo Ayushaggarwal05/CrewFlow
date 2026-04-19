@@ -325,7 +325,7 @@ const Dashboard = () => {
           )}
           
           <Button variant="primary" icon={Plus} size="sm" onClick={() => navigate("/app/organizations")}>
-            New Workspace
+            Manage Workspaces
           </Button>
         </div>
       </div>
@@ -373,8 +373,8 @@ const Dashboard = () => {
             <SectionHeader title="Quick Actions" icon={TrendingUp} />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: "New Task", icon: Plus, color: "brand", action: () => navigate("/app/projects") },
-                  { label: "Add Member", icon: UserPlus, color: "purple", action: () => navigate("/app/organizations") },
+                  { label: "New Task", icon: Plus, color: "brand", action: () => navigate(recentProjects.length > 0 ? `/app/projects/${recentProjects[0].id}/tasks` : "/app/projects") },
+                  { label: "Members", icon: UserPlus, color: "purple", action: () => navigate("/app/organizations") },
                   { label: "Teams", icon: Users, color: "blue", action: () => navigate(`/app/organizations/${orgId}/teams`) },
                   { label: "All Projects", icon: FolderKanban, color: "green", action: () => navigate("/app/projects") },
                 ].map((act, i) => (
@@ -399,8 +399,8 @@ const Dashboard = () => {
               {organizations.map(org => (
                 <GlassCard 
                   key={org.id} 
-                  className="p-6 cursor-pointer border border-dark-700/60 hover:border-brand-500/50 group"
-                  onClick={() => { setSelectedOrg(org.id); navigate(`/app/organizations/${org.id}/teams`); }}
+                  className="p-6 cursor-pointer border border-dark-700/60 hover:border-brand-500/50 group transition-all"
+                  onClick={() => { setSelectedOrg(org.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div className="w-12 h-12 bg-dark-900 border border-dark-700 rounded-2xl flex items-center justify-center text-brand-500 group-hover:scale-110 group-hover:bg-brand-500/10 transition-all">

@@ -14,6 +14,7 @@ import TaskBoard from "../features/tasks/TaskBoard";
 import MyTasks from "../features/tasks/MyTasks";
 import ActivityLog from "../features/activity/ActivityLog";
 import MyActivity from "../features/activity/MyActivity";
+import MembersPage from "../features/members/MembersPage";
 import JoinViaCode from "../features/invites/JoinViaCode";
 import Profile from "../features/profile/Profile";
 
@@ -53,7 +54,7 @@ const AppRouter = () => {
         <Route path="projects/:projectId/tasks" element={<TaskBoard />} />
         <Route path="projects/:projectId/activity" element={<ActivityLog />} />
         <Route path="activity" element={<MyActivity />} />
-
+        <Route path="members" element={<MembersPage />} />
         <Route path="join" element={<JoinViaCode />} />
         <Route path="profile" element={<Profile />} />
       </Route>

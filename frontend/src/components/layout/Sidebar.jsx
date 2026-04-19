@@ -14,6 +14,7 @@ import {
   Plus,
   CheckSquare,
   Users,
+  UserPlus,
   Rocket
 } from "lucide-react";
 import { logout } from "../../features/auth/authSlice";
@@ -37,6 +38,7 @@ const navigationGroups = [
     items: [
       { label: "Organizations", icon: Building2, to: "/app/organizations", roles: ["ADMIN", "MANAGER"] },
       { label: "Join", icon: Rocket, to: "/app/join" },
+      { label: "Members", icon: UserPlus, to: "/app/members", roles: ["ADMIN", "MANAGER"] },
       { label: "Teams", icon: Users, to: "/app/organizations" }, // Will navigate to organizations to select a team context
     ]
   },

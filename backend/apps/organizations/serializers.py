@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Organization , OrganizationMembership
-from .utils import is_admin, get_user_role, can_manage_role, can_view_join_codes
+from .utils import is_admin, get_user_role, can_manage_role, can_assign_role, can_view_join_codes
 
 
 
@@ -125,32 +125,38 @@ class OrganizationMembershipWriteSerializer(OrganizationMembershipBaseSerializer
         if not request:
             return attrs
         
-        # 1. Determine the organization context
+        user = request.user
         org_id = self.context["view"].kwargs.get("org_id")
+        
         try:
             organization = Organization.objects.get(id=org_id)
         except Organization.DoesNotExist:
             raise serializers.ValidationError({"organization": "Organization not found."})
 
-        # 2. Get requester's role
-        requester_role = get_user_role(request.user, organization)
-        if not requester_role:
+        requester_membership = OrganizationMembership.objects.filter(user=user, organization=organization).first()
+        if not requester_membership:
             raise serializers.ValidationError("You are not a member of this organization.")
 
-        # 3. Hierarchy Check: Assigning/Updating to a role
+        requester_role = requester_membership.role
         target_role = attrs.get("role")
-        if target_role:
-            if not can_manage_role(requester_role, target_role):
+
+        # 1. Self-management check
+        if self.instance and self.instance.user == user:
+            if target_role and target_role != self.instance.role:
+                raise serializers.ValidationError("You cannot change your own role.")
+
+        # 2. Managing an existing member
+        if self.instance:
+            if not can_manage_role(requester_role, self.instance.role):
                 raise serializers.ValidationError(
-                    f"You cannot assign the {target_role} role. Your role ({requester_role}) is not high enough."
+                    f"You cannot manage this member. Your role ({requester_role}) is not high enough."
                 )
 
-        # 4. Hierarchy Check: Managing an existing member
-        if self.instance:
-            current_role = self.instance.role
-            if not can_manage_role(requester_role, current_role):
+        # 3. Assigning a new role
+        if target_role:
+            if not can_assign_role(requester_role, target_role):
                 raise serializers.ValidationError(
-                    f"You cannot manage this member. Your role ({requester_role}) must be higher than their current role ({current_role})."
+                    f"You cannot assign the {target_role} role. Your role ({requester_role}) is not high enough."
                 )
 
         return attrs

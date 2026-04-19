@@ -28,6 +28,10 @@ export const getOrgMemberships = (orgId) =>
 export const createOrgMembership = (orgId, data) =>
   api.post(`/api/organizations/${orgId}/memberships/`, data);
 
+// UPDATE membership
+export const patchOrgMembership = (orgId, membershipId, data) => 
+  api.patch(`/api/organizations/${orgId}/memberships/${membershipId}/`, data);
+
 // DELETE membership
 export const deleteOrgMembership = (orgId, membershipId) =>
   api.delete(`/api/organizations/${orgId}/memberships/${membershipId}/`);

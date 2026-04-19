@@ -114,8 +114,10 @@ class OrganizationMembershipListCreateView(generics.ListCreateAPIView):
 
 class OrganizationMembershipDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_permissions(self):
-        if self.request.method in ["PUT", "PATCH", "DELETE"]:
+        if self.request.method == "DELETE":
             return [IsAuthenticated(), IsOrganizationAdmin()]
+        if self.request.method in ["PUT", "PATCH"]:
+            return [IsAuthenticated(), IsManagerOrAdmin()]
         return [IsAuthenticated(), IsOrganizationMember()]
 
     def get_queryset(self):
