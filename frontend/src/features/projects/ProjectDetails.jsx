@@ -23,9 +23,9 @@ const ProjectDetails = () => {
   const { isAdmin, isManager, role } = useRole();
   const { user } = useSelector((state) => state.auth);
   
-  const isLead = role === "LEAD" || project?.created_by === user?.id;
   // for data handling
   const [project, setProject] = useState(null);
+  const isLead = role === "LEAD" || project?.created_by === user?.id;
   const [tasks, setTasks] = useState([]);
   const [teamUsers, setTeamUsers] = useState([]);
   // holding states between

@@ -53,7 +53,7 @@ class OrganizationDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return Organization.objects.filter(memberships__user = user)
+        return Organization.objects.filter(Q(memberships__user=user) | Q(owner=user)).distinct()
 
     def get_serializer_class(self):
         if self.request.method in ["PUT", "PATCH"]:
@@ -83,11 +83,15 @@ class OrganizationMembershipListCreateView(generics.ListCreateAPIView):
         try:
             my_membership = OrganizationMembership.objects.get(user=user, organization_id=org_id)
         except OrganizationMembership.DoesNotExist:
-            return OrganizationMembership.objects.none()
+            organization = Organization.objects.filter(id=org_id).first()
+            if not (organization and organization.owner == user):
+                return OrganizationMembership.objects.none()
+            # If they are the owner but not a member, we'll continue to show memberships
+            my_membership = None
 
         queryset = OrganizationMembership.objects.filter(organization_id=org_id).select_related("user", "manager__user")
 
-        if my_membership.role in ["OWNER", "ADMIN"]:
+        if not my_membership or my_membership.role in ["ADMIN"]:
             return queryset
         
         if my_membership.role in ["MANAGER", "LEAD"]:
@@ -128,11 +132,14 @@ class OrganizationMembershipDetailView(generics.RetrieveUpdateDestroyAPIView):
         try:
             my_membership = OrganizationMembership.objects.get(user=user, organization_id=org_id)
         except OrganizationMembership.DoesNotExist:
-            return OrganizationMembership.objects.none()
+            organization = Organization.objects.filter(id=org_id).first()
+            if not (organization and organization.owner == user):
+                return OrganizationMembership.objects.none()
+            my_membership = None
 
         queryset = OrganizationMembership.objects.filter(organization_id=org_id)
 
-        if my_membership.role in ["OWNER", "ADMIN"]:
+        if not my_membership or my_membership.role in ["ADMIN"]:
             return queryset
         elif my_membership.role in ["MANAGER", "LEAD"]:
             # Can see themselves and their subordinates
@@ -185,7 +192,12 @@ class DashboardStatsView(APIView):
         try:
             membership = OrganizationMembership.objects.get(user=user, organization_id=org_id)
         except OrganizationMembership.DoesNotExist:
-            return Response({"detail": "Not a member of this organization."}, status=403)
+            organization = Organization.objects.filter(id=org_id).first()
+            if not (organization and organization.owner == user):
+                return Response({"detail": "Not a member of this organization."}, status=403)
+            # Define a dummy membership with 'ADMIN' role for stats logic
+            class DummyMembership: role = "ADMIN"
+            membership = DummyMembership()
 
         from apps.teams.models import Team, TeamMembership
         from apps.projects.models import Project

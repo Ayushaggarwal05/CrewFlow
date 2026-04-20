@@ -42,6 +42,9 @@ class OrganizationBaseSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if not (request and request.user.is_authenticated):
             return None
+        if obj.owner == request.user:
+            return "ADMIN"
+            
         membership = OrganizationMembership.objects.filter(user=request.user, organization=obj).first()
         return membership.role if membership else None
 

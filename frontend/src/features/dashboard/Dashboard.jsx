@@ -237,6 +237,7 @@ const Dashboard = () => {
     );
   };
 
+
   const renderMyTasks = () => (
     <div className="space-y-4">
       <SectionHeader title="Your Focus" icon={LayoutDashboard} />
@@ -336,6 +337,7 @@ const Dashboard = () => {
         {/* Main Content Areas */}
         <div className="lg:col-span-8 space-y-10">
           
+
           {/* My Team (For Admins/Managers) */}
           {(role !== "MEMBER") && (
             <div className="space-y-4">
@@ -406,7 +408,7 @@ const Dashboard = () => {
                     <div className="w-12 h-12 bg-dark-900 border border-dark-700 rounded-2xl flex items-center justify-center text-brand-500 group-hover:scale-110 group-hover:bg-brand-500/10 transition-all">
                       <Building2 size={24} />
                     </div>
-                    <Badge variant={org.user_role === 'OWNER' ? 'ADMIN' : org.user_role} label={org.user_role} size="sm" />
+                    <Badge variant={org.user_role} label={org.user_role} size="sm" />
                   </div>
                   <h3 className="text-lg font-black text-white group-hover:text-brand-400 transition-colors uppercase tracking-tight">{org.name}</h3>
                   <div className="flex items-center gap-4 mt-4 text-[11px] font-bold text-dark-500 uppercase tracking-widest">
