@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FolderKanban, ArrowRight, Rocket } from "lucide-react";
+import { FolderKanban, ArrowRight, Rocket, Plus } from "lucide-react";
 
 import useCurrentOrg from "../../hooks/useCurrentOrg";
 import { getTeams } from "../teams/teamAPI";
@@ -123,6 +123,9 @@ const ProjectList = () => {
           ))}
           <Button variant="secondary" size="sm" icon={Rocket} onClick={() => setShowJoin(true)}>
             Join
+          </Button>
+          <Button size="sm" icon={Plus} onClick={() => navigate("/app/organizations")}>
+            New Project
           </Button>
         </div>
       </div>

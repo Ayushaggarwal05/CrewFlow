@@ -108,10 +108,10 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { 
-    orgId, 
-    organizations, 
-    stats: orgStats, 
+  const {
+    orgId,
+    organizations,
+    stats: orgStats,
     loading: orgLoading,
     setSelectedOrg,
     refreshOrgs,
@@ -161,7 +161,7 @@ const Dashboard = () => {
           teams.slice(0, 3).map(t => getProjects(t.id).catch(() => ({ data: [] })))
         );
         const allProj = projectRes.flatMap(r => Array.isArray(r.data) ? r.data : []);
-        setRecentProjects(allProj.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5));
+        setRecentProjects(allProj.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5));
       }
 
       if (role === "MANAGER" || role === "LEAD" || role === "ADMIN") {
@@ -182,10 +182,10 @@ const Dashboard = () => {
   // Actions
   const handleMarkDone = async (task) => {
     try {
-      await dispatch(toggleTaskDone({ 
-        projectId: task.project, 
-        taskId: task.id, 
-        currentStatus: task.status 
+      await dispatch(toggleTaskDone({
+        projectId: task.project,
+        taskId: task.id,
+        currentStatus: task.status
       })).unwrap();
       toast.success("Task status updated! 🎉");
       dispatch(fetchOrgStats(orgId));
@@ -252,7 +252,7 @@ const Dashboard = () => {
           {myTasks.slice(0, 5).map(task => (
             <GlassCard key={task.id} className="p-4 border border-dark-700/30 flex items-center justify-between hover:border-brand-500/30">
               <div className="flex items-start gap-3 min-w-0">
-                <button 
+                <button
                   onClick={() => handleMarkDone(task)}
                   className="mt-1 w-5 h-5 rounded-full border-2 border-dark-600 flex items-center justify-center hover:border-brand-500 hover:text-brand-500 transition-colors"
                   disabled={tasksLoading}
@@ -272,7 +272,7 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => navigate(`/app/projects/${task.project}/tasks`)}
                 className="p-2 text-dark-500 hover:text-dark-100 transition-colors"
               >
@@ -298,7 +298,7 @@ const Dashboard = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-black text-white tracking-tight">Bonjour, {firstName}</h1>
+            <h1 className="text-3xl font-black text-white tracking-tight">Welcome, {firstName}</h1>
             <Rocket className="text-brand-500 animate-bounce" size={24} />
           </div>
           <p className="text-dark-400 font-medium">
@@ -324,7 +324,7 @@ const Dashboard = () => {
               </select>
             </div>
           )}
-          
+
           <Button variant="primary" icon={Plus} size="sm" onClick={() => navigate("/app/organizations")}>
             Manage Workspaces
           </Button>
@@ -336,7 +336,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Content Areas */}
         <div className="lg:col-span-8 space-y-10">
-          
+
 
           {/* My Team (For Admins/Managers) */}
           {(role !== "MEMBER") && (
@@ -347,7 +347,7 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {subordinates.length === 0 ? (
                   <div className="md:col-span-3">
-                    <EmptyState 
+                    <EmptyState
                       icon={UserPlus}
                       title="Lone Wolf?"
                       description="You don't have any direct subordinates in this workspace."
@@ -374,23 +374,23 @@ const Dashboard = () => {
           <div className="space-y-4 font-inter">
             <SectionHeader title="Quick Actions" icon={TrendingUp} />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { label: "New Task", icon: Plus, color: "brand", action: () => navigate(recentProjects.length > 0 ? `/app/projects/${recentProjects[0].id}/tasks` : "/app/projects") },
-                  { label: "Members", icon: UserPlus, color: "purple", action: () => navigate("/app/organizations") },
-                  { label: "Teams", icon: Users, color: "blue", action: () => navigate(`/app/organizations/${orgId}/teams`) },
-                  { label: "All Projects", icon: FolderKanban, color: "green", action: () => navigate("/app/projects") },
-                ].map((act, i) => (
-                  <button 
-                    key={i} 
-                    onClick={act.action}
-                    className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-dark-800/40 border border-dark-700/50 hover:border-brand-500/50 hover:bg-dark-700/50 transition-all group"
-                  >
-                    <div className={`p-2.5 rounded-xl bg-dark-800 text-${act.color}-400 group-hover:scale-110 transition-transform`}>
-                      <act.icon size={20} />
-                    </div>
-                    <span className="text-xs font-bold text-dark-300">{act.label}</span>
-                  </button>
-                ))}
+              {[
+                { label: "New Task", icon: Plus, color: "brand", action: () => navigate(recentProjects.length > 0 ? `/app/projects/${recentProjects[0].id}/tasks` : "/app/projects") },
+                { label: "Members", icon: UserPlus, color: "purple", action: () => navigate("/app/organizations") },
+                { label: "Teams", icon: Users, color: "blue", action: () => navigate(`/app/organizations/${orgId}/teams`) },
+                { label: "All Projects", icon: FolderKanban, color: "green", action: () => navigate("/app/projects") },
+              ].map((act, i) => (
+                <button
+                  key={i}
+                  onClick={act.action}
+                  className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-dark-800/40 border border-dark-700/50 hover:border-brand-500/50 hover:bg-dark-700/50 transition-all group"
+                >
+                  <div className={`p-2.5 rounded-xl bg-dark-800 text-${act.color}-400 group-hover:scale-110 transition-transform`}>
+                    <act.icon size={20} />
+                  </div>
+                  <span className="text-xs font-bold text-dark-300">{act.label}</span>
+                </button>
+              ))}
             </div>
           </div>
 
@@ -399,8 +399,8 @@ const Dashboard = () => {
             <SectionHeader title="Your Workspaces" icon={Building2} />
             <div className="grid md:grid-cols-2 gap-4">
               {organizations.map(org => (
-                <GlassCard 
-                  key={org.id} 
+                <GlassCard
+                  key={org.id}
                   className="p-6 cursor-pointer border border-dark-700/60 hover:border-brand-500/50 group transition-all"
                   onClick={() => { setSelectedOrg(org.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 >
@@ -423,16 +423,16 @@ const Dashboard = () => {
 
         {/* Sidebar Widgets - Activity Feed & My Tasks */}
         <div className="lg:col-span-4 space-y-10">
-          
+
           {/* Dynamic Progress Indicator (Sidebar Top) */}
           <GlassCard className="bg-gradient-to-br from-brand-600/10 to-transparent border-brand-500/20">
             <h4 className="text-xs font-black text-brand-400 uppercase tracking-widest mb-4">Workspace Velocity</h4>
             <div className="flex items-end gap-2 mb-2">
               <span className="text-4xl font-black text-white">{orgStats?.completion_percentage || 0}%</span>
-              <span className="text-sm font-bold text-brand-500 mb-1.5 flex items-center gap-0.5"><TrendingUp size={14}/> +12%</span>
+              <span className="text-sm font-bold text-brand-500 mb-1.5 flex items-center gap-0.5"><TrendingUp size={14} /> +12%</span>
             </div>
             <div className="w-full h-3 bg-dark-900 rounded-full overflow-hidden border border-dark-700/50">
-              <div 
+              <div
                 className="h-full bg-gradient-to-r from-brand-600 to-brand-400 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(var(--brand-500-rgb),0.5)]"
                 style={{ width: `${orgStats?.completion_percentage || 0}%` }}
               />
