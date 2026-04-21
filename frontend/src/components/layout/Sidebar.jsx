@@ -37,7 +37,7 @@ const navigationGroups = [
     title: "Workspace",
     items: [
       { label: "Organizations", icon: Building2, to: "/app/organizations", roles: ["ADMIN", "MANAGER"] },
-      { label: "Members", icon: UserPlus, to: "/app/members", roles: ["ADMIN", "MANAGER"] },
+      { label: "Members", icon: UserPlus, to: "/app/members", roles: ["ADMIN"] },
       { label: "Teams", icon: Users, to: "/app/organizations" },
     ]
   },

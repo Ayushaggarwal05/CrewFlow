@@ -13,6 +13,8 @@ class TeamBaseSerializer(serializers.ModelSerializer):
     members = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     join_code = serializers.SerializerMethodField()
     user_role = serializers.SerializerMethodField()
+    manager = serializers.PrimaryKeyRelatedField(read_only=True)
+    manager_name = serializers.SerializerMethodField()
 
 
     class Meta:
@@ -22,6 +24,8 @@ class TeamBaseSerializer(serializers.ModelSerializer):
             "name",
             "organization",
             "members",
+            "manager",
+            "manager_name",
             "created_at",
             "join_code",
             "user_role",
@@ -31,6 +35,8 @@ class TeamBaseSerializer(serializers.ModelSerializer):
             "id",
             "organization",
             "members",
+            "manager",
+            "manager_name",
             "created_at",
             "join_code",
             "user_role",
@@ -53,6 +59,11 @@ class TeamBaseSerializer(serializers.ModelSerializer):
             return None
         return get_effective_role(request.user, obj.organization, team=obj)
 
+    def get_manager_name(self, obj):
+        if obj.manager:
+            return obj.manager.full_name or obj.manager.email
+        return None
+
 
 class TeamSerializer(TeamBaseSerializer):
     pass
@@ -64,12 +75,26 @@ class TeamWriteSerializer(TeamBaseSerializer):
             "name"
         ]
 
-    def create(self , validated_data):
+    def create(self, validated_data):
         org_id = self.context["view"].kwargs["org_id"]
+        request = self.context.get("request")
 
-        organization = Organization.objects.get(id = org_id)
+        organization = Organization.objects.get(id=org_id)
 
-        team = Team.objects.create(organization = organization , **validated_data)
+        team = Team.objects.create(
+            organization=organization,
+            manager=request.user if request else None,
+            **validated_data,
+        )
+
+        # Auto-enroll the creator as MANAGER of the team they just created
+        if request and request.user:
+            TeamMembership.objects.get_or_create(
+                team=team,
+                user=request.user,
+                defaults={"role": "MANAGER"},
+            )
+
         return team
         
 

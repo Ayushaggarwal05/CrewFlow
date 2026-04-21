@@ -30,5 +30,8 @@ export const createTeamMembership = (teamId, data) =>
 export const deleteTeamMembership = (teamId, membershipId) =>
   api.delete(`/api/teams/teams/${teamId}/memberships/${membershipId}/`);
 
+export const updateTeamMembership = (teamId, membershipId, data) =>
+  api.patch(`/api/teams/teams/${teamId}/memberships/${membershipId}/`, data);
+
 export const getTeamUsers = (teamId) =>
   api.get(`/api/users/teams/${teamId}/users/`);

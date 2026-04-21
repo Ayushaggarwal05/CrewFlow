@@ -155,3 +155,47 @@ class IsTeamManagerOrAdminFromURL(BasePermission):
             organization=team.organization,
             role__in=["ADMIN", "MANAGER", "LEAD"],
         ).exists()
+
+
+class IsTeamManagerOrOrgAdmin(BasePermission):
+    """
+    Allows access only to:
+    - Org admins (org role = ADMIN, or the org owner)
+    - The team's explicitly assigned manager (team.manager == request.user)
+
+    Works for both team-detail endpoints (pk kwarg) and
+    team-membership endpoints (team_id kwarg).
+    """
+
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated):
+            return False
+
+        # Resolve team PK from URL — membership endpoints use team_id; team
+        # detail endpoints use pk.
+        team_id = view.kwargs.get("team_id") or view.kwargs.get("pk")
+        if not team_id:
+            return False
+
+        from apps.teams.models import Team
+
+        team = Team.objects.select_related("organization", "manager").filter(id=team_id).first()
+        if not team:
+            return False
+
+        org = team.organization
+
+        # Org owner always wins
+        if org.owner == request.user:
+            return True
+
+        # Org-level ADMIN
+        if OrganizationMembership.objects.filter(
+            user=request.user,
+            organization=org,
+            role="ADMIN",
+        ).exists():
+            return True
+
+        # Explicit team manager
+        return team.manager_id is not None and team.manager_id == request.user.id

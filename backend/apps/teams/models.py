@@ -12,6 +12,7 @@ def _generate_code(prefix: str, length: int = 6) -> str:
 
 
 TEAM_ROLE_CHOICES = [
+    ("MANAGER", "Manager"),
     ("LEAD", "Lead"),
     ("MEMBER", "Member"),
 ]
@@ -21,6 +22,13 @@ class Team(models.Model):
     name = models.CharField(max_length=255)
     organization = models.ForeignKey("organizations.Organization", on_delete=models.CASCADE, related_name="teams")
     members = models.ManyToManyField("users.User", through="TeamMembership", related_name="teams")
+    manager = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="managed_teams",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

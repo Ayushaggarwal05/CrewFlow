@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { Users, Plus, ArrowLeft, Trash2 } from "lucide-react";
 import { getTeams, createTeam, deleteTeam } from "./teamAPI";
 import { getOrganization } from "../organizations/organizationAPI";
@@ -18,6 +19,7 @@ const TeamList = () => {
   const { orgId } = useParams();
   const navigate = useNavigate();
   const { isAdmin, isManager } = useRole();
+  const { user } = useSelector((state) => state.auth);
 
   const [org, setOrg] = useState(null);
   const [teams, setTeams] = useState([]);
@@ -166,7 +168,8 @@ const TeamList = () => {
                   <Users size={20} className="text-purple-400" />
                 </div>
 
-                {isAdmin && (
+                {/* Delete: only org admin OR the team's own manager */}
+                {(isAdmin || team.manager === user?.id) && (
                   <button
                     onClick={(e) => handleDelete(e, team.id)}
                     className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 text-dark-400 hover:text-red-400 hover:bg-red-500/10 transition-all"

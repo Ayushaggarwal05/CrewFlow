@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Users,
@@ -18,6 +19,7 @@ import {
   getTeamMemberships,
   createTeamMembership,
   deleteTeamMembership,
+  updateTeamMembership,
 } from "./teamAPI";
 import {
   getProjects,
@@ -35,11 +37,17 @@ import JoinCodeCard from "../invites/JoinCodeCard";
 import JoinCodeModal from "../invites/JoinCodeModal";
 import { Rocket } from "lucide-react";
 
+const ROLE_ORDER = { MANAGER: 0, LEAD: 1, MEMBER: 2 };
+
+// Derive whether current user is the explicit manager of THIS team.
+// Computed as a derived value inside the component using team state.
+
 const TeamDetails = () => {
   const { orgId, teamId } = useParams();
   const navigate = useNavigate();
   const { isAdmin, isManager } = useRole();
   const { orgId: currentOrgId } = useCurrentOrg();
+  const { user } = useSelector((state) => state.auth);
 
   const [team, setTeam] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -190,6 +198,44 @@ const TeamDetails = () => {
     }
   };
 
+  // Role update — Admin can assign MANAGER/LEAD/MEMBER; Team manager can assign LEAD/MEMBER
+  const handleUpdateRole = async (membershipId, targetUserId, newRole) => {
+    try {
+      await updateTeamMembership(teamId, membershipId, { role: newRole });
+
+      // Update memberships list optimistically
+      setMemberships((prev) =>
+        prev.map((m) => {
+          if (m.id === membershipId) return { ...m, role: newRole, role_display: newRole };
+          // If promoting someone to MANAGER, demote the old manager in local state too
+          if (newRole === "MANAGER" && m.user === team?.manager) return { ...m, role: "LEAD", role_display: "LEAD" };
+          return m;
+        })
+      );
+
+      // Sync team.manager in local state
+      if (newRole === "MANAGER") {
+        setTeam((prev) => ({ ...prev, manager: targetUserId }));
+      } else if (newRole !== "MANAGER" && targetUserId === team?.manager) {
+        setTeam((prev) => ({ ...prev, manager: null }));
+      }
+
+      toast.success("Role updated");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update role");
+    }
+  };
+
+  // Sort memberships: LEAD first, then MEMBER
+  const sortedMemberships = [...memberships].sort(
+    (a, b) => (ROLE_ORDER[a.role] ?? 99) - (ROLE_ORDER[b.role] ?? 99)
+  );
+
+  // isTeamManager: true only if this user is the explicit manager of THIS team.
+  // Separate from org-level isManager so multiple managers can coexist.
+  const isTeamManager = team?.manager === user?.id;
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -276,8 +322,9 @@ const TeamDetails = () => {
       ) : (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <p className="text-dark-400 font-medium">{memberships.length} members</p>
-            {(isAdmin || isManager) && (
+            <p className="text-dark-400 font-medium">{sortedMemberships.length} members</p>
+            {/* Members tab: gate on isAdmin OR isTeamManager (team-level ownership) */}
+            {(isAdmin || isTeamManager) && (
               <Button onClick={() => setShowAddMember(true)} icon={UserPlus}>
                 Add Member
               </Button>
@@ -285,52 +332,100 @@ const TeamDetails = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {memberships.map((m) => (
-              <div key={m.id} className="card-hover p-5 relative group">
-                <div className="flex items-start gap-4">
-                  <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg ${getAvatarColor(
-                      m.user_full_name || m.user_email
-                    )}`}
-                  >
-                    {getInitials(m.user_full_name || "U")}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-dark-50 text-base truncate">
-                        {m.user_full_name || "Unknown User"}
-                      </p>
-                      <Badge variant={m.role} label={m.role_display || m.role} />
+            {sortedMemberships.map((m) => {
+              const isOwnCard = m.user === user?.id;
+              const isThisTheTeamManager = m.user === team?.manager;
+              return (
+                <div key={m.id} className="card-hover p-5 relative group">
+                  <div className="flex items-start gap-4">
+                    <div
+                      className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg ${getAvatarColor(
+                        m.user_full_name || m.user_email
+                      )}`}
+                    >
+                      {getInitials(m.user_full_name || "U")}
                     </div>
-                    <p className="text-sm text-dark-400 truncate">{m.user_email}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-dark-50 text-base truncate">
+                          {m.user_full_name || "Unknown User"}
+                        </p>
 
-                    <div className="mt-4 space-y-1.5 border-t border-dark-700/50 pt-3">
-                      <div className="flex items-center gap-2 text-xs text-dark-500">
-                        <Users size={12} className="text-brand-500" />
-                        <span className="font-medium text-dark-400">Manager:</span>
-                        <span className="text-dark-300">{m.manager_name || "None (Top Level)"}</span>
+                        {/*
+                          Role display logic:
+                          - Own card: always badge (no one changes their own role)
+                          - Admin on any other card: MANAGER / LEAD / MEMBER dropdown
+                          - Team manager on non-manager, non-own card: LEAD / MEMBER dropdown
+                          - Everyone else: badge only
+                        */}
+                        {isOwnCard ? (
+                          isThisTheTeamManager ? (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-brand-600/20 text-brand-400 font-semibold border border-brand-500/30">
+                              Manager
+                            </span>
+                          ) : (
+                            <Badge variant={m.role} label={m.role_display || m.role} />
+                          )
+                        ) : isAdmin ? (
+                          // Admin can assign MANAGER, LEAD, or MEMBER to anyone else
+                          <select
+                            value={isThisTheTeamManager ? "MANAGER" : m.role}
+                            onChange={(e) => handleUpdateRole(m.id, m.user, e.target.value)}
+                            className="cursor-pointer text-xs px-2 py-1 rounded-lg border border-dark-600 bg-dark-800 text-dark-200 focus:outline-none focus:border-brand-500 transition-colors hover:border-brand-400"
+                          >
+                            <option value="MANAGER">MANAGER</option>
+                            <option value="LEAD">LEAD</option>
+                            <option value="MEMBER">MEMBER</option>
+                          </select>
+                        ) : isTeamManager && !isThisTheTeamManager ? (
+                          // Team manager can assign LEAD or MEMBER to non-manager members
+                          <select
+                            value={m.role}
+                            onChange={(e) => handleUpdateRole(m.id, m.user, e.target.value)}
+                            className="cursor-pointer text-xs px-2 py-1 rounded-lg border border-dark-600 bg-dark-800 text-dark-200 focus:outline-none focus:border-brand-500 transition-colors hover:border-brand-400"
+                          >
+                            <option value="LEAD">LEAD</option>
+                            <option value="MEMBER">MEMBER</option>
+                          </select>
+                        ) : isThisTheTeamManager ? (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-brand-600/20 text-brand-400 font-semibold border border-brand-500/30">
+                            Manager
+                          </span>
+                        ) : (
+                          <Badge variant={m.role} label={m.role_display || m.role} />
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-dark-500">
-                        <Clock size={12} className="text-green-500" />
-                        <span className="font-medium text-dark-400">Joined:</span>
-                        <span className="text-dark-300">{formatDate(m.joined_at)}</span>
+                      <p className="text-sm text-dark-400 truncate">{m.user_email}</p>
+
+                      <div className="mt-4 space-y-1.5 border-t border-dark-700/50 pt-3">
+                        <div className="flex items-center gap-2 text-xs text-dark-500">
+                          <Users size={12} className="text-brand-500" />
+                          <span className="font-medium text-dark-400">Manager:</span>
+                          <span className="text-dark-300">{m.manager_name || "None (Top Level)"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-dark-500">
+                          <Clock size={12} className="text-green-500" />
+                          <span className="font-medium text-dark-400">Joined:</span>
+                          <span className="text-dark-300">{formatDate(m.joined_at)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Remove Button — only team manager or admin */}
+                  {(isAdmin || isTeamManager) && (
+                    <button
+                      onClick={() => handleRemoveMember(m.id)}
+                      className="absolute top-4 right-4 p-2 rounded-lg bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
+                      title="Remove Member"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
-
-                {/* Remove Button - Visible on hover/group */}
-                {(isAdmin || isManager) && (
-                  <button
-                    onClick={() => handleRemoveMember(m.id)}
-                    className="absolute top-4 right-4 p-2 rounded-lg bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
-                    title="Remove Member"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
