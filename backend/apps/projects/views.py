@@ -1,14 +1,14 @@
 from django.shortcuts import render
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from .models import Project
-from .serializers import ProjectWriteSerializer , ProjectSerializer
-# from rest_framework.exceptions import PermissionDenied
+from .serializers import ProjectWriteSerializer, ProjectSerializer
 from apps.common.permissions import IsManagerOrAdmin, IsTeamManagerOrAdminFromURL
-# Create your views here.
 
 
-#------------------------list nad create -----------------------
+#------------------------list and create -----------------------
 class ProjectListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -53,24 +53,22 @@ class ProjectListCreateView(generics.ListCreateAPIView):
         return ProjectSerializer
 
     def get_permissions(self):
-        # GET: any authenticated org member can view team projects (queryset is filtered).
-        # POST: only MANAGER/ADMIN of the team org can create.
         if self.request.method == "POST":
             return [IsAuthenticated(), IsTeamManagerOrAdminFromURL()]
         return [IsAuthenticated()]
     
 
-#-----------------------Update, delete , detail----------------
+#-----------------------Update, delete, detail----------------
 
 class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthenticated,IsManagerOrAdmin]
+    permission_classes = [IsAuthenticated, IsManagerOrAdmin]
 
     def get_queryset(self):
         user = self.request.user
         team_id = self.kwargs["team_id"]
 
         return Project.objects.filter(
-            team__id = team_id,
+            team__id=team_id,
             team__organization__memberships__user=user
         ).distinct()
     
@@ -78,3 +76,37 @@ class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method in ["PUT","PATCH"]:
             return ProjectWriteSerializer
         return ProjectSerializer
+
+
+# ---------------------------------------------------------------
+# GET /api/projects/<project_id>/members/
+# Read-only: returns team memberships scoped to this project's team.
+# No new model — project members are derived from TeamMembership.
+# ---------------------------------------------------------------
+
+class ProjectMembersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id):
+        from .models import ProjectMembership
+        from .serializers import ProjectMembershipSerializer
+
+        # Scope to projects visible to the requesting user
+        project = Project.objects.select_related(
+            "team__organization"
+        ).filter(
+            id=project_id,
+            team__organization__memberships__user=request.user,
+        ).distinct().first()
+
+        if not project:
+            return Response({"detail": "Not found."}, status=404)
+
+        # Only users who explicitly joined THIS project
+        memberships = ProjectMembership.objects.filter(
+            project=project
+        ).select_related("user")
+
+        serializer = ProjectMembershipSerializer(memberships, many=True)
+        return Response(serializer.data)
+

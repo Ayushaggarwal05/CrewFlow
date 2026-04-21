@@ -159,23 +159,33 @@ class JoinViaCodeView(APIView):
         team = project.team
         org = team.organization
 
-        if TeamMembership.objects.filter(user=user, team=team).exists():
-             return Response(
-                {"detail": "You are already a member of this team/project."},
+        from apps.projects.models import ProjectMembership
+
+        # Check project-specific membership (not team)
+        if ProjectMembership.objects.filter(user=user, project=project).exists():
+            return Response(
+                {"detail": "You are already a member of this project."},
                 status=status.HTTP_409_CONFLICT,
             )
 
-        # Ensure memberships up the chain
+        # Ensure org membership
         OrganizationMembership.objects.get_or_create(
             user=user,
             organization=org,
             defaults={"role": "MEMBER"},
         )
 
-        # REDESIGN: Always join as MEMBER
-        TeamMembership.objects.create(
+        # Ensure team membership (needed to access team resources)
+        TeamMembership.objects.get_or_create(
             user=user,
             team=team,
+            defaults={"role": "MEMBER"},
+        )
+
+        # Create project-specific membership (this is what appears in project members list)
+        ProjectMembership.objects.create(
+            user=user,
+            project=project,
             role="MEMBER",
         )
 
@@ -190,6 +200,7 @@ class JoinViaCodeView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
 
 
 

@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { ArrowLeft, Plus, X, Send } from "lucide-react";
+import { ArrowLeft, Plus, X, Send, Users } from "lucide-react";
 
-import { getProject } from "./projectAPI";
+import { getProject, getProjectMemberships } from "./projectAPI";
 import { getTasks, createTask, updateTask, deleteTask } from "../tasks/taskAPI";
 import { getComments, createComment } from "../comments/commentAPI";
 import { getTeamUsers } from "../teams/teamAPI";
 import useRole from "../../hooks/useRole";
+import { getInitials, getAvatarColor } from "../../utils/helpers";
 
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -28,6 +29,8 @@ const ProjectDetails = () => {
   const isLead = role === "LEAD" || project?.created_by === user?.id;
   const [tasks, setTasks] = useState([]);
   const [teamUsers, setTeamUsers] = useState([]);
+  const [projectMembers, setProjectMembers] = useState([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
   // holding states between
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -70,6 +73,17 @@ const ProjectDetails = () => {
       toast.error("Failed to load project");
     } finally {
       setLoading(false);
+    }
+
+    // Fetch project members separately (non-blocking)
+    setLoadingMembers(true);
+    try {
+      const membersRes = await getProjectMemberships(projectId);
+      setProjectMembers(membersRes.data?.results || membersRes.data || []);
+    } catch (err) {
+      console.error("Members fetch failed", err);
+    } finally {
+      setLoadingMembers(false);
     }
   }, [teamId, projectId]);
 
@@ -315,6 +329,71 @@ const ProjectDetails = () => {
           </form>
         </div>
       )}
+
+      {/* ── Project Members (read-only) ── */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Users size={16} className="text-brand-400" />
+          <h2 className="text-sm font-semibold text-dark-300 uppercase tracking-wider">Project Members</h2>
+          <span className="text-xs text-dark-500 ml-auto">{projectMembers.length} member{projectMembers.length !== 1 ? "s" : ""}</span>
+        </div>
+
+        {loadingMembers ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="card p-4 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-dark-700" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-3 bg-dark-700 rounded w-1/2" />
+                    <div className="h-2 bg-dark-800 rounded w-2/3" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : projectMembers.length === 0 ? (
+          <p className="text-sm text-dark-500 italic">No members have joined this project yet</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {projectMembers.map((m) => (
+              <div key={m.id} className="card p-4">
+                <div className="flex items-center gap-3">
+                  {/* Avatar */}
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-lg flex-shrink-0 ${
+                      getAvatarColor(m.user_full_name || m.user_email || "")
+                    }`}
+                  >
+                    {getInitials(m.user_full_name || "U")}
+                  </div>
+
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-dark-50 text-sm truncate">
+                      {m.user_full_name || "Unknown User"}
+                    </p>
+                    {m.user_email && (
+                      <p className="text-xs text-dark-400 truncate">{m.user_email}</p>
+                    )}
+                  </div>
+
+                  {/* Role badge — read-only */}
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${
+                    m.role === "MANAGER"
+                      ? "bg-brand-600/20 text-brand-400 border border-brand-500/30"
+                      : m.role === "LEAD"
+                      ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                      : "bg-dark-700 text-dark-300 border border-dark-600"
+                  }`}>
+                    {m.role_display || m.role}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Create Task Modal */}
       <Modal

@@ -1,10 +1,5 @@
 import api from "../../services/api";
 
-// GET  /api/projects/teams/<team_id>/projects/
-// POST /api/projects/teams/<team_id>/projects/
-// GET  /api/projects/teams/<team_id>/projects/<pk>/
-// PATCH/DELETE as well
-
 export const getProjects = (teamId) =>
   api.get(`/api/projects/teams/${teamId}/projects/`);
 
@@ -19,3 +14,8 @@ export const updateProject = (teamId, projectId, data) =>
 
 export const deleteProject = (teamId, projectId) =>
   api.delete(`/api/projects/teams/${teamId}/projects/${projectId}/`);
+
+// GET /api/projects/<projectId>/members/
+// Returns project-scoped members (team members of the project's team).
+export const getProjectMemberships = (projectId) =>
+  api.get(`/api/projects/${projectId}/members/`);

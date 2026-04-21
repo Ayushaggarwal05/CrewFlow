@@ -1,8 +1,29 @@
 from rest_framework import serializers
 from rest_framework.exceptions import NotFound, PermissionDenied
-from .models import Project
+from .models import Project, ProjectMembership
 from apps.teams.models import Team
 from apps.organizations.utils import is_admin, get_user_role, can_view_join_codes, get_effective_role
+
+
+# ── Project Membership (read-only) ──────────────────────────────────────────
+class ProjectMembershipSerializer(serializers.ModelSerializer):
+    user_full_name = serializers.SerializerMethodField()
+    user_email = serializers.SerializerMethodField()
+    role_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProjectMembership
+        fields = ["id", "user", "user_full_name", "user_email", "role", "role_display", "joined_at"]
+        read_only_fields = fields
+
+    def get_user_full_name(self, obj):
+        return getattr(obj.user, "full_name", None) or obj.user.email
+
+    def get_user_email(self, obj):
+        return obj.user.email
+
+    def get_role_display(self, obj):
+        return obj.get_role_display()
 
 
 #-----------------Base_----------------

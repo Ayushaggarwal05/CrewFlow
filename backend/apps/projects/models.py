@@ -32,3 +32,25 @@ class Project(models.Model):
     class Meta:
         ordering = ["-created_at"]
 
+
+class ProjectMembership(models.Model):
+    ROLE_CHOICES = [
+        ("LEAD", "Lead"),
+        ("MEMBER", "Member"),
+    ]
+
+    user = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, related_name="project_memberships"
+    )
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="memberships"
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="MEMBER")
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "project")
+        ordering = ["joined_at"]
+
+    def __str__(self):
+        return f"{self.user} — {self.project} ({self.role})"
