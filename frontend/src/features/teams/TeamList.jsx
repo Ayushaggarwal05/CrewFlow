@@ -12,10 +12,12 @@ import toast from "react-hot-toast";
 import JoinCodeCard from "../invites/JoinCodeCard";
 import JoinCodeModal from "../invites/JoinCodeModal";
 import { Rocket } from "lucide-react";
+import useRole from "../../hooks/useRole";
 
 const TeamList = () => {
   const { orgId } = useParams();
   const navigate = useNavigate();
+  const { isAdmin, isManager } = useRole();
 
   const [org, setOrg] = useState(null);
   const [teams, setTeams] = useState([]);
@@ -108,9 +110,11 @@ const TeamList = () => {
               <Button variant="secondary" icon={Rocket} onClick={() => setShowJoin(true)}>
                 Join
               </Button>
-              <Button icon={Plus} onClick={() => setShowCreate(true)}>
-                New Team
-              </Button>
+              {(isAdmin || isManager) && (
+                <Button icon={Plus} onClick={() => setShowCreate(true)}>
+                  New Team
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -137,9 +141,11 @@ const TeamList = () => {
             Create a team to start organizing projects.
           </p>
           <div className="flex items-center justify-center gap-4 mt-6">
-            <Button icon={Plus} onClick={() => setShowCreate(true)}>
-              Create Team
-            </Button>
+            {(isAdmin || isManager) && (
+              <Button icon={Plus} onClick={() => setShowCreate(true)}>
+                Create Team
+              </Button>
+            )}
             <Button variant="secondary" icon={Rocket} onClick={() => setShowJoin(true)}>
               Join
             </Button>
@@ -160,12 +166,14 @@ const TeamList = () => {
                   <Users size={20} className="text-purple-400" />
                 </div>
 
-                <button
-                  onClick={(e) => handleDelete(e, team.id)}
-                  className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 text-dark-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                >
-                  <Trash2 size={14} />
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={(e) => handleDelete(e, team.id)}
+                    className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 text-dark-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
 
               <h3 className="font-semibold text-dark-50 mb-1">{team.name}</h3>

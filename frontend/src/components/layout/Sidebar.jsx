@@ -38,7 +38,7 @@ const navigationGroups = [
     items: [
       { label: "Organizations", icon: Building2, to: "/app/organizations", roles: ["ADMIN", "MANAGER"] },
       { label: "Members", icon: UserPlus, to: "/app/members", roles: ["ADMIN", "MANAGER"] },
-      { label: "Teams", icon: Users, to: "/app/organizations" }, 
+      { label: "Teams", icon: Users, to: "/app/organizations" },
     ]
   },
   {
@@ -129,7 +129,7 @@ const Sidebar = ({ open, onClose }) => {
 
         {/* Quick Create */}
         <div className="px-4 py-4 pt-2">
-          <button 
+          <button
             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl shadow-glow transition-all duration-200 text-sm font-semibold group"
             onClick={() => toast.success("Quick Create opened!")}
           >
@@ -154,7 +154,7 @@ const Sidebar = ({ open, onClose }) => {
                 <p className="px-3 text-[10px] font-black uppercase tracking-[0.15em] text-dark-500 mb-2">
                   {group.title}
                 </p>
-                
+
                 {visibleItems.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -164,10 +164,9 @@ const Sidebar = ({ open, onClose }) => {
                       end={item.to === "/app/dashboard"}
                       onClick={() => onClose?.()}
                       className={({ isActive }) =>
-                        `group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative ${
-                          isActive 
-                            ? "bg-brand-600/10 text-brand-400" 
-                            : "text-dark-400 hover:text-dark-100 hover:bg-dark-800"
+                        `group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative ${isActive
+                          ? "bg-brand-600/10 text-brand-400"
+                          : "text-dark-400 hover:text-dark-100 hover:bg-dark-800"
                         }`
                       }
                     >
@@ -232,7 +231,7 @@ const Sidebar = ({ open, onClose }) => {
                 </div>
 
                 <div className="py-1">
-                  <button 
+                  <button
                     onClick={() => { navigate("/app/profile"); setProfileOpen(false); }}
                     className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-dark-300 hover:bg-dark-700"
                   >
@@ -240,7 +239,7 @@ const Sidebar = ({ open, onClose }) => {
                     View Profile
                   </button>
 
-                  <button 
+                  <button
                     onClick={() => { navigate("/app/profile"); setProfileOpen(false); }}
                     className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-dark-300 hover:bg-dark-700"
                   >

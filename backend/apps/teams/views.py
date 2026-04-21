@@ -17,7 +17,7 @@ from apps.common.permissions import (
 class TeamListCreateView(generics.ListCreateAPIView):
     def get_permissions(self):
         if self.request.method == "POST":
-            return [IsAuthenticated(), IsOrganizationAdmin()]
+            return [IsAuthenticated(), IsManagerOrAdmin()]
         return [IsAuthenticated()]
     
     filterset_fields = [
@@ -55,7 +55,9 @@ class TeamListCreateView(generics.ListCreateAPIView):
 
 class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_permissions(self):
-        if self.request.method in ["PUT", "PATCH", "DELETE"]:
+        if self.request.method == "DELETE":
+            return [IsAuthenticated(), IsOrganizationAdmin()]
+        if self.request.method in ["PUT", "PATCH"]:
             return [IsAuthenticated(), IsManagerOrAdmin()]
         return [IsAuthenticated(), IsOrganizationMember()]
 
