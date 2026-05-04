@@ -6,6 +6,7 @@ import { register, clearError } from "./authSlice";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import toast from "react-hot-toast";
+import logo from "../../assets/logo2.png";
 
 const Register = () => {
   const dispatch = useDispatch();
@@ -72,11 +73,12 @@ const Register = () => {
       <div className="relative w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-9 h-9 bg-brand-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-lg">C</span>
-            </div>
-            <span className="text-xl font-bold text-dark-50">CrewFlow</span>
+          <Link to="/" className="inline-flex items-center gap-0 mb-6 group">
+            <img src={logo} alt="CrewFlow Logo" className="w-14 h-14 pr-2 group-hover:scale-110 transition-transform duration-300 object-contain drop-shadow-lg" />
+            <span className="text-3xl font-bold tracking-tight group-hover:opacity-80 transition-opacity duration-300">
+              <span className="text-white">Crew</span>
+              <span className="bg-gradient-to-r from-blue-500 to-cyan-400 text-transparent bg-clip-text drop-shadow-sm">Flow</span>
+            </span>
           </Link>
 
           <h1 className="text-2xl font-bold text-dark-50">

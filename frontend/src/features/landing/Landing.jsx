@@ -12,6 +12,7 @@ import {
   Heart,
   Terminal
 } from "lucide-react";
+import logo from "../../assets/logo2.png";
 
 const features = [
   {
@@ -59,11 +60,12 @@ const Landing = () => {
       {/* Navbar */}
       <nav className="fixed top-4 left-4 right-4 z-50 glass-nav max-w-7xl mx-auto">
         <div className="px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform duration-300">
-              <span className="text-white font-bold">C</span>
-            </div>
-            <span className="text-lg font-bold text-dark-50 group-hover:text-white transition-colors duration-300">CrewFlow</span>
+          <Link to="/" className="flex items-center gap-0 group">
+            <img src={logo} alt="CrewFlow Logo" className="w-12 h-12 group-hover:scale-110 transition-transform duration-300 object-contain drop-shadow-md" />
+            <span className="text-2xl font-bold tracking-tight group-hover:opacity-80 transition-opacity duration-300">
+              <span className="text-white">Crew</span>
+              <span className="bg-gradient-to-r from-blue-500 to-cyan-400 text-transparent bg-clip-text drop-shadow-sm">Flow</span>
+            </span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
@@ -255,25 +257,26 @@ const Landing = () => {
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 mb-16">
-            
+
             {/* Brand & Newsletter */}
             <div className="lg:col-span-4">
-              <Link to="/" className="flex items-center gap-2 mb-6 group">
-                <div className="w-10 h-10 bg-gradient-to-br from-brand-500 to-purple-600 rounded-xl flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform duration-300">
-                  <span className="text-white font-bold text-xl">C</span>
-                </div>
-                <span className="text-2xl font-bold text-white tracking-tight">CrewFlow</span>
+              <Link to="/" className="flex items-center gap-0 mb-6 group">
+                <img src={logo} alt="CrewFlow Logo" className="w-16 h-16 pr-2 group-hover:scale-110 transition-transform duration-300 object-contain drop-shadow-lg" />
+                <span className="text-3xl font-bold tracking-tight group-hover:opacity-80 transition-opacity duration-300">
+                  <span className="text-white">Crew</span>
+                  <span className="bg-gradient-to-r from-blue-500 to-cyan-400 text-transparent bg-clip-text drop-shadow-sm">Flow</span>
+                </span>
               </Link>
               <p className="text-dark-300 mb-8 max-w-sm leading-relaxed">
                 The most advanced project management platform for high-performing teams. Ship features, not excuses.
               </p>
-              
+
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-white uppercase tracking-wider">Subscribe to our newsletter</h4>
                 <div className="flex gap-2 max-w-sm">
-                  <input 
-                    type="email" 
-                    placeholder="Enter your email" 
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
                     className="bg-dark-900 border border-dark-700 text-dark-100 placeholder-dark-500 rounded-lg px-4 py-2.5 w-full focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
                   />
                   <button className="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2.5 rounded-lg font-medium transition-colors whitespace-nowrap shadow-glow">
@@ -334,7 +337,7 @@ const Landing = () => {
             <p className="text-dark-500 text-sm">
               © {new Date().getFullYear()} CrewFlow Inc. All rights reserved.
             </p>
-            
+
             <div className="flex gap-4">
               <a href="#" className="w-10 h-10 rounded-full bg-dark-900 border border-dark-800 flex items-center justify-center text-dark-400 hover:border-brand-500 hover:text-brand-400 transition-all duration-300 group shadow-card">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 group-hover:scale-110 transition-transform">

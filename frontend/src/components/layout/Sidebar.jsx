@@ -22,6 +22,7 @@ import { getInitials, getAvatarColor } from "../../utils/helpers";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
 import toast from "react-hot-toast";
+import logo from "../../assets/logo2.png";
 
 //  navItems structure
 const navigationGroups = [
@@ -113,11 +114,12 @@ const Sidebar = ({ open, onClose }) => {
       >
         {/* Header */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-dark-800">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shadow-glow">
-              <span className="text-white font-bold text-sm">C</span>
-            </div>
-            <span className="font-bold text-dark-50 text-base">CrewFlow</span>
+          <div className="flex items-center gap-0">
+            <img src={logo} alt="CrewFlow Logo" className="w-10 h-10 pr-2 object-contain drop-shadow-md" />
+            <span className="text-lg font-bold tracking-tight">
+              <span className="text-white">Crew</span>
+              <span className="bg-gradient-to-r from-blue-500 to-cyan-400 text-transparent bg-clip-text drop-shadow-sm">Flow</span>
+            </span>
           </div>
           <button
             onClick={onClose}
