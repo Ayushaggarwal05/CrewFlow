@@ -25,6 +25,15 @@ class ProjectMembershipSerializer(serializers.ModelSerializer):
     def get_role_display(self, obj):
         return obj.get_role_display()
 
+class ProjectMembershipWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectMembership
+        fields = ["role"]
+        
+    def validate_role(self, value):
+        if value not in ["LEAD", "MEMBER"]:
+            raise serializers.ValidationError("Role must be LEAD or MEMBER")
+        return value
 
 #-----------------Base_----------------
 class ProjectBaseSerializer(serializers.ModelSerializer):
@@ -59,8 +68,8 @@ class ProjectBaseSerializer(serializers.ModelSerializer):
         if not request:
             return None
         
-        user_role = get_user_role(request.user, obj.team.organization)
-        if can_view_join_codes(user_role):
+        user_role = get_effective_role(request.user, obj.team.organization, team=obj.team)
+        if can_view_join_codes(user_role, "project"):
             invite = obj.invite_codes.filter(is_active=True).first()
             return invite.code if invite else None
         return None

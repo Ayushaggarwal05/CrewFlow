@@ -47,8 +47,8 @@ class TeamBaseSerializer(serializers.ModelSerializer):
         if not request:
             return None
         
-        user_role = get_user_role(request.user, obj.organization)
-        if can_view_join_codes(user_role):
+        user_role = get_effective_role(request.user, obj.organization, team=obj)
+        if can_view_join_codes(user_role, "team"):
             invite = obj.invite_codes.filter(is_active=True).first()
             return invite.code if invite else None
         return None

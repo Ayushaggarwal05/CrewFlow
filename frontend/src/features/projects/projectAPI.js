@@ -19,3 +19,6 @@ export const deleteProject = (teamId, projectId) =>
 // Returns project-scoped members (team members of the project's team).
 export const getProjectMemberships = (projectId) =>
   api.get(`/api/projects/${projectId}/members/`);
+
+export const updateProjectMembership = (projectId, membershipId, data) =>
+  api.patch(`/api/projects/${projectId}/members/${membershipId}/`, data);

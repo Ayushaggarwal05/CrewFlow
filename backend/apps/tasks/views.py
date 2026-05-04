@@ -31,23 +31,18 @@ class TaskListCreateView(generics.ListCreateAPIView):
         project_id = self.kwargs["project_id"]
         
         from django.shortcuts import get_object_or_404
-        from apps.organizations.utils import get_user_role
+        from apps.projects.utils import get_project_role
         from .models import Task
         from apps.projects.models import Project
 
         project = get_object_or_404(Project, id=project_id)
-        role = get_user_role(user, project.team.organization)
+        role = get_project_role(user, project)
 
-        # ADMIN or MANAGER see all project tasks
-        if role in ["ADMIN", "MANAGER"]:
+        # ADMIN, MANAGER, LEAD see all project tasks
+        if role in ["ADMIN", "MANAGER", "LEAD"] or project.created_by == user:
             return Task.objects.filter(project_id=project_id).order_by("-created_at")
 
-        # LEAD/MEMBER: 
-        # If they created the project (Lead), they see all.
-        if project.created_by == user:
-             return Task.objects.filter(project_id=project_id).order_by("-created_at")
-
-        # Otherwise, strictly assigned tasks
+        # MEMBER: Strictly assigned tasks
         return Task.objects.filter(
             project_id=project_id,
             assigned_to=user
@@ -80,21 +75,28 @@ class MyOrgTasksListView(generics.ListAPIView):
         return queryset
 
 
-
-
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated , IsMemberOrAbove]
 
-
     def get_queryset(self):
-
         user = self.request.user
         project_id = self.kwargs["project_id"]
 
+        from django.shortcuts import get_object_or_404
+        from apps.projects.utils import get_project_role
+        from .models import Task
+        from apps.projects.models import Project
+
+        project = get_object_or_404(Project, id=project_id)
+        role = get_project_role(user, project)
+
+        if role in ["ADMIN", "MANAGER", "LEAD"] or project.created_by == user:
+            return Task.objects.filter(project_id=project_id)
+
         return Task.objects.filter(
-            project__id=project_id,
-            project__team__organization__memberships__user=user,
-        ).distinct()
+            project_id=project_id,
+            assigned_to=user
+        )
 
     def get_serializer_class(self):
 

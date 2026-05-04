@@ -19,7 +19,6 @@ import {
   getTeamMemberships,
   createTeamMembership,
   deleteTeamMembership,
-  updateTeamMembership,
 } from "./teamAPI";
 import {
   getProjects,
@@ -198,34 +197,7 @@ const TeamDetails = () => {
     }
   };
 
-  // Role update — Admin can assign MANAGER/LEAD/MEMBER; Team manager can assign LEAD/MEMBER
-  const handleUpdateRole = async (membershipId, targetUserId, newRole) => {
-    try {
-      await updateTeamMembership(teamId, membershipId, { role: newRole });
-
-      // Update memberships list optimistically
-      setMemberships((prev) =>
-        prev.map((m) => {
-          if (m.id === membershipId) return { ...m, role: newRole, role_display: newRole };
-          // If promoting someone to MANAGER, demote the old manager in local state too
-          if (newRole === "MANAGER" && m.user === team?.manager) return { ...m, role: "LEAD", role_display: "LEAD" };
-          return m;
-        })
-      );
-
-      // Sync team.manager in local state
-      if (newRole === "MANAGER") {
-        setTeam((prev) => ({ ...prev, manager: targetUserId }));
-      } else if (newRole !== "MANAGER" && targetUserId === team?.manager) {
-        setTeam((prev) => ({ ...prev, manager: null }));
-      }
-
-      toast.success("Role updated");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to update role");
-    }
-  };
+  // handleUpdateRole removed as role editing is moved to project level
 
   // Sort memberships: LEAD first, then MEMBER
   const sortedMemberships = [...memberships].sort(
@@ -252,7 +224,7 @@ const TeamDetails = () => {
         </div>
       </div>
 
-      {team && isAdmin && (
+      {team && (isAdmin || isManager || isTeamManager) && (
         <div className="mb-4">
           <JoinCodeCard
             entityType="teams"
@@ -352,42 +324,11 @@ const TeamDetails = () => {
                         </p>
 
                         {/*
-                          Role display logic:
-                          - Own card: always badge (no one changes their own role)
-                          - Admin on any other card: MANAGER / LEAD / MEMBER dropdown
-                          - Team manager on non-manager, non-own card: LEAD / MEMBER dropdown
-                          - Everyone else: badge only
+                          Role display logic (Read-only on Team level):
+                          - Team manager gets a Manager badge.
+                          - Everyone else gets a standard badge.
                         */}
-                        {isOwnCard ? (
-                          isThisTheTeamManager ? (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-brand-600/20 text-brand-400 font-semibold border border-brand-500/30">
-                              Manager
-                            </span>
-                          ) : (
-                            <Badge variant={m.role} label={m.role_display || m.role} />
-                          )
-                        ) : isAdmin ? (
-                          // Admin can assign MANAGER, LEAD, or MEMBER to anyone else
-                          <select
-                            value={isThisTheTeamManager ? "MANAGER" : m.role}
-                            onChange={(e) => handleUpdateRole(m.id, m.user, e.target.value)}
-                            className="cursor-pointer text-xs px-2 py-1 rounded-lg border border-dark-600 bg-dark-800 text-dark-200 focus:outline-none focus:border-brand-500 transition-colors hover:border-brand-400"
-                          >
-                            <option value="MANAGER">MANAGER</option>
-                            <option value="LEAD">LEAD</option>
-                            <option value="MEMBER">MEMBER</option>
-                          </select>
-                        ) : isTeamManager && !isThisTheTeamManager ? (
-                          // Team manager can assign LEAD or MEMBER to non-manager members
-                          <select
-                            value={m.role}
-                            onChange={(e) => handleUpdateRole(m.id, m.user, e.target.value)}
-                            className="cursor-pointer text-xs px-2 py-1 rounded-lg border border-dark-600 bg-dark-800 text-dark-200 focus:outline-none focus:border-brand-500 transition-colors hover:border-brand-400"
-                          >
-                            <option value="LEAD">LEAD</option>
-                            <option value="MEMBER">MEMBER</option>
-                          </select>
-                        ) : isThisTheTeamManager ? (
+                        {isThisTheTeamManager ? (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-brand-600/20 text-brand-400 font-semibold border border-brand-500/30">
                             Manager
                           </span>

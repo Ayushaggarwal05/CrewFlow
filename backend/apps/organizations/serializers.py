@@ -33,7 +33,7 @@ class OrganizationBaseSerializer(serializers.ModelSerializer):
             return None
         
         user_role = get_user_role(request.user, obj)
-        if can_view_join_codes(user_role):
+        if can_view_join_codes(user_role, "org"):
             invite = obj.invite_codes.filter(is_active=True).first()
             return invite.code if invite else None
         return None

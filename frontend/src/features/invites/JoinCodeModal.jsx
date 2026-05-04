@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useDispatch } from "react-redux";
 import { joinViaCode } from "./inviteAPI";
+import { fetchOrganizations } from "../organizations/orgSlice";
 import Modal from "../../components/ui/Modal";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
@@ -9,6 +11,7 @@ import toast from "react-hot-toast";
 const JoinCodeModal = ({ open, onClose, onSuccess }) => {
   const [code, setCode] = useState("");
   const [joining, setJoining] = useState(false);
+  const dispatch = useDispatch();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,6 +24,7 @@ const JoinCodeModal = ({ open, onClose, onSuccess }) => {
     try {
       const response = await joinViaCode(code.trim());
       toast.success("Successfully joined!");
+      dispatch(fetchOrganizations());
       if (onSuccess) onSuccess(response.data);
       setCode("");
       onClose();

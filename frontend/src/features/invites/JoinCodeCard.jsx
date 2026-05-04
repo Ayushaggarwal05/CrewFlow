@@ -3,8 +3,10 @@ import { Copy, RefreshCw, Check } from "lucide-react";
 import toast from "react-hot-toast";
 import { generateOrgCode, generateTeamCode, generateProjectCode } from "./inviteAPI";
 import Button from "../../components/ui/Button";
+import useRole from "../../hooks/useRole";
 
 const JoinCodeCard = ({ entityType, entityId, parentEntityId, initialCode }) => {
+  const { isAdmin } = useRole();
   const [code, setCode] = useState(initialCode || "");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -72,15 +74,17 @@ const JoinCodeCard = ({ entityType, entityId, parentEntityId, initialCode }) => 
           </div>
         </div>
 
-        <Button
-          variant="secondary"
-          onClick={handleRegenerate}
-          className="w-full justify-center"
-          loading={loading}
-          icon={RefreshCw}
-        >
-          Regenerate Join Code
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="secondary"
+            onClick={handleRegenerate}
+            className="w-full justify-center"
+            loading={loading}
+            icon={RefreshCw}
+          >
+            Regenerate Join Code
+          </Button>
+        )}
       </div>
 
     </div>

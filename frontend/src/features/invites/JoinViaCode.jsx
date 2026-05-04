@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { Rocket, ArrowRight } from "lucide-react";
 import { joinViaCode } from "./inviteAPI";
+import { fetchOrganizations } from "../organizations/orgSlice";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import toast from "react-hot-toast";
 
 const JoinViaCode = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [code, setCode] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -20,6 +23,7 @@ const JoinViaCode = () => {
             const { data } = await joinViaCode(code.trim());
 
             toast.success(data.detail || "Successfully joined!");
+            dispatch(fetchOrganizations());
 
             // Navigate based on entity type returned by the API
             if (data.entity_type === "organization") {

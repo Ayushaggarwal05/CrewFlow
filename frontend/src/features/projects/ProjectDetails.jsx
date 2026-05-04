@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { ArrowLeft, Plus, X, Send, Users } from "lucide-react";
 
-import { getProject, getProjectMemberships } from "./projectAPI";
+import { getProject, getProjectMemberships, updateProjectMembership } from "./projectAPI";
 import { getTasks, createTask, updateTask, deleteTask } from "../tasks/taskAPI";
 import { getComments, createComment } from "../comments/commentAPI";
 import { getTeamUsers } from "../teams/teamAPI";
@@ -21,16 +21,18 @@ import JoinCodeCard from "../invites/JoinCodeCard";
 const ProjectDetails = () => {
   const { teamId, projectId } = useParams();
   const navigate = useNavigate();
-  const { isAdmin, isManager, role } = useRole();
+  const { isAdmin } = useRole();
   const { user } = useSelector((state) => state.auth);
   
   // for data handling
   const [project, setProject] = useState(null);
-  const isLead = role === "LEAD" || project?.created_by === user?.id;
   const [tasks, setTasks] = useState([]);
   const [teamUsers, setTeamUsers] = useState([]);
   const [projectMembers, setProjectMembers] = useState([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  
+  const myProjectRole = projectMembers.find((m) => m.user === user?.id)?.role;
+
   // holding states between
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -170,8 +172,22 @@ const ProjectDetails = () => {
 
       toast.success("Task deleted");
     } catch (err) {
-      console.error(err);
       toast.error("Failed to delete");
+    }
+  };
+
+  const handleUpdateRole = async (membershipId, newRole) => {
+    try {
+      await updateProjectMembership(projectId, membershipId, { role: newRole });
+      setProjectMembers((prev) =>
+        prev.map((m) =>
+          m.id === membershipId ? { ...m, role: newRole, role_display: newRole } : m
+        )
+      );
+      toast.success("Role updated");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update role");
     }
   };
 
@@ -217,7 +233,7 @@ const ProjectDetails = () => {
         </div>
       </div>
 
-      {project && isAdmin && (
+      {project && (isAdmin || myProjectRole === "MANAGER") && (
         <div className="mb-4">
           <JoinCodeCard
             entityType="projects"
@@ -231,7 +247,7 @@ const ProjectDetails = () => {
       {/* Task Header */}
       <div className="flex justify-between items-center bg-dark-800/50 p-4 rounded-xl border border-dark-700/50">
         <p className="text-dark-400 font-medium">{tasks.length} tasks</p>
-        {(isAdmin || isManager || isLead) && (
+        {(isAdmin || myProjectRole === "MANAGER" || myProjectRole === "LEAD") && (
           <Button onClick={() => setShowCreateTask(true)} icon={Plus}>
             Add Task
           </Button>
@@ -278,7 +294,7 @@ const ProjectDetails = () => {
                     >
                       Done
                     </button>
-                    {(isAdmin || isManager || isLead) && (
+                    {(isAdmin || myProjectRole === "MANAGER" || myProjectRole === "LEAD") && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -355,42 +371,67 @@ const ProjectDetails = () => {
         ) : projectMembers.length === 0 ? (
           <p className="text-sm text-dark-500 italic">No members have joined this project yet</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {projectMembers.map((m) => (
-              <div key={m.id} className="card p-4">
-                <div className="flex items-center gap-3">
-                  {/* Avatar */}
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-lg flex-shrink-0 ${
-                      getAvatarColor(m.user_full_name || m.user_email || "")
-                    }`}
-                  >
-                    {getInitials(m.user_full_name || "U")}
-                  </div>
+          <div className="space-y-6">
+            {["MANAGER", "LEAD", "MEMBER"].map((roleGroup) => {
+              const groupMembers = projectMembers.filter((m) => m.role === roleGroup);
+              if (groupMembers.length === 0) return null;
 
-                  {/* Info */}
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-dark-50 text-sm truncate">
-                      {m.user_full_name || "Unknown User"}
-                    </p>
-                    {m.user_email && (
-                      <p className="text-xs text-dark-400 truncate">{m.user_email}</p>
-                    )}
-                  </div>
+              return (
+                <div key={roleGroup} className="space-y-3">
+                  <h3 className="text-xs font-semibold text-dark-400 uppercase tracking-wider">
+                    {roleGroup === "MANAGER" ? "Manager" : roleGroup === "LEAD" ? "Leads" : "Members"}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {groupMembers.map((m) => (
+                      <div key={m.id} className="card p-4">
+                        <div className="flex items-center gap-3">
+                          {/* Avatar */}
+                          <div
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-lg flex-shrink-0 ${
+                              getAvatarColor(m.user_full_name || m.user_email || "")
+                            }`}
+                          >
+                            {getInitials(m.user_full_name || "U")}
+                          </div>
 
-                  {/* Role badge — read-only */}
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${
-                    m.role === "MANAGER"
-                      ? "bg-brand-600/20 text-brand-400 border border-brand-500/30"
-                      : m.role === "LEAD"
-                      ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-                      : "bg-dark-700 text-dark-300 border border-dark-600"
-                  }`}>
-                    {m.role_display || m.role}
-                  </span>
+                          {/* Info */}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-dark-50 text-sm truncate">
+                              {m.user_full_name || "Unknown User"}
+                            </p>
+                            {m.user_email && (
+                              <p className="text-xs text-dark-400 truncate">{m.user_email}</p>
+                            )}
+                          </div>
+
+                          {/* Role badge / dropdown */}
+                          {(isAdmin || myProjectRole === "MANAGER") && m.role !== "MANAGER" ? (
+                            <select
+                              value={m.role}
+                              onChange={(e) => handleUpdateRole(m.id, e.target.value)}
+                              className="cursor-pointer text-xs px-2 py-1 rounded-lg border border-dark-600 bg-dark-800 text-dark-200 focus:outline-none focus:border-brand-500 transition-colors hover:border-brand-400"
+                            >
+                              <option value="LEAD">LEAD</option>
+                              <option value="MEMBER">MEMBER</option>
+                            </select>
+                          ) : (
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${
+                              m.role === "MANAGER"
+                                ? "bg-brand-600/20 text-brand-400 border border-brand-500/30"
+                                : m.role === "LEAD"
+                                ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                                : "bg-dark-700 text-dark-300 border border-dark-600"
+                            }`}>
+                              {m.role_display || m.role}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -409,19 +450,31 @@ const ProjectDetails = () => {
             required
           />
 
-          {/*  teamUsers used */}
-          <select
-            className="input-base"
-            value={taskForm.assigned_to}
-            onChange={tcChange("assigned_to")}
-          >
-            <option value="">Unassigned</option>
-            {teamUsers.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.full_name}
-              </option>
-            ))}
-          </select>
+          {/* Task Assignment */}
+          {(isAdmin || myProjectRole !== "MEMBER") && (
+            <select
+              className="input-base"
+              value={taskForm.assigned_to}
+              onChange={tcChange("assigned_to")}
+            >
+              <option value="">Unassigned</option>
+              {myProjectRole === "LEAD" && !isAdmin ? (
+                projectMembers
+                  .filter((m) => m.role === "MEMBER")
+                  .map((m) => (
+                    <option key={m.user} value={m.user}>
+                      {m.user_full_name || m.user_email}
+                    </option>
+                  ))
+              ) : (
+                projectMembers.map((u) => (
+                  <option key={u.user} value={u.user}>
+                    {u.user_full_name || u.user_email}
+                  </option>
+                ))
+              )}
+            </select>
+          )}
 
           <Button type="submit" loading={creatingTask}>
             Create

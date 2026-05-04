@@ -15,9 +15,16 @@ def is_admin(user, organization):
     if not (user and user.is_authenticated):
         return False
         
+    from .models import Organization
+    org_id = organization if isinstance(organization, (str, int)) else organization.id
+    
+    org = Organization.objects.filter(id=org_id).first()
+    if org and org.owner == user:
+        return True
+        
     return OrganizationMembership.objects.filter(
         user=user,
-        organization=organization,
+        organization_id=org_id,
         role="ADMIN"
     ).exists()
 
@@ -25,8 +32,15 @@ def get_user_role(user, organization):
     """Returns the role string for a user in an organization."""
     if not (user and user.is_authenticated):
         return None
+        
+    from .models import Organization
+    org_id = organization if isinstance(organization, (str, int)) else organization.id
     
-    mem = OrganizationMembership.objects.filter(user=user, organization=organization).first()
+    org = Organization.objects.filter(id=org_id).first()
+    if org and org.owner == user:
+        return "ADMIN"
+    
+    mem = OrganizationMembership.objects.filter(user=user, organization_id=org_id).first()
     return mem.role if mem else None
 
 def can_manage_role(requester_role, target_role):
@@ -62,9 +76,16 @@ def can_assign_role(requester_role, new_role):
 
     return req_rank >= new_rank
 
-def can_view_join_codes(role):
-    """Only ADMIN can view join codes."""
-    return role == 'ADMIN'
+def can_view_join_codes(role, entity_type="org"):
+    """
+    ADMIN can view all join codes.
+    MANAGER can view team and project join codes, but NOT org join codes.
+    """
+    if role == 'ADMIN':
+        return True
+    if role == 'MANAGER' and entity_type in ['team', 'project']:
+        return True
+    return False
 
 def can_generate_join_codes(role):
     """Only ADMIN can generate join codes."""
