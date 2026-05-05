@@ -55,7 +55,18 @@ class TaskWriteSerializer(TaskBaseSerializer):
             return data
 
         role = get_project_role(request.user, project)
-        if not role:
+        # Check if user is the project creator or the task assignee (for updates)
+        is_creator = project.created_by == request.user
+        
+        # For updates, we can also check if they are the current assignee
+        is_assignee = False
+        if request.method in ["PUT", "PATCH"]:
+            task_id = self.context.get("view").kwargs.get("pk")
+            if task_id:
+                from .models import Task
+                is_assignee = Task.objects.filter(id=task_id, assigned_to=request.user).exists()
+
+        if not role and not is_creator and not is_assignee:
             raise ValidationError("You are not part of this project.")
 
         if "assigned_to" in data:

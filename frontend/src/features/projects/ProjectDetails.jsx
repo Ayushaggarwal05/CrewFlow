@@ -96,8 +96,8 @@ const ProjectDetails = () => {
   const loadComments = async (taskId) => {
     setLoadingComments(true);
     try {
-      const { data } = await getComments(taskId);
-      setComments(data);
+      const res = await getComments(taskId);
+      setComments(res.data?.data || res.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -121,9 +121,10 @@ const ProjectDetails = () => {
       if (!payload.assigned_to) delete payload.assigned_to;
       if (!payload.due_date) delete payload.due_date;
 
-      const { data } = await createTask(projectId, payload);
+      const res = await createTask(projectId, payload);
+      const newTask = res.data?.data || res.data;
 
-      setTasks((prev) => [...prev, data]);
+      setTasks((prev) => [...prev, newTask]);
       toast.success("Task created!");
 
       setShowCreateTask(false);
@@ -145,16 +146,24 @@ const ProjectDetails = () => {
 
   const handleUpdateTaskStatus = async (task, status) => {
     try {
-      const { data } = await updateTask(projectId, task.id, { status });
+      const res = await updateTask(projectId, task.id, { status });
+      console.log("Update Task Response:", res);
 
-      setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)));
-
+      setTasks((prev) =>
+        prev.map((t) => (String(t.id) === String(task.id) ? { ...t, status } : t))
+      );
       if (selectedTask?.id === task.id) {
-        setSelectedTask(data);
+        setSelectedTask((prev) => ({ ...prev, status }));
       }
+      toast.success("Task updated!");
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to update task");
+      console.error("Task update failed:", err.response?.data || err.message);
+      const errorData = err.response?.data;
+      const errorMsg = typeof errorData?.message === 'object' 
+        ? JSON.stringify(errorData.message) 
+        : (errorData?.message || errorData?.detail || "Failed to update task");
+      
+      toast.error(errorMsg);
     }
   };
 
@@ -197,11 +206,12 @@ const ProjectDetails = () => {
     if (!selectedTask || !newComment.trim()) return;
 
     try {
-      const { data } = await createComment(selectedTask.id, {
+      const res = await createComment(selectedTask.id, {
         content: newComment.trim(),
       });
+      const newC = res.data?.data || res.data;
 
-      setComments((prev) => [...prev, data]);
+      setComments((prev) => [...prev, newC]);
       setNewComment("");
     } catch (err) {
       console.error(err);
@@ -451,28 +461,28 @@ const ProjectDetails = () => {
           />
 
           {/* Task Assignment */}
-          {(isAdmin || myProjectRole !== "MEMBER") && (
+          {(isAdmin || myProjectRole === "MANAGER" || myProjectRole === "LEAD") && (
             <select
               className="input-base"
               value={taskForm.assigned_to}
               onChange={tcChange("assigned_to")}
             >
               <option value="">Unassigned</option>
-              {myProjectRole === "LEAD" && !isAdmin ? (
-                projectMembers
-                  .filter((m) => m.role === "MEMBER")
-                  .map((m) => (
-                    <option key={m.user} value={m.user}>
-                      {m.user_full_name || m.user_email}
-                    </option>
-                  ))
-              ) : (
-                projectMembers.map((u) => (
-                  <option key={u.user} value={u.user}>
-                    {u.user_full_name || u.user_email}
+              {projectMembers
+                .filter((m) => {
+                  if (isAdmin || myProjectRole === "MANAGER") {
+                    return m.role === "LEAD" || m.role === "MEMBER";
+                  }
+                  if (myProjectRole === "LEAD") {
+                    return m.role === "MEMBER";
+                  }
+                  return false;
+                })
+                .map((m) => (
+                  <option key={m.user} value={m.user}>
+                    {m.user_full_name || m.user_email} ({m.role})
                   </option>
-                ))
-              )}
+                ))}
             </select>
           )}
 

@@ -177,19 +177,25 @@ const TaskBoard = () => {
     );
 
     try {
-      await updateTask(projectId, draggedTask.id, { status: targetStatus });
+      const res = await updateTask(projectId, draggedTask.id, { status: targetStatus });
+      console.log("Task move success:", res);
       toast.success(`Moved to ${targetStatus}`);
     } catch (err) {
-      console.error(err);
-
-      // ❌ Revert
+      console.error("Task move failed:", err.response?.data || err.message);
+      
+      // ❌ Revert state on actual failure
       setTasks((prev) =>
         prev.map((t) =>
-          t.id === draggedTask.id ? { ...t, status: draggedTask.status } : t,
+          String(t.id) === String(draggedTask.id) ? { ...t, status: draggedTask.status } : t,
         ),
       );
 
-      toast.error("Failed to update task");
+      const errorData = err.response?.data;
+      const errorMsg = typeof errorData?.message === 'object' 
+        ? JSON.stringify(errorData.message) 
+        : (errorData?.message || errorData?.detail || "Failed to update task");
+      
+      toast.error(errorMsg);
     }
   };
 
@@ -223,11 +229,12 @@ const TaskBoard = () => {
 
     try {
       await deleteTask(projectId, taskId);
-      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      setTasks((prev) => prev.filter((t) => String(t.id) !== String(taskId)));
       toast.success("Task deleted");
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to delete");
+      console.error("Delete failed:", err);
+      const errorMsg = err.response?.data?.message || "Failed to delete";
+      toast.error(typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : errorMsg);
     }
   };
 

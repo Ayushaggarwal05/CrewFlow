@@ -34,11 +34,22 @@ const addSubscriber = (cb) => {
 
 //  Response interceptor
 api.interceptors.response.use(
-  // (response) => response,
   (response) => {
-    // Globally handle DRF pagination + CustomRenderer
     const payload = response.data;
+    // 🧪 DEBUG LOG (MANDATORY)
+    console.log("API Response:", response.status, response.data);
+
     if (payload && typeof payload === "object" && "success" in payload) {
+      // If success is false even on 2xx, treat as error
+      if (payload.success === false) {
+        console.error("Backend success: false", payload);
+        return Promise.reject({
+          response: {
+            data: payload
+          }
+        });
+      }
+
       if (payload.data && payload.data.results !== undefined) {
         response.data = payload.data.results;
       } else {

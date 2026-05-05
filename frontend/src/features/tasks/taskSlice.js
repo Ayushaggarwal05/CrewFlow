@@ -19,9 +19,19 @@ export const toggleTaskDone = createAsyncThunk(
     try {
       const newStatus = currentStatus === "DONE" ? "TODO" : "DONE";
       const response = await updateTask(projectId, taskId, { status: newStatus });
-      return { taskId, newStatus, data: response.data?.data || response.data };
+      
+      // 🧪 DEBUG LOG (MANDATORY)
+      console.log("Thunk Response Status:", response.status);
+      console.log("Thunk Response Data:", response.data);
+
+      return { 
+        taskId, 
+        newStatus, 
+        data: response.data?.data || response.data 
+      };
     } catch (err) {
-      return rejectWithValue(err.response?.data || "Failed to update task");
+      console.error("Thunk Error:", err);
+      return rejectWithValue(err.response?.data || err.message || "Failed to update task");
     }
   }
 );

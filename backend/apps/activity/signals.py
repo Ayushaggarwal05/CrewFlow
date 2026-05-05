@@ -14,11 +14,12 @@ from .models import ActivityLog
 def log_task(sender, instance, created, **kwargs):
     # Use assigned_to if available, otherwise fall back to None (user field is nullable)
     actor = instance.assigned_to
+    action_text = f"Task {'created' if created else 'updated'}: {instance.title}"
     ActivityLog.objects.create(
         user=actor, 
         project=instance.project, 
         organization=instance.project.team.organization,
-        action=action
+        action=action_text
     )
 
 @receiver(post_delete, sender=Task)
