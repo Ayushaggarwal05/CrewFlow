@@ -81,9 +81,9 @@ const OrganizationList = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="page-header">Organizations</h1>
+          <h1 className="page-header">Teams & Workspaces</h1>
           <p className="text-dark-400 mt-1 text-sm">
-            Manage all your organizations
+            Access all your organizational teams and collaboration workspaces.
           </p>
         </div>
 

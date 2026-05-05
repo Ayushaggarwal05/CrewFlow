@@ -30,20 +30,18 @@ const navigationGroups = [
     title: "Main",
     items: [
       { label: "Dashboard", icon: LayoutDashboard, to: "/app/dashboard" },
-      { label: "My Tasks", icon: CheckSquare, to: "/app/my-tasks" },
-      { label: "Projects", icon: FolderKanban, to: "/app/projects" },
+      { label: "My Work", icon: CheckSquare, to: "/app/my-work" },
     ]
   },
   {
     title: "Workspace",
     items: [
-      { label: "Organizations", icon: Building2, to: "/app/organizations", roles: ["ADMIN", "MANAGER"] },
-      { label: "Members", icon: UserPlus, to: "/app/members", roles: ["ADMIN"] },
+      { label: "Projects", icon: FolderKanban, to: "/app/projects" },
       { label: "Teams", icon: Users, to: "/app/organizations" },
     ]
   },
   {
-    title: "Productivity",
+    title: "Insights",
     items: [
       { label: "Activity", icon: Activity, to: "/app/activity" },
     ]
@@ -129,19 +127,19 @@ const Sidebar = ({ open, onClose }) => {
           </button>
         </div>
 
-        {/* Quick Create */}
-        <div className="px-4 py-4 pt-2">
+        {/* Quick Create - Subtler, more professional */}
+        <div className="px-4 py-6">
           <button
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl shadow-glow transition-all duration-200 text-sm font-semibold group"
-            onClick={() => toast.success("Quick Create opened!")}
+            className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl shadow-lg shadow-brand-500/20 transition-all duration-300 text-sm font-bold group active:scale-95"
+            onClick={() => toast.success("Quick Create coming soon!")}
           >
-            <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" />
-            <span>New</span>
+            <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" />
+            <span>Create New</span>
           </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-2 space-y-6 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 px-3 py-2 space-y-8 overflow-y-auto custom-scrollbar">
           {navigationGroups.map((group) => {
             // Filter items based on role
             const visibleItems = group.items.filter(item => {
@@ -152,38 +150,40 @@ const Sidebar = ({ open, onClose }) => {
             if (visibleItems.length === 0) return null;
 
             return (
-              <div key={group.title} className="space-y-1">
-                <p className="px-3 text-[10px] font-black uppercase tracking-[0.15em] text-dark-500 mb-2">
+              <div key={group.title} className="space-y-2">
+                <p className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-dark-500/70">
                   {group.title}
                 </p>
 
-                {visibleItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <NavLink
-                      key={item.label}
-                      to={item.to}
-                      end={item.to === "/app/dashboard"}
-                      onClick={() => onClose?.()}
-                      className={({ isActive }) =>
-                        `group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative ${isActive
-                          ? "bg-brand-600/10 text-brand-400"
-                          : "text-dark-400 hover:text-dark-100 hover:bg-dark-800"
-                        }`
-                      }
-                    >
-                      {({ isActive }) => (
-                        <>
-                          <Icon size={18} className={`${isActive ? "text-brand-400" : "text-dark-500 group-hover:text-dark-100"}`} />
-                          {item.label}
-                          {isActive && (
-                            <div className="absolute left-0 w-[3px] h-4 bg-brand-500 rounded-r-full shadow-[0_0_8px_rgba(var(--brand-500-rgb),0.8)]" />
-                          )}
-                        </>
-                      )}
-                    </NavLink>
-                  );
-                })}
+                <div className="space-y-1">
+                  {visibleItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <NavLink
+                        key={item.label}
+                        to={item.to}
+                        end={item.to === "/app/dashboard"}
+                        onClick={() => onClose?.()}
+                        className={({ isActive }) =>
+                          `group flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 relative ${isActive
+                            ? "bg-brand-600/10 text-brand-400"
+                            : "text-dark-400 hover:text-dark-100 hover:bg-dark-800/50"
+                          }`
+                        }
+                      >
+                        {({ isActive }) => (
+                          <>
+                            <Icon size={19} className={`${isActive ? "text-brand-400" : "text-dark-500 group-hover:text-dark-200"} transition-colors duration-300`} />
+                            {item.label}
+                            {isActive && (
+                              <div className="absolute left-0 w-[4px] h-5 bg-brand-500 rounded-r-full shadow-[0_0_12px_rgba(var(--brand-500-rgb),0.8)]" />
+                            )}
+                          </>
+                        )}
+                      </NavLink>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}

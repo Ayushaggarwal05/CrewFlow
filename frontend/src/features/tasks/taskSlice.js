@@ -1,5 +1,17 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getMyOrgTasks, updateTask } from "./taskAPI";
+import { getMyOrgTasks, updateTask, getTasks } from "./taskAPI";
+
+export const fetchTasks = createAsyncThunk(
+  "task/fetchTasks",
+  async (projectId, { rejectWithValue }) => {
+    try {
+      const response = await getTasks(projectId);
+      return response.data?.data?.results || response.data?.results || response.data?.data || response.data || [];
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to fetch tasks");
+    }
+  }
+);
 
 export const fetchMyTasks = createAsyncThunk(
   "task/fetchMyTasks",
@@ -38,6 +50,7 @@ export const toggleTaskDone = createAsyncThunk(
 
 const initialState = {
   myTasks: [],
+  tasks: [],
   loading: false,
   error: null,
 };
@@ -61,6 +74,17 @@ const taskSlice = createSlice({
         state.myTasks = action.payload;
       })
       .addCase(fetchMyTasks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchTasks.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchTasks.fulfilled, (state, action) => {
+        state.loading = false;
+        state.tasks = action.payload;
+      })
+      .addCase(fetchTasks.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

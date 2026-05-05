@@ -36,7 +36,7 @@ const AppRouter = () => {
       >
         <Route index element={<Navigate to="/app/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path="my-tasks" element={<MyTasks />} />
+        <Route path="my-work" element={<MyTasks />} />
         <Route path="organizations" element={<OrganizationList />} />
         <Route path="organizations/:orgId/teams" element={<TeamList />} />
         <Route
