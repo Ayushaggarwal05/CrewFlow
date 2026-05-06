@@ -1,70 +1,77 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
-import { login, clearError } from "./authSlice";
+import { Mail, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
+import { clearError } from "./authSlice";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import toast from "react-hot-toast";
 import logo from "../../assets/logo2.png";
+import api from "../../services/api";
 
-const Login = () => {
+const ForgotPassword = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { loading, error } = useSelector((state) => state.auth);
 
-  const { loading, error, user } = useSelector((state) => state.auth);
+  const [email, setEmail] = useState("");
+  const [isSent, setIsSent] = useState(false);
 
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-
-  const from = location.state?.from?.pathname || "/app/dashboard";
-
-  // Clear stale errors on mount
   useEffect(() => {
     dispatch(clearError());
   }, [dispatch]);
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
-      navigate("/app/dashboard");
-    }
-  }, [user, navigate]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Basic validation
-    if (!form.email || !form.password) {
-      toast.error("Please fill all fields");
+    if (!email) {
+      toast.error("Please enter your email");
       return;
     }
 
     try {
-      const result = await dispatch(login(form));
-
-      if (login.fulfilled.match(result)) {
-        toast.success("Welcome back!");
-        setForm({ email: form.email, password: "" }); // clear password
-        navigate(from, { replace: true });
-      }
-    } catch {
-      toast.error("Something went wrong");
+      // Reusing the ResendOTP logic but via ForgotPassword endpoint
+      await api.post("/api/auth/forgot-password/", { email });
+      setIsSent(true);
+      toast.success("OTP sent to your email!");
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to send reset code");
     }
   };
 
+  if (isSent) {
+    return (
+      <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4">
+        <div className="relative w-full max-w-md text-center">
+          <div className="card p-8 flex flex-col items-center">
+            <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-6">
+              <CheckCircle2 size={32} className="text-green-500" />
+            </div>
+            <h1 className="text-2xl font-bold text-dark-50 mb-2">Check your email</h1>
+            <p className="text-dark-400 mb-8">
+              We've sent a 6-digit verification code to <span className="text-brand-400">{email}</span>. 
+              Use this code to verify your identity and reset your password.
+            </p>
+            <Button
+              onClick={() => navigate("/reset-password", { state: { email } })}
+              className="w-full justify-center"
+              icon={ArrowRight}
+            >
+              Go to Reset Password
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4">
-      {/* Background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-brand-600/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-0 mb-6 group">
             <img src={logo} alt="CrewFlow Logo" className="w-14 h-14 pr-2 group-hover:scale-110 transition-transform duration-300 object-contain drop-shadow-lg" />
@@ -73,78 +80,50 @@ const Login = () => {
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 text-transparent bg-clip-text drop-shadow-sm">Flow</span>
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-dark-50">Welcome back</h1>
+          <h1 className="text-2xl font-bold text-dark-50">Reset password</h1>
           <p className="text-dark-400 mt-1 text-sm">
-            Sign in to your account to continue
+            Enter your email to receive a verification code
           </p>
         </div>
 
-        {/* Card */}
         <div className="card p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input
-              label="Email"
+              label="Email Address"
               type="email"
               icon={Mail}
               placeholder="you@company.com"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
               autoFocus
             />
 
-            <div className="space-y-1">
-              <Input
-                label="Password"
-                type="password"
-                icon={Lock}
-                placeholder="••••••••"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                required
-              />
-              <div className="flex justify-end">
-                <Link
-                  to="/forgot-password"
-                  className="text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-            </div>
-
-            {/* Error Message */}
             {error && (
               <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
                 <AlertCircle size={15} className="flex-shrink-0 mt-0.5" />
-                <span>
-                  {error?.detail ||
-                    error?.message ||
-                    "Invalid credentials. Please try again."}
-                </span>
+                <span>{error.detail || "Error occurred"}</span>
               </div>
             )}
 
-            {/* Submit Button */}
             <Button
               type="submit"
               className="w-full justify-center"
               loading={loading}
-              disabled={!form.email || !form.password}
+              disabled={!email}
               icon={ArrowRight}
             >
-              Sign in
+              Send Reset Code
             </Button>
           </form>
 
-          {/* Footer */}
           <p className="mt-6 text-center text-sm text-dark-400">
-            Don't have an account?{" "}
+            Remember your password?{" "}
             <Link
-              to="/register"
+              to="/login"
               className="text-brand-400 hover:text-brand-300 font-medium"
             >
-              Create account
+              Sign in
             </Link>
           </p>
         </div>
@@ -153,4 +132,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default ForgotPassword;

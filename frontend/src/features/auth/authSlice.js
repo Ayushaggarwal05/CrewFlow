@@ -1,6 +1,18 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../services/api";
-import { loginUser, registerUser, logoutUser, getCurrentUser, updateProfile } from "./authAPI";
+import { loginUser, registerUser, logoutUser, getCurrentUser, updateProfile, verifyOTP } from "./authAPI";
+
+export const verifyEmailOTP = createAsyncThunk(
+  "auth/verifyOTP",
+  async (data, { rejectWithValue }) => {
+    try {
+      const res = await verifyOTP(data);
+      return extractData(res);
+    } catch (err) {
+      return rejectWithValue(extractError(err));
+    }
+  },
+);
 
 // Backend response format: { success, message, data }
 // Success: { success: true, message: '', data: <payload> }
@@ -21,20 +33,38 @@ const extractData = (response) => response.data?.data ?? response.data;
 
 const extractError = (err) => {
   const body = err.response?.data;
-  if (!body) return { detail: "Network error. Is the server running?" };
+  if (!body) return { detail: "Network error. Please check your internet connection." };
 
-  // After exception_handler fix, message is always a plain string in error responses
-  const msg = body.message;
-  if (typeof msg === "string" && msg) return { detail: msg };
+  // If the backend followed our custom_exception_handler, message is a string
+  if (typeof body.message === "string" && body.message) {
+    return { detail: body.message };
+  }
+
+  // Fallback for legacy or direct DRF errors
+  const msg = body.detail || body.message || body;
+  if (typeof msg === "string") return { detail: msg };
+  
+  if (Array.isArray(msg)) {
+    return { detail: msg.map(item => (typeof item === 'object' && item !== null) ? (item.string || String(item)) : String(item)).join(" · ") };
+  }
+
   if (typeof msg === "object" && msg !== null) {
-    // Field-level errors (registration validation)
     const parts = Object.entries(msg).map(([k, v]) => {
-      const val = Array.isArray(v) ? v.join(", ") : String(v);
-      return k === "detail" ? val : `${k}: ${val}`;
+      // Handle ErrorDetail or lists of strings
+      let val = v;
+      if (Array.isArray(v)) {
+        val = v.map(item => (typeof item === 'object' && item !== null) ? (item.string || String(item)) : String(item)).join(", ");
+      } else if (typeof v === 'object' && v !== null) {
+        val = v.string || String(v);
+      } else {
+        val = String(v);
+      }
+      return k === "detail" || k === "message" ? val : `${k}: ${val}`;
     });
     return { detail: parts.join(" · ") };
   }
-  return { detail: "Something went wrong. Please try again." };
+
+  return { detail: "An unexpected error occurred. Please try again." };
 };
 
 // ─── Async Thunks ───(A function that returns another function)─────────────────────────────────────────────────────────
@@ -182,6 +212,20 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(register.rejected, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = false;
+        state.error = action.payload;
+      })
+      // Verify OTP
+      .addCase(verifyEmailOTP.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyEmailOTP.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(verifyEmailOTP.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

@@ -1,70 +1,58 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
-import { login, clearError } from "./authSlice";
+import { Mail, ShieldCheck, ArrowRight, AlertCircle } from "lucide-react";
+import { verifyEmailOTP, clearError } from "./authSlice";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import toast from "react-hot-toast";
 import logo from "../../assets/logo2.png";
 
-const Login = () => {
+const VerifyOTP = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { loading, error, user } = useSelector((state) => state.auth);
+  const { loading, error } = useSelector((state) => state.auth);
+  const [otp, setOtp] = useState("");
+  const email = location.state?.email || "";
 
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-
-  const from = location.state?.from?.pathname || "/app/dashboard";
-
-  // Clear stale errors on mount
   useEffect(() => {
     dispatch(clearError());
-  }, [dispatch]);
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
-      navigate("/app/dashboard");
+    if (!email) {
+      toast.error("Email missing. Please register again.");
+      navigate("/register");
     }
-  }, [user, navigate]);
+  }, [dispatch, email, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic validation
-    if (!form.email || !form.password) {
-      toast.error("Please fill all fields");
+    if (!otp || otp.length !== 6) {
+      toast.error("Please enter a valid 6-digit OTP");
       return;
     }
 
     try {
-      const result = await dispatch(login(form));
+      const result = await dispatch(verifyEmailOTP({ email, otp }));
 
-      if (login.fulfilled.match(result)) {
-        toast.success("Welcome back!");
-        setForm({ email: form.email, password: "" }); // clear password
-        navigate(from, { replace: true });
+      if (verifyEmailOTP.fulfilled.match(result)) {
+        toast.success("Account verified! You can now sign in.");
+        navigate("/login");
       }
-    } catch {
-      toast.error("Something went wrong");
+    } catch (err) {
+      console.error(err);
+      toast.error("Verification failed");
     }
   };
 
   return (
     <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4">
-      {/* Background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-brand-600/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-0 mb-6 group">
             <img src={logo} alt="CrewFlow Logo" className="w-14 h-14 pr-2 group-hover:scale-110 transition-transform duration-300 object-contain drop-shadow-lg" />
@@ -73,78 +61,51 @@ const Login = () => {
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 text-transparent bg-clip-text drop-shadow-sm">Flow</span>
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-dark-50">Welcome back</h1>
+          <h1 className="text-2xl font-bold text-dark-50">Verify your email</h1>
           <p className="text-dark-400 mt-1 text-sm">
-            Sign in to your account to continue
+            We've sent a 6-digit code to <span className="text-brand-400 font-medium">{email}</span>
           </p>
         </div>
 
-        {/* Card */}
         <div className="card p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input
-              label="Email"
-              type="email"
-              icon={Mail}
-              placeholder="you@company.com"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              label="One-Time Password"
+              type="text"
+              icon={ShieldCheck}
+              placeholder="123456"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
               required
               autoFocus
+              maxLength={6}
             />
 
-            <div className="space-y-1">
-              <Input
-                label="Password"
-                type="password"
-                icon={Lock}
-                placeholder="••••••••"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                required
-              />
-              <div className="flex justify-end">
-                <Link
-                  to="/forgot-password"
-                  className="text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-            </div>
-
-            {/* Error Message */}
             {error && (
               <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
                 <AlertCircle size={15} className="flex-shrink-0 mt-0.5" />
-                <span>
-                  {error?.detail ||
-                    error?.message ||
-                    "Invalid credentials. Please try again."}
-                </span>
+                <span>{error.detail || error.message || "Invalid OTP. Please try again."}</span>
               </div>
             )}
 
-            {/* Submit Button */}
             <Button
               type="submit"
               className="w-full justify-center"
               loading={loading}
-              disabled={!form.email || !form.password}
+              disabled={otp.length !== 6}
               icon={ArrowRight}
             >
-              Sign in
+              Verify Account
             </Button>
           </form>
 
-          {/* Footer */}
           <p className="mt-6 text-center text-sm text-dark-400">
-            Don't have an account?{" "}
+            Didn't receive the code?{" "}
             <Link
               to="/register"
               className="text-brand-400 hover:text-brand-300 font-medium"
             >
-              Create account
+              Try again
             </Link>
           </p>
         </div>
@@ -153,4 +114,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default VerifyOTP;

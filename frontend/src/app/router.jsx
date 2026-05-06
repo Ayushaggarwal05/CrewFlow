@@ -2,6 +2,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "../features/auth/ProtectedRoute";
 import Login from "../features/auth/Login";
 import Register from "../features/auth/Register";
+import VerifyOTP from "../features/auth/VerifyOTP";
+import ForgotPassword from "../features/auth/ForgotPassword";
+import ResetPassword from "../features/auth/ResetPassword";
 import Landing from "../features/landing/Landing";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Dashboard from "../features/dashboard/Dashboard";
@@ -24,6 +27,9 @@ const AppRouter = () => {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify-otp" element={<VerifyOTP />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Protected routes  */}
       <Route

@@ -6,13 +6,59 @@ from rest_framework.permissions import IsAuthenticated,AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db.models import Count, Q
-
+from django.core.mail import send_mail
+from django.conf import settings
+import random
+from apps.authentication.models import EmailOTP
 from apps.common.permissions import IsOrganizationMember
 # Create your views here.
 
 class RegisterView(generics.CreateAPIView):
-    serializer_class= RegisterSerializer
+    serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        existing_user = User.objects.filter(email=email).first()
+
+        if existing_user:
+            if existing_user.is_verified:
+                return Response("User with this email already exists.", status=400)
+            else:
+                # User exists but is not verified - Resend OTP
+                user = existing_user
+                # Optionally update other fields if they changed
+                user.full_name = request.data.get("full_name", user.full_name)
+                user.username = request.data.get("username", user.username)
+                password = request.data.get("password")
+                if password:
+                    user.set_password(password)
+                user.save()
+        else:
+            # Normal signup flow
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user = serializer.save()
+
+        # Generate fresh OTP
+        otp = str(random.randint(100000, 999999))
+        # Delete old OTPs for this user
+        EmailOTP.objects.filter(user=user).delete()
+        EmailOTP.objects.create(user=user, otp=otp)
+
+        # Send Email
+        try:
+            send_mail(
+                "Verify your Email - CrewFlow",
+                f"Your OTP for email verification is: {otp}. It is valid for 10 minutes.",
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            print(f"Error sending email: {e}")
+
+        return Response("OTP sent to email.", status=201)
 
 
 class CurrentUserView(generics.RetrieveUpdateAPIView):

@@ -13,6 +13,9 @@ export const loginUser = (credentials) =>
 export const registerUser = (data) =>
   api.post("/api/users/auth/register/", data);
 
+export const verifyOTP = (data) =>
+  api.post("/api/auth/verify-otp/", data);
+
 export const logoutUser = (refresh) =>
   api.post("/api/auth/logout/", { refresh });
 

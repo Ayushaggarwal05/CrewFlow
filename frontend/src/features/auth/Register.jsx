@@ -15,6 +15,7 @@ const Register = () => {
   const { loading, error, user } = useSelector((state) => state.auth);
 
   const [form, setForm] = useState({
+    username: "",
     email: "",
     full_name: "",
     password: "",
@@ -36,7 +37,7 @@ const Register = () => {
     e.preventDefault();
 
     // Basic validation
-    if (!form.full_name || !form.email || !form.password) {
+    if (!form.username || !form.full_name || !form.email || !form.password) {
       toast.error("Please fill all fields");
       return;
     }
@@ -50,9 +51,8 @@ const Register = () => {
       const result = await dispatch(register(form));
 
       if (register.fulfilled.match(result)) {
-        toast.success("Account created! Please sign in.");
-        setForm({ email: form.email, full_name: form.full_name, password: "" });
-        navigate("/login");
+        toast.success("OTP sent to your email!");
+        navigate("/verify-otp", { state: { email: form.email } });
       }
     } catch (err) {
       console.log(err);
@@ -93,6 +93,17 @@ const Register = () => {
         <div className="card p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input
+              label="Username"
+              type="text"
+              icon={User}
+              placeholder="janesmith"
+              value={form.username}
+              onChange={change("username")}
+              required
+              autoFocus
+            />
+
+            <Input
               label="Full Name"
               type="text"
               icon={User}
@@ -100,7 +111,6 @@ const Register = () => {
               value={form.full_name}
               onChange={change("full_name")}
               required
-              autoFocus
             />
 
             <Input
@@ -140,7 +150,7 @@ const Register = () => {
               type="submit"
               className="w-full justify-center"
               loading={loading}
-              disabled={!form.full_name || !form.email || !form.password}
+              disabled={!form.username || !form.full_name || !form.email || !form.password}
               icon={ArrowRight}
             >
               Create account

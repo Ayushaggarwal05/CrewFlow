@@ -9,17 +9,24 @@ class CustomRenderer(JSONRenderer):
         status = response.status_code
 
         if status >= 200 and status < 300:
-            result = {
-                "success" : True,
-                "message" : "",
-                "data" : data,
-            }
-        
+            if isinstance(data, str):
+                result = {
+                    "success": True,
+                    "message": data,
+                    "data": None,
+                }
+            else:
+                result = {
+                    "success": True,
+                    "message": "",
+                    "data": data,
+                }
         else:
+            # Errors (data is already a string from custom_exception_handler or direct Response)
             result = {
-                "success" : False,
-                "message" : data,
-                "data" : None,
+                "success": False,
+                "message": data if isinstance(data, str) else str(data),
+                "data": None,
             }
         
         return super().render(result , accepted_media_type,renderer_context)
