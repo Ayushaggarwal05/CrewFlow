@@ -15,6 +15,10 @@ import {
   UserPlus,
   Rocket,
   LayoutDashboard,
+  MoreHorizontal,
+  FileText,
+  Map,
+  Settings
 } from "lucide-react";
 
 import useAuth from "../../hooks/useAuth";
@@ -37,67 +41,81 @@ import toast from "react-hot-toast";
 
 // --- Visual Components ---
 
-const GlassCard = ({ children, className = "" }) => (
-  <div className={`glass-panel p-5 relative overflow-hidden group transition-all duration-300 hover:shadow-brand-500/10 ${className}`}>
+const GlassCard = ({ children, className = "", onClick }) => (
+  <div
+    onClick={onClick}
+    className={`bg-[#1E293B] border border-white/5 border-t-white/10 rounded-lg p-5 relative transition-all duration-300 ${onClick ? 'cursor-pointer hover:border-[#8B5CF6]/50 hover:bg-[#1E293B]/80' : ''} ${className}`}
+  >
     {children}
   </div>
 );
 
-const StatCard = ({ icon, label, value, subtext, color = "brand", loading = false }) => {
+const StatCard = ({
+  icon,
+  label,
+  value,
+  subtext,
+  color = "brand",
+  loading = false,
+}) => {
   const Icon = icon;
-  const colorMap = {
-    brand: "bg-brand-600/20 text-brand-400 border-brand-500/20",
-    green: "bg-green-600/20 text-green-400 border-green-500/20",
-    blue: "bg-blue-600/20 text-blue-400 border-blue-500/20",
-    purple: "bg-purple-600/20 text-purple-400 border-purple-500/20",
-  };
-
-  if (loading) return <div className="skeleton h-32 rounded-2xl" />;
+  
+  if (loading)
+    return (
+      <div className="animate-pulse bg-[#1E293B] h-32 rounded-lg border border-white/5" />
+    );
 
   return (
-    <GlassCard className="border border-dark-700/50">
+    <GlassCard className="flex flex-col justify-between group h-32 hover:border-[#8B5CF6]/30">
       <div className="flex items-start justify-between">
-        <div className={`p-3 rounded-xl border ${colorMap[color]}`}>
-          <Icon size={24} />
+        <div className="text-[#8B5CF6]">
+          <Icon size={20} strokeWidth={2} />
         </div>
         {subtext && (
-          <span className="text-xs font-medium text-dark-500 bg-dark-800 px-2 py-1 rounded-full border border-dark-700">
+          <span className="text-[10px] font-mono tracking-wider text-[#c5c6cd] uppercase">
             {subtext}
           </span>
         )}
       </div>
-      <div className="mt-4">
-        <p className="text-3xl font-bold text-dark-50 tracking-tight">{value}</p>
-        <p className="text-sm font-medium text-dark-400 mt-1">{label}</p>
-      </div>
-      <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
-        <Icon size={80} />
+      <div>
+        <p className="text-[10px] font-mono tracking-widest text-[#c5c6cd] uppercase mb-1">
+          {label}
+        </p>
+        <p className="text-3xl font-bold text-[#dae2fd] tracking-tight leading-none font-sans">
+          {value}
+        </p>
       </div>
     </GlassCard>
   );
 };
 
 const SectionHeader = ({ title, icon: Icon, children }) => (
-  <div className="flex items-center justify-between mb-5">
-    <h2 className="text-lg font-bold text-dark-50 flex items-center gap-2.5">
-      {Icon && <Icon size={20} className="text-brand-500" />}
+  <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+    <h2 className="text-lg font-bold text-[#dae2fd] flex items-center gap-2 tracking-tight font-sans">
+      {Icon && <Icon size={18} className="text-[#8B5CF6]" />}
       {title}
     </h2>
     {children}
   </div>
 );
 
-const EmptyState = ({ icon: Icon, title, description, actionText, onAction }) => (
-  <div className="flex flex-col items-center justify-center py-12 px-4 text-center glass-panel border-dashed border-2 border-dark-700/50">
-    <div className="w-16 h-16 bg-dark-800 rounded-2xl flex items-center justify-center mb-4 text-dark-500">
-      <Icon size={32} />
+const EmptyState = ({
+  icon: Icon,
+  title,
+  description,
+  actionText,
+  onAction,
+}) => (
+  <div className="flex flex-col items-center justify-center py-10 px-4 text-center bg-[#1E293B]/50 rounded-lg border border-dashed border-white/10">
+    <div className="w-12 h-12 bg-[#0F172A] rounded-lg flex items-center justify-center mb-4 text-[#c5c6cd] border border-white/5">
+      <Icon size={24} />
     </div>
-    <h3 className="text-lg font-semibold text-dark-100">{title}</h3>
-    <p className="text-dark-400 text-sm mt-2 max-w-xs">{description}</p>
+    <h3 className="text-md font-semibold text-[#dae2fd]">{title}</h3>
+    <p className="text-[#c5c6cd] text-sm mt-1 max-w-xs">{description}</p>
     {actionText && (
-      <Button onClick={onAction} className="mt-6" variant="secondary" size="sm">
+      <button onClick={onAction} className="mt-5 px-4 py-2 bg-[#8B5CF6] hover:bg-[#7c3aed] text-white text-sm font-medium rounded transition-colors shadow-[0_0_15px_rgba(139,92,246,0.3)]">
         {actionText}
-      </Button>
+      </button>
     )}
   </div>
 );
@@ -117,7 +135,9 @@ const Dashboard = () => {
     refreshOrgs,
   } = useCurrentOrg();
   const { myTasks, loading: tasksLoading } = useSelector((state) => state.task);
-  const { activities, loading: activityLoading } = useSelector((state) => state.activity);
+  const { activities, loading: activityLoading } = useSelector(
+    (state) => state.activity,
+  );
   const { role } = useRole();
 
   // Local State for non-centralized data (Teams/Projects)
@@ -126,8 +146,14 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   // Computed
-  const firstName = useMemo(() => user?.full_name?.split(" ")?.[0] || "there", [user?.full_name]);
-  const currentOrg = useMemo(() => organizations.find(o => Number(o.id) === Number(orgId)), [organizations, orgId]);
+  const firstName = useMemo(
+    () => user?.full_name?.split(" ")?.[0] || "there",
+    [user?.full_name],
+  );
+  const currentOrg = useMemo(
+    () => organizations.find((o) => Number(o.id) === Number(orgId)),
+    [organizations, orgId],
+  );
 
   // Initial Data
   useEffect(() => {
@@ -158,10 +184,18 @@ const Dashboard = () => {
       const teams = Array.isArray(teamsRes.data) ? teamsRes.data : [];
       if (teams.length > 0) {
         const projectRes = await Promise.all(
-          teams.slice(0, 3).map(t => getProjects(t.id).catch(() => ({ data: [] })))
+          teams
+            .slice(0, 3)
+            .map((t) => getProjects(t.id).catch(() => ({ data: [] }))),
         );
-        const allProj = projectRes.flatMap(r => Array.isArray(r.data) ? r.data : []);
-        setRecentProjects(allProj.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5));
+        const allProj = projectRes.flatMap((r) =>
+          Array.isArray(r.data) ? r.data : [],
+        );
+        setRecentProjects(
+          allProj
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 5),
+        );
       }
 
       if (role === "MANAGER" || role === "LEAD" || role === "ADMIN") {
@@ -182,11 +216,13 @@ const Dashboard = () => {
   // Actions
   const handleMarkDone = async (task) => {
     try {
-      await dispatch(toggleTaskDone({
-        projectId: task.project,
-        taskId: task.id,
-        currentStatus: task.status
-      })).unwrap();
+      await dispatch(
+        toggleTaskDone({
+          projectId: task.project,
+          taskId: task.id,
+          currentStatus: task.status,
+        }),
+      ).unwrap();
       toast.success("Task status updated! 🎉");
       dispatch(fetchOrgStats(orgId));
     } catch (err) {
@@ -197,50 +233,59 @@ const Dashboard = () => {
   // --- Render Sections ---
 
   const renderStats = () => {
-    if (!orgStats && loading) return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => <div key={i} className="skeleton h-32 rounded-2xl" />)}
-      </div>
-    );
+    if (!orgStats && loading)
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="animate-pulse bg-[#1E293B] h-32 rounded-lg border border-white/5" />
+          ))}
+        </div>
+      );
 
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={FolderKanban}
           label="Active Projects"
-          value={orgStats?.active_projects_count || 0}
-          subtext={`of ${orgStats?.projects_count || 0}`}
+          value={`${orgStats?.active_projects_count || 0}/${orgStats?.projects_count || 0}`}
+          subtext="+2 this week"
           color="brand"
         />
         <StatCard
           icon={CheckCircle2}
           label="Total Tasks"
           value={orgStats?.total_tasks || 0}
-          subtext="Org Volume"
+          subtext="Steady"
           color="blue"
         />
         <StatCard
           icon={TrendingUp}
-          label="Completion"
+          label="Completion Rate"
           value={`${orgStats?.completion_percentage || 0}%`}
-          subtext={`${orgStats?.completed_tasks || 0} done`}
+          subtext="+5%"
           color="green"
         />
         <StatCard
           icon={Users}
           label="Team Size"
           value={orgStats?.members_count || 0}
-          subtext="Active Members"
+          subtext={`${Math.floor((orgStats?.members_count || 0) / 5) || 1} active teams`}
           color="purple"
         />
       </div>
     );
   };
 
-
   const renderMyTasks = () => (
     <div className="space-y-4">
-      <SectionHeader title="Your Focus" icon={LayoutDashboard} />
+      <SectionHeader title="Your Focus" icon={LayoutDashboard}>
+        <button
+          onClick={() => navigate("/app/tasks")}
+          className="text-[10px] font-mono text-[#8B5CF6] uppercase tracking-widest hover:text-[#D8B4FE] transition-colors flex items-center gap-1"
+        >
+          View Schedule <ArrowRight size={12} />
+        </button>
+      </SectionHeader>
       {myTasks.length === 0 ? (
         <EmptyState
           icon={Rocket}
@@ -249,35 +294,30 @@ const Dashboard = () => {
         />
       ) : (
         <div className="space-y-3">
-          {myTasks.slice(0, 5).map(task => (
-            <GlassCard key={task.id} className="p-4 border border-dark-700/30 flex items-center justify-between hover:border-brand-500/30">
-              <div className="flex items-start gap-3 min-w-0">
-                <button
-                  onClick={() => handleMarkDone(task)}
-                  className="mt-1 w-5 h-5 rounded-full border-2 border-dark-600 flex items-center justify-center hover:border-brand-500 hover:text-brand-500 transition-colors"
-                  disabled={tasksLoading}
-                >
-                  <CheckCircle2 size={12} className="opacity-0 hover:opacity-100" />
-                </button>
+          {myTasks.slice(0, 3).map((task) => (
+            <GlassCard
+              key={task.id}
+              className="!p-4 flex items-center justify-between group/task"
+              onClick={() => navigate(`/app/projects/${task.project}/tasks`)}
+            >
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="w-10 h-10 rounded bg-[#0F172A] border border-white/5 flex items-center justify-center text-[#c5c6cd]">
+                  <FileText size={18} />
+                </div>
                 <div className="min-w-0">
-                  <p className="font-semibold text-dark-50 truncate hover:text-brand-400 transition-colors cursor-pointer" onClick={() => navigate(`/app/projects/${task.project}/tasks`)}>
+                  <p className="font-semibold text-[#dae2fd] truncate text-sm">
                     {task.title}
                   </p>
-                  <div className="flex items-center gap-3 mt-1.5">
-                    <Badge variant={task.status} size="sm" />
-                    <span className="flex items-center gap-1.5 text-xs text-dark-500 font-medium">
-                      <Calendar size={12} />
-                      {task.due_date ? formatDate(task.due_date) : "No date"}
-                    </span>
-                  </div>
+                  <p className="text-[11px] text-[#c5c6cd] mt-0.5 truncate">
+                    {task.project_name || "Project"} • {task.status.replace(/_/g, " ")}
+                  </p>
                 </div>
               </div>
-              <button
-                onClick={() => navigate(`/app/projects/${task.project}/tasks`)}
-                className="p-2 text-dark-500 hover:text-dark-100 transition-colors"
-              >
-                <ArrowRight size={18} />
-              </button>
+              <div className="flex items-center gap-3">
+                <span className={`px-2 py-1 text-[10px] font-mono uppercase tracking-widest rounded ${task.status === 'DONE' ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]' : task.due_date && new Date(task.due_date) < new Date() ? 'bg-red-500/10 text-red-400' : 'bg-white/5 text-[#c5c6cd]'}`}>
+                   {task.status === 'DONE' ? 'Completed' : task.due_date ? 'Due soon' : 'Pending'}
+                </span>
+              </div>
             </GlassCard>
           ))}
         </div>
@@ -287,166 +327,308 @@ const Dashboard = () => {
 
   const renderActivityFeed = () => (
     <div className="space-y-4">
-      <SectionHeader title="Recent Activity" icon={Activity} />
-      <ActivityFeed activities={activities} loading={activityLoading} />
+      <SectionHeader title="Recent Activity" icon={Activity}>
+        <button
+          onClick={() => navigate("/app/activity")}
+          className="text-[10px] font-mono text-[#8B5CF6] uppercase tracking-widest hover:text-[#D8B4FE] transition-colors"
+        >
+          View All
+        </button>
+      </SectionHeader>
+      <GlassCard className="!p-4">
+        {activities.length === 0 && !activityLoading ? (
+          <div className="py-6 text-center text-[#c5c6cd] text-sm font-mono">
+            No recent activity detected.
+          </div>
+        ) : (
+          <div className="space-y-4">
+             {activities.slice(0, 3).map((act, i) => {
+               const userName = act.user?.full_name?.split(" ")[0] || "Someone";
+               const fullUserName = act.user?.full_name || "Unknown";
+               const actionText = act.action ? act.action.toLowerCase() : "updated something";
+               const projectName = act.project?.name;
+               const orgName = act.organization?.name;
+
+               // Determine a simple shape/color indicator based on action
+               let indicatorColor = "bg-[#8B5CF6]"; // default
+               if (actionText.includes("created") || actionText.includes("added")) indicatorColor = "bg-emerald-400";
+               if (actionText.includes("deleted") || actionText.includes("removed")) indicatorColor = "bg-red-400";
+               if (actionText.includes("joined") || actionText.includes("invited")) indicatorColor = "bg-[#D8B4FE]";
+
+               return (
+                <div key={act.id || i} className="flex gap-4 items-start relative pb-4 border-b border-white/5 last:border-0 last:pb-0 group/act">
+                   {/* Avatar & Indicator */}
+                   <div className="relative shrink-0 mt-0.5">
+                     <div className="w-9 h-9 rounded-lg bg-[#0F172A] border border-white/10 flex items-center justify-center text-[11px] text-[#8B5CF6] font-bold shadow-md group-hover/act:border-[#8B5CF6]/30 transition-colors">
+                       {getInitials(fullUserName)}
+                     </div>
+                     <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#1E293B] ${indicatorColor} shadow-[0_0_8px_rgba(139,92,246,0.3)]`}></div>
+                   </div>
+                   
+                   <div className="pt-0.5">
+                     <p className="text-sm text-[#c5c6cd]">
+                       <strong className="text-[#dae2fd]">{userName}</strong> {actionText} {projectName && <span className="text-[#D8B4FE] font-medium">{projectName}</span>}
+                       {!projectName && orgName && <span className="text-[#D8B4FE] font-medium">{orgName}</span>}
+                     </p>
+                     <p className="text-[10px] font-mono text-[#c5c6cd]/50 mt-1 uppercase tracking-wider">
+                       {act.timestamp ? new Date(act.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "Just now"}
+                     </p>
+                   </div>
+                </div>
+               );
+             })}
+          </div>
+        )}
+      </GlassCard>
     </div>
   );
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-10 animate-fade-in pb-10">
-      {/* Top Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-black text-white tracking-tight">Welcome, {firstName}</h1>
-            <Rocket className="text-brand-500 animate-bounce" size={24} />
+    <div className="min-h-screen bg-[#0F172A] font-sans selection:bg-[#8B5CF6]/30">
+      <div className="max-w-[1600px] mx-auto space-y-8 pb-20 px-4 md:px-8 pt-8 animate-fade-in">
+        {/* Premium Dashboard Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/5">
+          <div>
+            <h1 className="text-3xl font-bold text-[#dae2fd] tracking-tight">
+              Welcome back, {firstName}!
+            </h1>
+            <p className="text-[#c5c6cd] font-medium mt-1 text-sm">
+              Here is what's happening across <span className="text-[#8B5CF6] font-semibold">{currentOrg?.name || "your workspace"}</span> today.
+            </p>
           </div>
-          <p className="text-dark-400 font-medium">
-            Project status: <span className="text-brand-400">{orgStats?.completion_percentage || 0}% Complete</span> in {currentOrg?.name || "Workspace"}
-          </p>
-        </div>
 
-        <div className="flex items-center gap-4">
-          {/* Org Selector Swish */}
-          {organizations.length > 0 && (
-            <div className="relative">
-              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-dark-500">
-                <Building2 size={16} />
+          <div className="flex items-center gap-3">
+            {organizations.length > 0 && (
+              <div className="relative group flex items-center bg-[#1E293B] border border-white/10 rounded-lg px-3 py-1.5 hover:border-[#8B5CF6]/50 transition-colors">
+                <span className="text-xs font-mono text-[#dae2fd] uppercase tracking-wider select-none pr-3 border-r border-white/10">{currentOrg?.name || "Workspace"}</span>
+                <select
+                  className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                  value={orgId || ""}
+                  onChange={(e) => setSelectedOrg(Number(e.target.value))}
+                >
+                  {organizations.map((org) => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="ml-3 text-[10px] font-mono text-[#8B5CF6] uppercase tracking-widest cursor-pointer">Switch</div>
               </div>
-              <select
-                className="pl-10 pr-10 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm font-bold text-dark-100 outline-none hover:border-brand-500 transition-all appearance-none cursor-pointer"
-                value={orgId || ""}
-                onChange={(e) => setSelectedOrg(Number(e.target.value))}
-              >
-                {organizations.map((org) => (
-                  <option key={org.id} value={org.id}>{org.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <Button variant="primary" icon={Plus} size="sm" onClick={() => navigate("/app/organizations")}>
-            Manage Workspaces
-          </Button>
+            )}
+            <button
+              onClick={() => navigate("/app/organizations")}
+              className="px-4 py-1.5 bg-[#8B5CF6] hover:bg-[#7c3aed] text-white text-xs font-mono uppercase tracking-widest rounded-lg transition-all shadow-[0_0_15px_rgba(139,92,246,0.2)]"
+            >
+              Workspace Settings
+            </button>
+          </div>
         </div>
-      </div>
 
-      {renderStats()}
+        {renderStats()}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Main Content Areas */}
-        <div className="lg:col-span-8 space-y-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Main Content Areas */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Workspace Velocity */}
+            <GlassCard className="!p-8 !bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#8B5CF6]/20">
+              <div className="flex justify-between items-start mb-6">
+                 <div>
+                   <h2 className="text-2xl font-bold text-[#dae2fd] tracking-tight">Workspace Velocity</h2>
+                   <p className="text-[#c5c6cd] text-sm mt-1">Quarterly Goal Achievement</p>
+                 </div>
+                 <div className="text-5xl font-bold text-[#dae2fd] tracking-tighter">
+                   {orgStats?.completion_percentage || 0}%
+                 </div>
+              </div>
+              <div className="w-full h-3 bg-[#0F172A] rounded-full overflow-hidden border border-white/5 mb-6">
+                <div
+                  className="h-full bg-gradient-to-r from-[#8B5CF6] to-[#D8B4FE] rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(139,92,246,0.6)]"
+                  style={{ width: `${orgStats?.completion_percentage || 0}%` }}
+                />
+              </div>
+              <div className="flex gap-12 border-t border-white/5 pt-4">
+                 <div>
+                   <p className="text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest mb-1">Current Output</p>
+                   <p className="text-sm font-semibold text-[#dae2fd]">High Performance</p>
+                 </div>
+                 <div>
+                   <p className="text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest mb-1">Estimated Completion</p>
+                   <p className="text-sm font-semibold text-[#dae2fd]">14 Days Early</p>
+                 </div>
+              </div>
+            </GlassCard>
 
-
-          {/* My Team (For Admins/Managers) */}
-          {(role !== "MEMBER") && (
+            {/* Quick Workspace: Recent Projects */}
             <div className="space-y-4">
-              <SectionHeader title="Team Members" icon={Users}>
-                <button onClick={() => navigate("/app/organizations")} className="text-xs font-bold text-brand-500 uppercase tracking-widest hover:text-brand-400">Invite More</button>
-              </SectionHeader>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {subordinates.length === 0 ? (
-                  <div className="md:col-span-3">
-                    <EmptyState
-                      icon={UserPlus}
-                      title="Lone Wolf?"
-                      description="You don't have any direct subordinates in this workspace."
-                    />
-                  </div>
-                ) : (
-                  subordinates.slice(0, 6).map(sub => (
-                    <GlassCard key={sub.id} className="p-4 flex items-center gap-3 border border-dark-700/40">
-                      <div className="w-10 h-10 rounded-full bg-dark-700 flex items-center justify-center text-brand-400 font-black border border-dark-600">
-                        {getInitials(sub.user_full_name)}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-bold text-dark-50 truncate text-sm">{sub.user_full_name}</p>
-                        <p className="text-[10px] font-bold text-dark-500 uppercase tracking-tighter truncate">{sub.role_display || sub.role}</p>
-                      </div>
-                    </GlassCard>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Quick Actions Grid */}
-          <div className="space-y-4 font-inter">
-            <SectionHeader title="Quick Actions" icon={TrendingUp} />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "New Task", icon: Plus, color: "brand", action: () => navigate(recentProjects.length > 0 ? `/app/projects/${recentProjects[0].id}/tasks` : "/app/projects") },
-                { label: "Members", icon: UserPlus, color: "purple", action: () => navigate("/app/organizations") },
-                { label: "Teams", icon: Users, color: "blue", action: () => navigate(`/app/organizations/${orgId}/teams`) },
-                { label: "All Projects", icon: FolderKanban, color: "green", action: () => navigate("/app/projects") },
-              ].map((act, i) => (
+              <SectionHeader title="Recent Projects" icon={FolderKanban}>
                 <button
-                  key={i}
-                  onClick={act.action}
-                  className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-dark-800/40 border border-dark-700/50 hover:border-brand-500/50 hover:bg-dark-700/50 transition-all group"
+                  onClick={() => navigate("/app/projects")}
+                  className="px-3 py-1 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest border border-white/10 rounded hover:bg-white/5 transition-colors"
                 >
-                  <div className={`p-2.5 rounded-xl bg-dark-800 text-${act.color}-400 group-hover:scale-110 transition-transform`}>
-                    <act.icon size={20} />
-                  </div>
-                  <span className="text-xs font-bold text-dark-300">{act.label}</span>
+                  Export Report
                 </button>
-              ))}
-            </div>
-          </div>
+              </SectionHeader>
 
-          {/* Your Organizations */}
-          <div className="space-y-4">
-            <SectionHeader title="Your Workspaces" icon={Building2} />
-            <div className="grid md:grid-cols-2 gap-4">
-              {organizations.map(org => (
-                <GlassCard
-                  key={org.id}
-                  className="p-6 cursor-pointer border border-dark-700/60 hover:border-brand-500/50 group transition-all"
-                  onClick={() => { setSelectedOrg(org.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-12 h-12 bg-dark-900 border border-dark-700 rounded-2xl flex items-center justify-center text-brand-500 group-hover:scale-110 group-hover:bg-brand-500/10 transition-all">
-                      <Building2 size={24} />
-                    </div>
-                    <Badge variant={org.user_role} label={org.user_role} size="sm" />
-                  </div>
-                  <h3 className="text-lg font-black text-white group-hover:text-brand-400 transition-colors uppercase tracking-tight">{org.name}</h3>
-                  <div className="flex items-center gap-4 mt-4 text-[11px] font-bold text-dark-500 uppercase tracking-widest">
-                    <span className="flex items-center gap-1.5"><Users size={12} /> {org.members_count || 0} Members</span>
-                    <span className="flex items-center gap-1.5 font-inter"><Clock size={12} /> {formatDate(org.created_at)}</span>
+              {recentProjects.length === 0 ? (
+                <EmptyState
+                  icon={Plus}
+                  title="No projects yet"
+                  description="Create your first project to start tracking tasks and progress."
+                  actionText="Create Project"
+                  onAction={() => navigate("/app/projects")}
+                />
+              ) : (
+                <GlassCard className="!p-0 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-white/5 bg-white/[0.02]">
+                          <th className="py-3 px-5 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal">Project Name</th>
+                          <th className="py-3 px-5 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal">Lead</th>
+                          <th className="py-3 px-5 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal">Status</th>
+                          <th className="py-3 px-5 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal">Progress</th>
+                          <th className="py-3 px-5 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {recentProjects.slice(0, 4).map((project) => (
+                          <tr key={project.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => navigate(`/app/projects/${project.id}/tasks`)}>
+                            <td className="py-4 px-5">
+                              <p className="text-sm font-semibold text-[#dae2fd]">{project.name}</p>
+                              <p className="text-[11px] text-[#c5c6cd] mt-0.5 truncate max-w-[200px]">{project.description || "Infrastructure Upgrade"}</p>
+                            </td>
+                            <td className="py-4 px-5">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-[#1E293B] border border-white/10 flex items-center justify-center text-[10px] text-[#8B5CF6] font-bold">
+                                  {getInitials(project.lead_name || project.created_by_name || "U")}
+                                </div>
+                                <span className="text-sm text-[#dae2fd]">{project.lead_name || project.created_by_name || "Unassigned"}</span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-5">
+                              <span className={`px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest rounded-full ${project.status === 'ACTIVE' ? 'bg-[#8B5CF6]/20 text-[#8B5CF6]' : project.status === 'COMPLETED' ? 'bg-[#D8B4FE]/20 text-[#D8B4FE]' : 'bg-white/10 text-[#c5c6cd]'}`}>
+                                {project.status || "Active"}
+                              </span>
+                            </td>
+                            <td className="py-4 px-5">
+                              <div className="flex items-center gap-3">
+                                <div className="w-24 h-1.5 bg-[#0F172A] rounded-full overflow-hidden">
+                                  <div className="h-full bg-[#8B5CF6]" style={{ width: `${Math.floor(Math.random() * 60) + 20}%` }}></div>
+                                </div>
+                                <span className="text-xs font-mono text-[#dae2fd]">88%</span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-5 text-right">
+                              <button className="p-1 text-[#c5c6cd] hover:text-[#8B5CF6] transition-colors">
+                                <MoreHorizontal size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </GlassCard>
-              ))}
+              )}
             </div>
+
+            {/* My Team (For Admins/Managers) */}
+            {role !== "MEMBER" && (
+              <div className="space-y-4">
+                <SectionHeader title="Active Members" icon={Users}>
+                  <button
+                    onClick={() => navigate("/app/organizations")}
+                    className="text-[10px] font-mono text-[#8B5CF6] uppercase tracking-widest hover:text-[#D8B4FE]"
+                  >
+                    Invite More
+                  </button>
+                </SectionHeader>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {subordinates.length === 0 ? (
+                    <div className="col-span-full">
+                      <EmptyState
+                        icon={UserPlus}
+                        title="No Active Members"
+                        description="You don't have any direct subordinates in this workspace."
+                      />
+                    </div>
+                  ) : (
+                    subordinates.slice(0, 6).map((sub) => (
+                      <GlassCard
+                        key={sub.id}
+                        className="!p-3 flex items-center gap-3 hover:bg-white/[0.02]"
+                      >
+                        <div className="w-10 h-10 rounded bg-[#0F172A] flex items-center justify-center text-[#8B5CF6] font-bold border border-white/5">
+                          {getInitials(sub.user_full_name)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-[#dae2fd] truncate text-sm">
+                            {sub.user_full_name}
+                          </p>
+                          <p className="text-[10px] font-mono text-[#c5c6cd] uppercase tracking-wider truncate">
+                            {sub.role_display || sub.role}
+                          </p>
+                        </div>
+                      </GlassCard>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Sidebar Widgets - Activity Feed & My Tasks */}
-        <div className="lg:col-span-4 space-y-10">
-
-          {/* Dynamic Progress Indicator (Sidebar Top) */}
-          <GlassCard className="bg-gradient-to-br from-brand-600/10 to-transparent border-brand-500/20">
-            <h4 className="text-xs font-black text-brand-400 uppercase tracking-widest mb-4">Workspace Velocity</h4>
-            <div className="flex items-end gap-2 mb-2">
-              <span className="text-4xl font-black text-white">{orgStats?.completion_percentage || 0}%</span>
-              <span className="text-sm font-bold text-brand-500 mb-1.5 flex items-center gap-0.5"><TrendingUp size={14} /> +12%</span>
+          {/* Sidebar Widgets */}
+          <div className="lg:col-span-4 space-y-6">
+            
+            {/* Quick Actions Grid */}
+            <div className="space-y-4">
+              <SectionHeader title="Quick Actions" icon={Map} />
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  {
+                    label: "New Task",
+                    icon: Plus,
+                    action: () =>
+                      navigate(
+                        recentProjects.length > 0
+                          ? `/app/projects/${recentProjects[0].id}/tasks`
+                          : "/app/projects",
+                      ),
+                  },
+                  {
+                    label: "Members",
+                    icon: UserPlus,
+                    action: () => navigate("/app/organizations"),
+                  },
+                  {
+                    label: "Teams",
+                    icon: Users,
+                    action: () => navigate(`/app/organizations/${orgId}/teams`),
+                  },
+                  {
+                    label: "Settings",
+                    icon: Settings,
+                    action: () => navigate("/app/projects"),
+                  },
+                ].map((act, i) => (
+                  <GlassCard
+                    key={i}
+                    onClick={act.action}
+                    className="flex flex-col items-center justify-center gap-2 !p-4 hover:border-[#8B5CF6]/50 group"
+                  >
+                    <act.icon size={20} className="text-[#c5c6cd] group-hover:text-[#8B5CF6] transition-colors" />
+                    <span className="text-[10px] font-mono text-[#c5c6cd] group-hover:text-[#dae2fd] uppercase tracking-widest transition-colors">
+                      {act.label}
+                    </span>
+                  </GlassCard>
+                ))}
+              </div>
             </div>
-            <div className="w-full h-3 bg-dark-900 rounded-full overflow-hidden border border-dark-700/50">
-              <div
-                className="h-full bg-gradient-to-r from-brand-600 to-brand-400 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(var(--brand-500-rgb),0.5)]"
-                style={{ width: `${orgStats?.completion_percentage || 0}%` }}
-              />
-            </div>
-            <p className="text-[10px] text-dark-500 mt-4 leading-relaxed font-inter">
-              Your team has completed <b>{orgStats?.completed_tasks || 0}</b> total milestones this month. Keep pushing toward the 100% mark!
-            </p>
-          </GlassCard>
 
-          {renderMyTasks()}
+            {renderMyTasks()}
 
-          <hr className="border-dark-800" />
-
-          {renderActivityFeed()}
+            {renderActivityFeed()}
+          </div>
         </div>
       </div>
     </div>
