@@ -1,17 +1,18 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  Trash2, 
+import {
+  Users,
+  Search,
+  Filter,
+  MoreVertical,
+  Trash2,
   ShieldCheck,
   UserCheck,
   Shield,
   Loader2,
   Mail,
-  Calendar
+  Calendar,
+  Lock
 } from "lucide-react";
 import { fetchMembers, updateMemberRole, removeMember } from "./membersSlice";
 import useCurrentOrg from "../../hooks/useCurrentOrg";
@@ -41,9 +42,9 @@ const MembersPage = () => {
   // Filtering Logic
   const filteredMembers = useMemo(() => {
     return members.filter(m => {
-      const matchesSearch = 
-        m.user_full_name.toLowerCase().includes(search.toLowerCase()) || 
-        m.user_email.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch =
+        (m.user_full_name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (m.user_email || "").toLowerCase().includes(search.toLowerCase());
       const matchesRole = roleFilter === "ALL" || m.role === roleFilter;
       return matchesSearch && matchesRole;
     });
@@ -69,129 +70,141 @@ const MembersPage = () => {
     }
   };
 
+  if (myRole !== 'ADMIN') {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 px-4 animate-fade-in bg-[#0F172A] min-h-screen">
+        <div className="w-16 h-16 bg-[#0F172A] rounded-2xl flex items-center justify-center text-red-500 mb-6 border border-white/5 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+          <Lock size={32} />
+        </div>
+        <h2 className="text-2xl font-bold text-[#dae2fd] mb-2 tracking-tight">Unauthorized Access</h2>
+        <p className="text-[#c5c6cd] text-sm max-w-md text-center">
+          You do not have permission to view this page. This area is restricted to Organization Administrators.
+        </p>
+      </div>
+    );
+  }
+
   if (loading && members.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="animate-spin text-brand-500 mb-4" size={48} />
-        <p className="text-dark-400 font-medium font-inter uppercase tracking-widest text-xs">Accessing Neural Archive...</p>
+      <div className="flex flex-col items-center justify-center py-20 bg-[#0F172A] min-h-screen">
+        <Loader2 className="animate-spin text-[#8B5CF6] mb-4" size={48} />
+        <p className="text-[#c5c6cd] font-mono uppercase tracking-widest text-xs">Accessing Data...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-fade-in pb-20">
+    <div className="max-w-[1600px] mx-auto space-y-8 animate-fade-in pb-20 px-4 md:px-8 py-8 font-sans bg-[#0F172A] min-h-screen">
       {/* Header Container */}
-      <div className="relative group">
-        <div className="absolute -inset-1 bg-gradient-to-r from-brand-600 to-blue-600 rounded-2xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-        <div className="relative glass-panel p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border border-dark-700/50">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-black text-white tracking-tight uppercase">Workspace Roster</h1>
-              <div className="px-2 py-0.5 bg-brand-500/10 border border-brand-500/20 rounded-md text-[10px] font-black text-brand-400 uppercase tracking-widest">
-                {members.length} Entities
-              </div>
-            </div>
-            <p className="text-dark-400 mt-1 font-medium font-inter">
-              Manage permissions and organization hierarchy.
-            </p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-             {/* Search */}
-             <div className="relative w-full sm:w-64 group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500 group-focus-within:text-brand-500 transition-colors" size={16} />
-                <input 
-                  type="text"
-                  placeholder="Search members..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm font-bold text-white outline-none focus:border-brand-500 transition-all placeholder:text-dark-600"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-             </div>
-             {/* Filter */}
-             <div className="relative w-full sm:w-48 group">
-                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" size={16} />
-                <select 
-                  className="w-full pl-10 pr-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm font-bold text-white outline-none focus:border-brand-500 transition-all appearance-none cursor-pointer"
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                >
-                  <option value="ALL">All Roles</option>
-                  <option value="ADMIN">Admins</option>
-                  <option value="MANAGER">Managers</option>
-                  <option value="LEAD">Leads</option>
-                  <option value="MEMBER">Members</option>
-                </select>
-             </div>
-          </div>
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-white/5">
+        <div>
+          <h1 className="text-3xl font-bold text-[#dae2fd] tracking-tight">Organization Members</h1>
+          <p className="text-[#c5c6cd] font-medium mt-1 text-sm">
+            Manage member roles and visibility across the workspace.
+          </p>
+        </div>
+        <div className="px-3 py-1 bg-[#1E293B] border border-white/10 rounded-lg text-xs font-mono text-[#8B5CF6] uppercase tracking-widest flex items-center gap-2">
+          <Users size={14} /> {members.length} Members Total
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        {/* Search */}
+        <div className="relative w-full sm:w-80 group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c6cd] group-focus-within:text-[#8B5CF6] transition-colors" size={16} />
+          <input
+            type="text"
+            placeholder="Search members by name or email..."
+            className="w-full pl-10 pr-4 py-2.5 bg-[#1E293B] border border-white/5 rounded-lg text-sm text-[#dae2fd] outline-none focus:border-[#8B5CF6]/50 transition-all placeholder:text-[#c5c6cd]/50 shadow-[0_0_15px_rgba(255,255,255,0.02)]"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        {/* Filter */}
+        <div className="relative w-full sm:w-48 group">
+          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c6cd]" size={16} />
+          <select
+            className="w-full pl-10 pr-4 py-2.5 bg-[#1E293B] border border-white/5 rounded-lg text-sm text-[#dae2fd] outline-none focus:border-[#8B5CF6]/50 transition-all appearance-none cursor-pointer shadow-[0_0_15px_rgba(255,255,255,0.02)]"
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+          >
+            <option value="ALL">All Roles</option>
+            <option value="ADMIN">Admins</option>
+            <option value="MANAGER">Managers</option>
+            <option value="LEAD">Leads</option>
+            <option value="MEMBER">Members</option>
+          </select>
         </div>
       </div>
 
       {/* Members Grid */}
-      <div className="glass-panel border border-dark-700/50 overflow-hidden">
+      <div className="bg-[#1E293B] border border-white/5 border-t-white/10 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-dark-800/50 border-b border-dark-700/50">
+            <thead className="bg-white/[0.02] border-b border-white/5">
               <tr>
-                <th className="px-6 py-4 text-[10px] font-black text-dark-500 uppercase tracking-[0.2em]">Member</th>
-                <th className="px-6 py-4 text-[10px] font-black text-dark-500 uppercase tracking-[0.2em]">Contact</th>
-                <th className="px-6 py-4 text-[10px] font-black text-dark-500 uppercase tracking-[0.2em]">Authority</th>
-                <th className="px-6 py-4 text-[10px] font-black text-dark-500 uppercase tracking-[0.2em]">Timeline</th>
-                <th className="px-6 py-4 text-[10px] font-black text-dark-500 uppercase tracking-[0.2em] text-right">Actions</th>
+                <th className="px-6 py-4 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal">Member</th>
+                <th className="px-6 py-4 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal">Contact</th>
+                <th className="px-6 py-4 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal">Authority</th>
+                <th className="px-6 py-4 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal">Timeline</th>
+                <th className="px-6 py-4 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-dark-800/50">
+            <tbody className="divide-y divide-white/5">
               {filteredMembers.map((member) => (
-                <tr key={member.id} className="group hover:bg-dark-800/30 transition-colors">
+                <tr key={member.id} className="group hover:bg-white/[0.02] transition-colors">
                   <td className="px-6 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg ${getAvatarColor(member.user_full_name)}`}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded bg-[#0F172A] border border-white/5 flex items-center justify-center text-[#8B5CF6] font-bold shadow-md">
                         {getInitials(member.user_full_name)}
                       </div>
                       <div>
-                        <p className="text-sm font-black text-white uppercase tracking-tight group-hover:text-brand-400 transition-colors">{member.user_full_name}</p>
-                        <p className="text-[10px] font-bold text-dark-500 leading-none mt-0.5">ID: {member.user}</p>
+                        <p className="text-sm font-semibold text-[#dae2fd]">{member.user_full_name}</p>
+                        <p className="text-[10px] font-mono text-[#c5c6cd] mt-0.5">ID: {String(member.user).split('-')[0]}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-5">
-                    <div className="flex items-center gap-2 text-dark-400">
-                      <Mail size={14} className="text-dark-500" />
-                      <span className="text-xs font-bold font-inter">{member.user_email}</span>
+                    <div className="flex items-center gap-2 text-[#c5c6cd]">
+                      <Mail size={14} className="text-[#8B5CF6]/70" />
+                      <span className="text-sm font-medium">{member.user_email}</span>
                     </div>
                   </td>
                   <td className="px-6 py-5">
-                    {/* Role Control */}
-                    <div className="flex items-center gap-3">
-                      <select 
-                        className={`bg-transparent outline-none cursor-pointer font-black text-[10px] tracking-widest uppercase py-1 px-2 rounded border border-transparent transition-all
-                          ${member.role === 'ADMIN' ? 'text-red-500 hover:border-red-500/30' : ''}
-                          ${member.role === 'MANAGER' ? 'text-blue-500 hover:border-blue-500/30' : ''}
-                          ${member.role === 'LEAD' ? 'text-purple-500 hover:border-purple-500/30' : ''}
-                          ${member.role === 'MEMBER' ? 'text-dark-400 hover:border-dark-600' : ''}
+                    <div className="relative group/select w-fit">
+                      <select
+                        className={`bg-[#0F172A] outline-none cursor-pointer font-mono text-[10px] tracking-widest uppercase py-1.5 px-3 rounded border border-white/10 transition-all appearance-none pr-8
+                          ${member.role === 'ADMIN' ? 'text-[#D8B4FE] border-[#D8B4FE]/30 bg-[#D8B4FE]/5' : ''}
+                          ${member.role === 'MANAGER' ? 'text-[#0EA5E9] border-[#0EA5E9]/30 bg-[#0EA5E9]/5' : ''}
+                          ${member.role === 'LEAD' ? 'text-[#F59E0B] border-[#F59E0B]/30 bg-[#F59E0B]/5' : ''}
+                          ${member.role === 'MEMBER' ? 'text-[#c5c6cd] hover:border-white/20' : ''}
                         `}
                         value={member.role}
                         onChange={(e) => handleRoleChange(member.id, e.target.value)}
-                        disabled={myRole !== 'ADMIN' && myRole !== 'MANAGER'}
+                        disabled={myRole !== 'ADMIN'}
                       >
-                        <option value="ADMIN" disabled={myRole !== 'ADMIN'}>Admin</option>
+                        <option value="ADMIN">Admin</option>
                         <option value="MANAGER">Manager</option>
-                        <option value="LEAD">Lead</option>
-                        <option value="MEMBER">Member</option>
+                        {member.role === 'LEAD' && <option value="LEAD" hidden>Lead</option>}
+                        {member.role === 'MEMBER' && <option value="MEMBER" hidden>Member</option>}
                       </select>
+                      {/* Custom caret */}
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 group-hover/select:opacity-100 transition-opacity">
+                        <MoreVertical size={12} className="text-current rotate-90" />
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-5">
-                    <div className="flex items-center gap-2 text-dark-500">
-                      <Calendar size={12} />
-                      <span className="text-[10px] font-black uppercase tracking-tighter">Joined {formatDate(member.joined_at)}</span>
+                    <div className="flex items-center gap-2 text-[#c5c6cd]">
+                      <Calendar size={14} className="text-[#8B5CF6]/70" />
+                      <span className="text-[11px] font-mono uppercase tracking-wider">Joined {formatDate(member.joined_at)}</span>
                     </div>
                   </td>
                   <td className="px-6 py-5 text-right">
                     {myRole === 'ADMIN' && (
-                      <button 
+                      <button
                         onClick={() => setShowDeleteModal(member)}
-                        className="p-2 text-dark-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                        className="p-2 text-[#c5c6cd] hover:text-red-400 hover:bg-red-500/10 rounded transition-all border border-transparent hover:border-red-500/20"
                         title="Remove Access"
                       >
                         <Trash2 size={16} />
@@ -203,41 +216,32 @@ const MembersPage = () => {
             </tbody>
           </table>
           {filteredMembers.length === 0 && (
-            <div className="p-12 text-center">
-               <Users size={48} className="mx-auto text-dark-700 mb-4" />
-               <p className="text-dark-400 font-bold uppercase tracking-widest text-xs">No matching entities found in this sector</p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-12 h-12 bg-[#0F172A] rounded-lg flex items-center justify-center mb-4 text-[#c5c6cd] border border-white/5">
+                <Users size={24} />
+              </div>
+              <p className="text-[#dae2fd] font-semibold text-sm mb-1">No members found</p>
+              <p className="text-[#c5c6cd] text-sm">Try adjusting your search or filters.</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Security Info */}
-      <div className="flex items-center justify-center gap-8 py-10 opacity-50">
-          <div className="flex items-center gap-2">
-            <ShieldCheck size={14} className="text-brand-500" />
-            <span className="text-[9px] font-black text-dark-500 uppercase tracking-[0.2em]">Audit Trail Active</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <UserCheck size={14} className="text-brand-500" />
-            <span className="text-[9px] font-black text-dark-500 uppercase tracking-[0.2em]">Verified Identities</span>
-          </div>
-      </div>
-
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <Modal 
-          open={true} 
+        <Modal
+          open={true}
           onClose={() => setShowDeleteModal(null)}
           title="Revoke Workspace Access?"
         >
           <div className="space-y-6">
-            <p className="text-dark-400 text-sm leading-relaxed font-inter">
-              You are about to remove <span className="text-white font-black uppercase">{showDeleteModal.user_full_name}</span> from the organization. 
+            <p className="text-[#c5c6cd] text-sm leading-relaxed">
+              You are about to remove <span className="text-[#dae2fd] font-bold">{showDeleteModal.user_full_name}</span> from the organization.
               This will immediately revoke their access to all teams, projects, and tasks in this workspace.
             </p>
             <div className="flex gap-4">
-               <Button className="flex-1 border-dark-700" variant="secondary" onClick={() => setShowDeleteModal(null)}>Cancel</Button>
-               <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={handleDelete}>Remove Access</Button>
+              <button className="flex-1 py-2 bg-[#0F172A] text-[#dae2fd] border border-white/10 rounded hover:bg-white/5 transition-colors text-sm font-medium" onClick={() => setShowDeleteModal(null)}>Cancel</button>
+              <button className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors text-sm font-medium shadow-[0_0_15px_rgba(220,38,38,0.3)]" onClick={handleDelete}>Remove Access</button>
             </div>
           </div>
         </Modal>

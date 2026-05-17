@@ -15,7 +15,8 @@ import {
   CheckSquare,
   Users,
   UserPlus,
-  Rocket
+  Rocket,
+  Shield
 } from "lucide-react";
 import { logout } from "../../features/auth/authSlice";
 import { getInitials, getAvatarColor } from "../../utils/helpers";
@@ -38,6 +39,12 @@ const navigationGroups = [
     items: [
       { label: "Projects", icon: FolderKanban, to: "/app/projects" },
       { label: "Teams", icon: Users, to: "/app/organizations" },
+    ]
+  },
+  {
+    title: "Admin",
+    items: [
+      { label: "Members", icon: Shield, to: "/app/members", roles: ["ADMIN"] },
     ]
   },
   {

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { getOrganizations, getOrganization, getOrgStats, createOrganization, deleteOrganization } from "./organizationAPI";
 import { getOrgActivityFeed } from "../activity/activityAPI";
+import { logout } from "../auth/authSlice";
 
 // Thunks
 export const fetchOrganizations = createAsyncThunk(
@@ -98,6 +99,24 @@ const orgSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(logout.fulfilled, (state) => {
+        state.organizations = [];
+        state.selectedOrgId = null;
+        state.selectedOrgDetails = null;
+        state.userRole = null;
+        state.stats = null;
+        state.error = null;
+        localStorage.removeItem("selected_org_id");
+      })
+      .addCase(logout.rejected, (state) => {
+        state.organizations = [];
+        state.selectedOrgId = null;
+        state.selectedOrgDetails = null;
+        state.userRole = null;
+        state.stats = null;
+        state.error = null;
+        localStorage.removeItem("selected_org_id");
+      })
       .addCase(fetchOrganizations.pending, (state) => {
         state.loading = true;
       })
