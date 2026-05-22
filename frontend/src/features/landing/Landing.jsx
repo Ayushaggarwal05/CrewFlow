@@ -13,6 +13,7 @@ import {
   Terminal
 } from "lucide-react";
 import logo from "../../assets/logo2.png";
+import heroBg from "../../assets/hero-bg.jpg";
 
 const features = [
   {
@@ -106,10 +107,25 @@ const Landing = () => {
       </nav>
       {/* Hero */}
       <section className="relative pt-40 pb-24 px-6">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none flex justify-center items-center">
-          <div className="absolute top-1/4 w-96 h-96 bg-brand-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-70 animate-blob" />
-          <div className="absolute top-1/3 -right-20 w-96 h-96 bg-purple-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-70 animate-blob animation-delay-2000" />
-          <div className="absolute -bottom-20 left-20 w-96 h-96 bg-blue-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-70 animate-blob animation-delay-4000" />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Cyberpunk Workspace Background Image */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src={heroBg}
+              alt="Futuristic Developer Collaboration Background"
+              className="w-full h-full object-cover object-[center_-80px] opacity-[0.26] filter brightness-[0.75] contrast-[1.15]"
+            />
+            {/* Precise gradients to blend with deep navy theme and keep text readable */}
+            <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-dark-950 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-[450px] bg-gradient-to-t from-dark-950 via-dark-950/75 to-transparent" />
+            <div className="absolute inset-0 bg-dark-950/10" />
+          </div>
+          {/* Glowing Animated Ambient Blobs */}
+          <div className="absolute inset-0 flex justify-center items-center z-10">
+            <div className="absolute top-1/4 w-96 h-96 bg-brand-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-60 animate-blob" />
+            <div className="absolute top-1/3 -right-20 w-96 h-96 bg-purple-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-60 animate-blob animation-delay-2000" />
+            <div className="absolute -bottom-20 left-20 w-96 h-96 bg-blue-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-60 animate-blob animation-delay-4000" />
+          </div>
         </div>
 
         <div className="relative max-w-4xl mx-auto text-center z-10 animate-fade-in">
@@ -228,23 +244,64 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section id="about" className="py-32 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-brand-600/5 mix-blend-overlay" />
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="glass-panel p-16 border-brand-500/20 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-400 via-purple-400 to-brand-400" />
-            <CheckCircle size={56} className="mx-auto text-brand-400 mb-8" />
-            <h2 className="text-4xl font-bold text-white mb-6">
-              Ready to ship faster?
-            </h2>
-            <p className="text-xl text-dark-300 mb-10 max-w-xl mx-auto">
-              Join thousands of teams already using CrewFlow to manage their work and achieve their goals.
-            </p>
-            <Link to="/register" className="bg-white text-dark-950 hover:bg-dark-50 font-bold px-10 py-4 rounded-xl shadow-glow hover:-translate-y-1 transform transition-all duration-300 inline-flex items-center gap-2">
+      {/* CTA Section (About) */}
+      <section id="about" className="py-28 px-6 relative overflow-hidden bg-gradient-to-r from-brand-700 via-indigo-600 to-blue-600 text-white border-t border-b border-white/10 w-full">
+        {/* Elegant glassmorphic background noise/grids inside the full width section */}
+        <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px]" />
+        
+        {/* Ambient floating glowing meshes */}
+        <div className="absolute -top-40 right-0 w-[500px] h-[500px] bg-cyan-400/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 left-0 w-[500px] h-[500px] bg-brand-400/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 blur-[130px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 right-1/3 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 blur-[130px] rounded-full pointer-events-none" />
+
+        <div className="max-w-4xl mx-auto relative z-10 flex flex-col items-center">
+          {/* Creative Floating Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-full text-cyan-200 text-xs font-bold uppercase tracking-wider mb-8 shadow-inner">
+            <CheckCircle size={14} className="text-cyan-300" />
+            <span>CrewFlow Workspace</span>
+          </div>
+
+          {/* Headline */}
+          <h2 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-6 text-center leading-none max-w-3xl">
+            Ready to ship <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 to-blue-100 drop-shadow-md">faster?</span>
+          </h2>
+
+          {/* Subtitle */}
+          <p className="text-lg md:text-xl text-indigo-100 mb-10 max-w-2xl mx-auto text-center leading-relaxed font-normal opacity-90">
+            Join thousands of high-performing teams already using CrewFlow to manage their organizations, coordinate teams, track Kanban boards, and achieve milestones in record time.
+          </p>
+
+          {/* Interactive Links/CTA Actions - Large Pill-Shaped buttons with increased padding */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 justify-center">
+            <Link
+              to="/register"
+              className="group bg-white text-brand-700 hover:text-brand-600 hover:bg-slate-50 font-bold px-12 py-5 rounded-full shadow-xl hover:-translate-y-0.5 transform transition-all duration-300 inline-flex items-center gap-2.5 text-base"
+            >
               Get started — it's free
-              <ArrowRight size={20} />
+              <ArrowRight size={18} className="group-hover:translate-x-1.5 transition-transform duration-300 text-brand-700" />
             </Link>
+            <Link
+              to="/login"
+              className="bg-white/10 hover:bg-white/20 border border-white/30 hover:border-white/50 text-white font-semibold px-10 py-5 rounded-full transition-all duration-300 text-base"
+            >
+              Sign in to Account
+            </Link>
+          </div>
+
+          {/* Mini Guarantees / High Trust Points */}
+          <div className="mt-12 pt-8 border-t border-white/10 w-full max-w-xl flex justify-between items-center text-xs font-semibold text-indigo-200/80">
+            <span className="flex items-center gap-1.5">
+              <CheckCircle size={14} className="text-cyan-300" /> Free Forever Mode
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-300/40" />
+            <span className="flex items-center gap-1.5">
+              <CheckCircle size={14} className="text-cyan-300" /> Unlimited Projects
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-300/40" />
+            <span className="flex items-center gap-1.5">
+              <CheckCircle size={14} className="text-cyan-300" /> No Credit Card
+            </span>
           </div>
         </div>
       </section>
