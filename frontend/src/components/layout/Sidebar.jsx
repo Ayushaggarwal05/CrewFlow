@@ -38,7 +38,7 @@ const navigationGroups = [
     title: "Workspace",
     items: [
       { label: "Projects", icon: FolderKanban, to: "/app/projects" },
-      { label: "Teams", icon: Users, to: "/app/organizations" },
+      { label: "Organizations", icon: Users, to: "/app/organizations" },
     ]
   },
   {

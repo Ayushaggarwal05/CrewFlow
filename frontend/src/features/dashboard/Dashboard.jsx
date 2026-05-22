@@ -384,7 +384,7 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#0F172A] font-sans selection:bg-[#8B5CF6]/30">
+    <div className="min-h-screen bg-transparent font-sans selection:bg-[#8B5CF6]/30">
       <div className="max-w-[1600px] mx-auto space-y-8 pb-20 px-4 md:px-8 pt-8 animate-fade-in">
         {/* Premium Dashboard Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/5">

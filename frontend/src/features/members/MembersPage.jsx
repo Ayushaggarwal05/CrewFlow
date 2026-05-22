@@ -72,8 +72,8 @@ const MembersPage = () => {
 
   if (myRole !== 'ADMIN') {
     return (
-      <div className="flex flex-col items-center justify-center py-32 px-4 animate-fade-in bg-[#0F172A] min-h-screen">
-        <div className="w-16 h-16 bg-[#0F172A] rounded-2xl flex items-center justify-center text-red-500 mb-6 border border-white/5 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+      <div className="flex flex-col items-center justify-center py-32 px-4 animate-fade-in bg-transparent min-h-screen">
+        <div className="w-16 h-16 bg-dark-900 rounded-2xl flex items-center justify-center text-red-500 mb-6 border border-white/5 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
           <Lock size={32} />
         </div>
         <h2 className="text-2xl font-bold text-[#dae2fd] mb-2 tracking-tight">Unauthorized Access</h2>
@@ -86,7 +86,7 @@ const MembersPage = () => {
 
   if (loading && members.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-[#0F172A] min-h-screen">
+      <div className="flex flex-col items-center justify-center py-20 bg-transparent min-h-screen">
         <Loader2 className="animate-spin text-[#8B5CF6] mb-4" size={48} />
         <p className="text-[#c5c6cd] font-mono uppercase tracking-widest text-xs">Accessing Data...</p>
       </div>
@@ -94,7 +94,7 @@ const MembersPage = () => {
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-8 animate-fade-in pb-20 px-4 md:px-8 py-8 font-sans bg-[#0F172A] min-h-screen">
+    <div className="max-w-[1600px] mx-auto space-y-8 animate-fade-in pb-20 px-4 md:px-8 py-8 font-sans bg-transparent min-h-screen">
       {/* Header Container */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-white/5">
         <div>
