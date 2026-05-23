@@ -24,8 +24,18 @@ class Command(BaseCommand):
             user = User.objects.filter(email=email).first()
             
             if not user:
-                self.stdout.write(self.style.WARNING(f'User not found, skipping: {email}'))
-                not_found_count += 1
+                try:
+                    user = User.objects.create_user(
+                        email=email,
+                        full_name=email.split("@")[0].capitalize(),
+                        password=new_password
+                    )
+                    user.is_verified = True
+                    user.save()
+                    self.stdout.write(self.style.SUCCESS(f'Successfully created and verified dummy user: {email}'))
+                    migrated_count += 1
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'Failed to create dummy user {email}: {str(e)}'))
                 continue
                 
             # Safely upgrade

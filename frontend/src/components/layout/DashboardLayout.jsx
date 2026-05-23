@@ -42,7 +42,7 @@ const DashboardLayout = () => {
   }
 
   return (
-    <div 
+    <div
       className="flex h-screen overflow-hidden relative"
       style={{
         background: "radial-gradient(circle at 90% 10%, rgba(99, 102, 241, 0.07) 0%, rgba(6, 182, 212, 0.02) 20%, rgba(3, 7, 18, 1) 60%)"
@@ -50,6 +50,9 @@ const DashboardLayout = () => {
     >
       {/* Premium Top-Right Atmospheric Glow Mesh */}
       <div className="absolute top-[-100px] right-[-100px] w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/10 via-cyan-500/4 to-transparent rounded-full blur-[130px] pointer-events-none z-0" />
+
+      {/* Premium Left Atmospheric Glow Mesh for naturally blending Sidebar/Navbar */}
+      <div className="absolute top-[10%] left-[-150px] w-[500px] h-[500px] bg-gradient-to-tr from-brand-500/8 via-cyan-500/2 to-transparent rounded-full blur-[120px] pointer-events-none z-0 animate-pulse-slow" />
 
       {/* Sidebar */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />

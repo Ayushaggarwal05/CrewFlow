@@ -59,7 +59,7 @@ const StatCard = ({
   loading = false,
 }) => {
   const Icon = icon;
-  
+
   if (loading)
     return (
       <div className="animate-pulse bg-[#1E293B] h-32 rounded-lg border border-white/5" />
@@ -315,7 +315,7 @@ const Dashboard = () => {
               </div>
               <div className="flex items-center gap-3">
                 <span className={`px-2 py-1 text-[10px] font-mono uppercase tracking-widest rounded ${task.status === 'DONE' ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]' : task.due_date && new Date(task.due_date) < new Date() ? 'bg-red-500/10 text-red-400' : 'bg-white/5 text-[#c5c6cd]'}`}>
-                   {task.status === 'DONE' ? 'Completed' : task.due_date ? 'Due soon' : 'Pending'}
+                  {task.status === 'DONE' ? 'Completed' : task.due_date ? 'Due soon' : 'Pending'}
                 </span>
               </div>
             </GlassCard>
@@ -342,41 +342,41 @@ const Dashboard = () => {
           </div>
         ) : (
           <div className="space-y-4">
-             {activities.slice(0, 3).map((act, i) => {
-               const userName = act.user?.full_name?.split(" ")[0] || "Someone";
-               const fullUserName = act.user?.full_name || "Unknown";
-               const actionText = act.action ? act.action.toLowerCase() : "updated something";
-               const projectName = act.project?.name;
-               const orgName = act.organization?.name;
+            {activities.slice(0, 3).map((act, i) => {
+              const userName = act.user?.full_name?.split(" ")[0] || "Someone";
+              const fullUserName = act.user?.full_name || "Unknown";
+              const actionText = act.action ? act.action.toLowerCase() : "updated something";
+              const projectName = act.project?.name;
+              const orgName = act.organization?.name;
 
-               // Determine a simple shape/color indicator based on action
-               let indicatorColor = "bg-[#8B5CF6]"; // default
-               if (actionText.includes("created") || actionText.includes("added")) indicatorColor = "bg-emerald-400";
-               if (actionText.includes("deleted") || actionText.includes("removed")) indicatorColor = "bg-red-400";
-               if (actionText.includes("joined") || actionText.includes("invited")) indicatorColor = "bg-[#D8B4FE]";
+              // Determine a simple shape/color indicator based on action
+              let indicatorColor = "bg-[#8B5CF6]"; // default
+              if (actionText.includes("created") || actionText.includes("added")) indicatorColor = "bg-emerald-400";
+              if (actionText.includes("deleted") || actionText.includes("removed")) indicatorColor = "bg-red-400";
+              if (actionText.includes("joined") || actionText.includes("invited")) indicatorColor = "bg-[#D8B4FE]";
 
-               return (
+              return (
                 <div key={act.id || i} className="flex gap-4 items-start relative pb-4 border-b border-white/5 last:border-0 last:pb-0 group/act">
-                   {/* Avatar & Indicator */}
-                   <div className="relative shrink-0 mt-0.5">
-                     <div className="w-9 h-9 rounded-lg bg-[#0F172A] border border-white/10 flex items-center justify-center text-[11px] text-[#8B5CF6] font-bold shadow-md group-hover/act:border-[#8B5CF6]/30 transition-colors">
-                       {getInitials(fullUserName)}
-                     </div>
-                     <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#1E293B] ${indicatorColor} shadow-[0_0_8px_rgba(139,92,246,0.3)]`}></div>
-                   </div>
-                   
-                   <div className="pt-0.5">
-                     <p className="text-sm text-[#c5c6cd]">
-                       <strong className="text-[#dae2fd]">{userName}</strong> {actionText} {projectName && <span className="text-[#D8B4FE] font-medium">{projectName}</span>}
-                       {!projectName && orgName && <span className="text-[#D8B4FE] font-medium">{orgName}</span>}
-                     </p>
-                     <p className="text-[10px] font-mono text-[#c5c6cd]/50 mt-1 uppercase tracking-wider">
-                       {act.timestamp ? new Date(act.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "Just now"}
-                     </p>
-                   </div>
+                  {/* Avatar & Indicator */}
+                  <div className="relative shrink-0 mt-0.5">
+                    <div className="w-9 h-9 rounded-lg bg-[#0F172A] border border-white/10 flex items-center justify-center text-[11px] text-[#8B5CF6] font-bold shadow-md group-hover/act:border-[#8B5CF6]/30 transition-colors">
+                      {getInitials(fullUserName)}
+                    </div>
+                    <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#1E293B] ${indicatorColor} shadow-[0_0_8px_rgba(139,92,246,0.3)]`}></div>
+                  </div>
+
+                  <div className="pt-0.5">
+                    <p className="text-sm text-[#c5c6cd]">
+                      <strong className="text-[#dae2fd]">{userName}</strong> {actionText} {projectName && <span className="text-[#D8B4FE] font-medium">{projectName}</span>}
+                      {!projectName && orgName && <span className="text-[#D8B4FE] font-medium">{orgName}</span>}
+                    </p>
+                    <p className="text-[10px] font-mono text-[#c5c6cd]/50 mt-1 uppercase tracking-wider">
+                      {act.timestamp ? new Date(act.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "Just now"}
+                    </p>
+                  </div>
                 </div>
-               );
-             })}
+              );
+            })}
           </div>
         )}
       </GlassCard>
@@ -385,14 +385,14 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-transparent font-sans selection:bg-[#8B5CF6]/30">
-      <div className="max-w-[1600px] mx-auto space-y-8 pb-20 px-4 md:px-8 pt-8 animate-fade-in">
+      <div className="max-w-[1600px] mx-auto space-y-8 pb-20 px-4 md:px-6 pt-2 animate-fade-in">
         {/* Premium Dashboard Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/5">
           <div>
-            <h1 className="text-3xl font-bold text-[#dae2fd] tracking-tight">
+            <h1 className="text-4xl font-bold text-[#dae2fd] tracking-tight">
               Welcome back, {firstName}!
             </h1>
-            <p className="text-[#c5c6cd] font-medium mt-1 text-sm">
+            <p className="text-[#c5c6cd] font-medium mt-1 ml-1 text-sm">
               Here is what's happening across <span className="text-[#8B5CF6] font-semibold">{currentOrg?.name || "your workspace"}</span> today.
             </p>
           </div>
@@ -432,13 +432,13 @@ const Dashboard = () => {
             {/* Workspace Velocity */}
             <GlassCard className="!p-8 !bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#8B5CF6]/20">
               <div className="flex justify-between items-start mb-6">
-                 <div>
-                   <h2 className="text-2xl font-bold text-[#dae2fd] tracking-tight">Workspace Velocity</h2>
-                   <p className="text-[#c5c6cd] text-sm mt-1">Quarterly Goal Achievement</p>
-                 </div>
-                 <div className="text-5xl font-bold text-[#dae2fd] tracking-tighter">
-                   {orgStats?.completion_percentage || 0}%
-                 </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-[#dae2fd] tracking-tight">Workspace Velocity</h2>
+                  <p className="text-[#c5c6cd] text-sm mt-1">Quarterly Goal Achievement</p>
+                </div>
+                <div className="text-5xl font-bold text-[#dae2fd] tracking-tighter">
+                  {orgStats?.completion_percentage || 0}%
+                </div>
               </div>
               <div className="w-full h-3 bg-[#0F172A] rounded-full overflow-hidden border border-white/5 mb-6">
                 <div
@@ -447,14 +447,14 @@ const Dashboard = () => {
                 />
               </div>
               <div className="flex gap-12 border-t border-white/5 pt-4">
-                 <div>
-                   <p className="text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest mb-1">Current Output</p>
-                   <p className="text-sm font-semibold text-[#dae2fd]">High Performance</p>
-                 </div>
-                 <div>
-                   <p className="text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest mb-1">Estimated Completion</p>
-                   <p className="text-sm font-semibold text-[#dae2fd]">14 Days Early</p>
-                 </div>
+                <div>
+                  <p className="text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest mb-1">Current Output</p>
+                  <p className="text-sm font-semibold text-[#dae2fd]">High Performance</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest mb-1">Estimated Completion</p>
+                  <p className="text-sm font-semibold text-[#dae2fd]">14 Days Early</p>
+                </div>
               </div>
             </GlassCard>
 
@@ -579,7 +579,7 @@ const Dashboard = () => {
 
           {/* Sidebar Widgets */}
           <div className="lg:col-span-4 space-y-6">
-            
+
             {/* Quick Actions Grid */}
             <div className="space-y-4">
               <SectionHeader title="Quick Actions" icon={Map} />

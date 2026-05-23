@@ -94,7 +94,7 @@ const MembersPage = () => {
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-8 animate-fade-in pb-20 px-4 md:px-8 py-8 font-sans bg-transparent min-h-screen">
+    <div className="max-w-[1600px] mx-auto -mt-6 space-y-8 animate-fade-in pb-20 px-4 md:px-8 py-8 font-sans bg-transparent min-h-screen">
       {/* Header Container */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-white/5">
         <div>

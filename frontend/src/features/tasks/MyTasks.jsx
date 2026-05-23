@@ -131,7 +131,7 @@ const MyTasks = () => {
 
   if (loading) {
     return (
-      <div className="space-y-8 animate-fade-in p-6 lg:p-8">
+      <div className="space-y-8 animate-fade-in pt-0 px-2 lg:px-4">
         <div className="page-header-container">
           <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-500 via-indigo-400 to-cyan-400 text-transparent bg-clip-text tracking-tight mb-2">My Workspace</h1>
           <p className="text-dark-400">Loading your teams and projects...</p>
@@ -143,14 +143,14 @@ const MyTasks = () => {
 
   return (
     <div
-      className="space-y-10 pb-20 animate-fade-in p-6 lg:p-8 min-h-screen text-dark-100 relative overflow-hidden bg-transparent"
+      className="-mt-10 space-y-10 pb-20 animate-fade-in pt-0 px-2 lg:px-4 text-dark-100 relative overflow-hidden bg-transparent"
     >
       {/* Subtle top right atmospheric glowing highlight */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-indigo-500/8 via-cyan-500/3 to-transparent rounded-full blur-[130px] pointer-events-none z-0" />
 
       {/* Header */}
       <div className="page-header-container border-b border-dark-800/60 pb-6">
-        <div className="flex items-center gap-3.5 mb-3">
+        <div className="flex items-center gap-3.5 mb-2">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-600/10 to-cyan-500/10 border border-blue-500/25 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/5">
             <CheckCircle2 size={24} className="text-cyan-400" />
           </div>

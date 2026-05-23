@@ -188,7 +188,7 @@ const Landing = () => {
           <h1 className="text-6xl md:text-8xl font-extrabold text-white leading-[1.1] tracking-tight mb-8">
             Build faster with{" "}
             <span className="text-gradient block mt-2">
-              your crew
+              Your Crew
             </span>
           </h1>
 
@@ -375,9 +375,9 @@ const Landing = () => {
 
             {/* LEFT SATELLITE COLUMN: Col-span 3 */}
             <div className="lg:col-span-3 flex flex-col gap-8 justify-between">
-              
+
               {/* FEATURE 1: Smart Team Collaboration */}
-              <div 
+              <div
                 className="spatial-card p-6 flex flex-col justify-between h-[360px] animate-float-slow group"
                 onMouseMove={handleCardMouseMove}
               >
@@ -398,7 +398,7 @@ const Landing = () => {
                     <line x1="160" y1="50" x2="100" y2="30" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="1.5" strokeDasharray="3 3" />
                     <line x1="100" y1="30" x2="100" y2="80" stroke="rgba(6, 182, 212, 0.4)" strokeWidth="1.5" strokeDasharray="3 3" />
                   </svg>
-                  
+
                   {/* Orbiting Avatar nodes */}
                   <div className="absolute top-1/4 left-1/5 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-purple-600 border border-purple-400 flex items-center justify-center text-[10px] text-white font-bold shadow-md shadow-purple-500/20">
                     S
@@ -409,13 +409,13 @@ const Landing = () => {
                   <div className="absolute bottom-1/5 left-1/2 -translate-x-1/2 translate-y-1/2 w-8 h-8 rounded-full bg-cyan-600 border border-cyan-400 flex items-center justify-center text-[10px] text-white font-bold shadow-md shadow-cyan-500/20">
                     D
                   </div>
-                  
+
                   {/* AI Core pulse node */}
                   <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center border-2 border-white/20 relative shadow-[0_0_20px_rgba(168,85,247,0.4)]">
                     <Sparkles size={14} className="text-white" />
                     <span className="absolute -inset-2 rounded-full border border-purple-500/30 animate-ping opacity-60" />
                   </div>
-                  
+
                   <div className="absolute bottom-2 left-3 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                     <span className="text-[9px] font-semibold text-green-400 tracking-wider uppercase">Active Live Sync</span>
@@ -424,7 +424,7 @@ const Landing = () => {
               </div>
 
               {/* FEATURE 2: Real-Time Kanban Boards */}
-              <div 
+              <div
                 className="spatial-card p-6 flex flex-col justify-between h-[360px] animate-float-medium group"
                 onMouseMove={handleCardMouseMove}
               >
@@ -450,7 +450,7 @@ const Landing = () => {
                         <span className="text-[9px] uppercase font-bold tracking-wider opacity-60">{col.title}</span>
                         <span className={`text-[8px] px-1 bg-white/5 border ${col.color} rounded-md font-mono`}>{col.count}</span>
                       </div>
-                      
+
                       {col.active ? (
                         <div className="bg-gradient-to-br from-indigo-900/50 to-blue-900/50 border border-indigo-500/40 rounded px-1.5 py-1 flex flex-col gap-1 shadow-md shadow-indigo-500/10">
                           <div className="h-1 bg-indigo-300/40 rounded w-4/5" />
@@ -473,7 +473,7 @@ const Landing = () => {
             </div>
 
             {/* CENTER WIDESCREEN CORE CONSOLE: Col-span 6 */}
-            <div 
+            <div
               className="lg:col-span-6 spatial-card p-8 flex flex-col justify-between min-h-[750px] border-brand-500/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] relative group animate-float-slow"
               onMouseMove={handleCardMouseMove}
             >
@@ -499,7 +499,7 @@ const Landing = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                  
+
                   {/* LEFT COMPONENT: NESTED WORKSPACE ARCHITECTURE */}
                   <div className="space-y-6">
                     <div>
@@ -515,7 +515,7 @@ const Landing = () => {
                     {/* Interactive tree graph */}
                     <div className="bg-dark-950/60 rounded-2xl border border-dark-800/80 p-5 relative overflow-hidden h-64 flex items-center justify-center">
                       <div className="absolute inset-0 spatial-grid-bg opacity-30" />
-                      
+
                       <div className="relative w-full h-full flex flex-col justify-between py-2">
                         {/* Node 1: Org (Root) */}
                         <div className="flex justify-center relative">
@@ -523,7 +523,7 @@ const Landing = () => {
                             <Layers size={12} />
                             <span>Org: CrewFlow</span>
                           </div>
-                          
+
                           {/* Branch lines */}
                           <svg className="absolute top-8 left-0 w-full h-40 pointer-events-none" viewBox="0 0 200 160">
                             <path d="M100,0 L100,30 C100,30 100,45 60,45 L60,65" fill="none" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="1.5" />
@@ -579,7 +579,7 @@ const Landing = () => {
                           <span>&gt;</span>
                           <span className="border-r border-brand-400 pr-0.5 animate-pulse">/optimize-sprint --team Platform</span>
                         </div>
-                        
+
                         <div className="text-[11px] text-dark-400 leading-relaxed space-y-1">
                           <p className="text-white font-semibold">🤖 CrewFlow AI:</p>
                           <p>• Scanned 48 items across 2 projects.</p>
@@ -627,9 +627,9 @@ const Landing = () => {
 
             {/* RIGHT SATELLITE COLUMN: Col-span 3 */}
             <div className="lg:col-span-3 flex flex-col gap-8 justify-between">
-              
+
               {/* FEATURE 3: Role-Based Access Control */}
-              <div 
+              <div
                 className="spatial-card p-6 flex flex-col justify-between h-[360px] animate-float-medium group"
                 onMouseMove={handleCardMouseMove}
               >
@@ -652,7 +652,7 @@ const Landing = () => {
                       <Lock size={14} className="text-cyan-400 animate-pulse" />
                     </div>
                   </div>
-                  
+
                   {/* Digital Scopes */}
                   <div className="absolute top-2 left-2 text-[8px] font-mono text-dark-500">POLICY INTEGRITY</div>
                   <div className="absolute bottom-2 right-2 text-[8px] font-mono text-cyan-400 bg-cyan-950/50 border border-cyan-500/30 px-1.5 py-0.5 rounded">
@@ -662,7 +662,7 @@ const Landing = () => {
               </div>
 
               {/* FEATURE 4: Activity Analytics */}
-              <div 
+              <div
                 className="spatial-card p-6 flex flex-col justify-between h-[360px] animate-float-slow group"
                 onMouseMove={handleCardMouseMove}
               >
@@ -680,8 +680,8 @@ const Landing = () => {
                 <div className="relative h-28 w-full mt-4 bg-dark-900/80 border border-dark-800/80 rounded-xl p-2.5 overflow-hidden font-mono text-[9px] text-dark-400">
                   <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-dark-900 to-transparent z-10 pointer-events-none" />
                   <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-dark-900 to-transparent z-10 pointer-events-none" />
-                  
-                  <div 
+
+                  <div
                     className="space-y-1.5"
                     style={{
                       animation: "scrollLogs 8s linear infinite"
@@ -692,7 +692,7 @@ const Landing = () => {
                       { time: "00:05", label: "AI", msg: "Allocated task 4", color: "text-purple-400" },
                       { time: "00:07", label: "USER", msg: "Sarah merged SpaceUI", color: "text-cyan-400" },
                       { time: "00:09", label: "RBAC", msg: "Admin policy verified", color: "text-green-400" },
-                      
+
                       { time: "00:04", label: "SYS", msg: "Workspace active.", color: "text-indigo-400" },
                       { time: "00:05", label: "AI", msg: "Allocated task 4", color: "text-purple-400" },
                       { time: "00:07", label: "USER", msg: "Sarah merged SpaceUI", color: "text-cyan-400" },
@@ -736,8 +736,8 @@ const Landing = () => {
           {/* Row 1 - Scrolling Left */}
           <ThreeDScrollTriggerRow baseVelocity={-1.5} className="py-4">
             {testimonials.map((item, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="w-[300px] md:w-[450px] mx-4 p-8 rounded-2xl bg-white border border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 whitespace-normal flex flex-col h-full justify-between group cursor-default hover:scale-[1.01] hover:border-slate-300"
               >
                 <blockquote className="text-lg md:text-xl font-medium text-slate-700 mb-6 leading-relaxed">
@@ -759,8 +759,8 @@ const Landing = () => {
           {/* Row 2 - Scrolling Right */}
           <ThreeDScrollTriggerRow baseVelocity={1.5} className="py-4">
             {testimonials.slice().reverse().map((item, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="w-[300px] md:w-[450px] mx-4 p-8 rounded-2xl bg-white border border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 whitespace-normal flex flex-col h-full justify-between group cursor-default hover:scale-[1.01] hover:border-slate-300"
               >
                 <blockquote className="text-lg md:text-xl font-medium text-slate-700 mb-6 leading-relaxed">

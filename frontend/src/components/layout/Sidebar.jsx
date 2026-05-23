@@ -114,14 +114,14 @@ const Sidebar = ({ open, onClose }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-50 w-64 bg-dark-900 border-r border-dark-800 flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:z-auto ${open ? "translate-x-0" : "-translate-x-full"
+        className={`fixed top-0 left-0 bottom-0 z-50 w-64 bg-dark-950/60 backdrop-blur-xl border-r border-dark-850/40 flex flex-col transition-all duration-300 lg:translate-x-0 lg:static lg:z-auto lg:my-3 lg:ml-3 lg:rounded-2xl lg:border lg:border-dark-800/40 lg:shadow-2xl lg:shadow-black/40 ${open ? "translate-x-0" : "-translate-x-full"
           }`}
       >
         {/* Header */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-dark-800">
-          <div className="flex items-center gap-0">
-            <img src={logo} alt="CrewFlow Logo" className="w-10 h-10 pr-2 object-contain drop-shadow-md" />
-            <span className="text-lg font-bold tracking-tight">
+        <div className="h-16 flex items-center justify-between px-5 border-b border-dark-800/40">
+          <div className="flex items-center pl-4 gap-0">
+            <img src={logo} alt="CrewFlow Logo" className="w-12 h-12 pr-2 object-contain drop-shadow-md" />
+            <span className="text-2xl font-bold tracking-tight">
               <span className="text-white">Crew</span>
               <span className="bg-gradient-to-r from-blue-500 to-cyan-400 text-transparent bg-clip-text drop-shadow-sm">Flow</span>
             </span>
@@ -173,8 +173,8 @@ const Sidebar = ({ open, onClose }) => {
                         onClick={() => onClose?.()}
                         className={({ isActive }) =>
                           `group flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 relative ${isActive
-                            ? "bg-brand-600/10 text-brand-400"
-                            : "text-dark-400 hover:text-dark-100 hover:bg-dark-800/50"
+                            ? "bg-gradient-to-r from-brand-600/15 to-transparent text-brand-400 border border-brand-500/15 shadow-[0_2px_12px_-3px_rgba(99,102,241,0.1)]"
+                            : "text-dark-400 hover:text-dark-100 hover:bg-dark-800/30 border border-transparent"
                           }`
                         }
                       >
@@ -183,7 +183,7 @@ const Sidebar = ({ open, onClose }) => {
                             <Icon size={19} className={`${isActive ? "text-brand-400" : "text-dark-500 group-hover:text-dark-200"} transition-colors duration-300`} />
                             {item.label}
                             {isActive && (
-                              <div className="absolute left-0 w-[4px] h-5 bg-brand-500 rounded-r-full shadow-[0_0_12px_rgba(var(--brand-500-rgb),0.8)]" />
+                              <div className="absolute left-[-1px] w-[3px] h-5 bg-brand-500 rounded-r-full shadow-[0_0_8px_rgba(99,102,241,0.6)]" />
                             )}
                           </>
                         )}
@@ -197,7 +197,7 @@ const Sidebar = ({ open, onClose }) => {
         </nav>
 
         {/* Profile section */}
-        <div className="px-3 py-4 border-t border-dark-800">
+        <div className="px-3 py-4 border-t border-dark-800/40">
           <div className="relative">
             <button
               onClick={() => setProfileOpen(!profileOpen)}
