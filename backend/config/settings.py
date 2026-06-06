@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "django_filters",
     "corsheaders",
     "drf_spectacular",  
+    "anymail",
 
     # Local apps
     'apps.users',
@@ -238,3 +239,10 @@ EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@crewflow.com")
+EMAIL_TIMEOUT = 10
+
+ANYMAIL = {
+    "BREVO_API_KEY": config("BREVO_API_KEY", default=""),
+    "RESEND_API_KEY": config("RESEND_API_KEY", default=""),
+    "SENDGRID_API_KEY": config("SENDGRID_API_KEY", default=""),
+}

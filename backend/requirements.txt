@@ -21,3 +21,4 @@ drf-spectacular==0.29.0
 PyYAML==6.0.3
 uritemplate==4.2.0
 inflection==0.5.1
+django-anymail[brevo]
