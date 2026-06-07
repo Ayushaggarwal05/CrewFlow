@@ -102,18 +102,27 @@ const TeamList = () => {
         </button>
 
         <div className="flex-1">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
             <div>
               <p className="section-title">{org?.name || "Organization"}</p>
               <h1 className="page-header mt-0.5">Teams</h1>
             </div>
 
-            <div className="flex gap-3">
-              <Button variant="secondary" icon={Rocket} onClick={() => setShowJoin(true)}>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <Button
+                variant="secondary"
+                icon={Rocket}
+                onClick={() => setShowJoin(true)}
+                className="flex-1 sm:flex-initial justify-center"
+              >
                 Join
               </Button>
               {(isAdmin || isManager) && (
-                <Button icon={Plus} onClick={() => setShowCreate(true)}>
+                <Button
+                  icon={Plus}
+                  onClick={() => setShowCreate(true)}
+                  className="flex-1 sm:flex-initial justify-center"
+                >
                   New Team
                 </Button>
               )}

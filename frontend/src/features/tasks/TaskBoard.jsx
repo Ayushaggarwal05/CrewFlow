@@ -268,7 +268,7 @@ const TaskBoard = () => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="flex md:grid md:grid-cols-3 gap-4 overflow-x-auto pb-4 scrollbar-thin snap-x">
           {COLUMNS.map((col) => {
             const colTasks = tasksByColumn(col.id);
 
@@ -278,7 +278,7 @@ const TaskBoard = () => {
                 items={colTasks.map((t) => t.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="bg-dark-800 p-3 rounded-xl">
+                <div className="bg-dark-800 p-3 rounded-xl min-w-[280px] w-[280px] md:w-auto snap-align-start flex-shrink-0">
                   <h3>{col.label}</h3>
 
                   <div className="space-y-2 min-h-[80px]">

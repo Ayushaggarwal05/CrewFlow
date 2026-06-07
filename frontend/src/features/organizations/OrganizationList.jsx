@@ -13,9 +13,13 @@ import {
   Shield,
   Layers,
   Calendar,
-  ArrowRight
+  ArrowRight,
 } from "lucide-react";
-import { fetchOrganizations, addOrganization, removeOrganization } from "./orgSlice";
+import {
+  fetchOrganizations,
+  addOrganization,
+  removeOrganization,
+} from "./orgSlice";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
 import Input from "../../components/ui/Input";
@@ -63,7 +67,9 @@ const OrganizationList = () => {
         setShowCreate(false);
         setName("");
       } else {
-        throw new Error(result.payload?.detail || "Failed to create organization");
+        throw new Error(
+          result.payload?.detail || "Failed to create organization",
+        );
       }
     } catch (err) {
       toast.error(err.message);
@@ -83,7 +89,9 @@ const OrganizationList = () => {
         toast.success("Organization deleted");
         setDeleteConfirm(null);
       } else {
-        throw new Error(result.payload?.detail || "Failed to delete organization");
+        throw new Error(
+          result.payload?.detail || "Failed to delete organization",
+        );
       }
     } catch (err) {
       toast.error(err.message);
@@ -117,7 +125,9 @@ const OrganizationList = () => {
 
   // Local Search & Filter logic
   const filteredOrgs = orgs.filter((org) => {
-    const matchesSearch = org.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = org.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
     const matchesRole =
       roleFilter === "ALL" ||
       (roleFilter === "ADMIN" && org.user_role === "ADMIN") ||
@@ -126,43 +136,45 @@ const OrganizationList = () => {
   });
 
   return (
-    <div className="relative min-h-screen -mt-5 space-y-6 mx-4 animate-fade-in pb-12 overflow-hidden">
+    <div className="-mt-8 space-y-8 sm:space-y-10 pb-20 animate-fade-in pt-0 px-4 sm:px-5 lg:px-6 text-dark-100 relative overflow-hidden bg-transparent">
       {/* Ambient background glows for immersive glass feel */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-[100px] animate-blob pointer-events-none" />
       <div className="absolute bottom-1/4 left-10 w-80 h-80 bg-purple-500/10 rounded-full blur-[80px] animate-blob animation-delay-2000 pointer-events-none" />
 
       {/* Header */}
-      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-dark-800">
+      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-4 pb-5 sm:pb-4 border-b border-dark-800/40">
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight text-white flex items-center gap-3">
             <span className="text-gradient">Teams & Workspaces</span>
           </h1>
           <p className="text-dark-400 mt-2 text-sm max-w-xl">
-            Access all your organizational teams, collaboration workspaces, and project catalogs.
+            Access all your organizational teams, collaboration workspaces, and
+            project catalogs.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
           <Button
             variant="secondary"
             icon={Rocket}
             onClick={() => setShowJoin(true)}
-            className="hover:scale-[1.02] active:scale-95 transition-transform duration-250 font-semibold"
+            className="flex-1 sm:flex-initial hover:scale-[1.02] active:scale-95 transition-transform duration-250 font-semibold text-sm whitespace-nowrap justify-center min-h-[44px]"
           >
             Join Workspace
           </Button>
           <Button
             icon={Plus}
             onClick={() => setShowCreate(true)}
-            className="shadow-lg shadow-brand-500/20 hover:scale-[1.02] active:scale-95 transition-transform duration-250 font-semibold"
+            className="flex-1 sm:flex-initial shadow-lg shadow-brand-500/20 hover:scale-[1.02] active:scale-95 transition-transform duration-250 font-semibold text-sm whitespace-nowrap justify-center min-h-[44px]"
           >
-            New Organization
+            <span className="hidden sm:inline">New Organization</span>
+            <span className="sm:hidden">New Org</span>
           </Button>
         </div>
       </div>
 
-      {/* Controls Bar */}
-      <div className="relative z-10 flex flex-col sm:flex-row gap-4 items-center justify-between bg-dark-800/30 backdrop-blur-md p-4 rounded-2xl border border-dark-700/40">
+      {/* Controls Bar (Unboxed & Blended) */}
+      <div className="relative z-10 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
         {/* Search Input */}
         <div className="relative w-full sm:w-80">
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-500">
@@ -173,7 +185,7 @@ const OrganizationList = () => {
             placeholder="Search workspaces..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-dark-900/50 hover:bg-dark-900 border border-dark-700/60 hover:border-dark-600 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-dark-100 placeholder-dark-500 rounded-xl pl-10 pr-10 py-2.5 text-sm transition-all focus:outline-none"
+            className="w-full bg-dark-900/40 hover:bg-dark-900/60 border border-transparent focus:border-brand-500/40 focus:ring-1 focus:ring-brand-500/20 text-dark-100 placeholder-dark-500 rounded-xl pl-10 pr-10 py-3 sm:py-2.5 text-sm transition-all focus:outline-none"
           />
           {searchQuery && (
             <button
@@ -186,10 +198,10 @@ const OrganizationList = () => {
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-1 bg-dark-900/60 p-1 rounded-xl border border-dark-800 w-full sm:w-auto overflow-x-auto">
+        <div className="flex bg-transparent border-none p-1 rounded-xl gap-1 w-full sm:w-auto overflow-x-auto scrollbar-none">
           {[
             { value: "ALL", label: "All Workspaces", icon: Layers },
-            { value: "ADMIN", label: "Managed by Me", icon: Shield },
+            { value: "ADMIN", label: "Managed", icon: Shield },
             { value: "MEMBER", label: "Joined", icon: Users },
           ].map((tab) => {
             const TabIcon = tab.icon;
@@ -198,10 +210,11 @@ const OrganizationList = () => {
               <button
                 key={tab.value}
                 onClick={() => setRoleFilter(tab.value)}
-                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-300 ${isActive
-                  ? "bg-brand-600 text-white shadow-md shadow-brand-500/10"
-                  : "text-dark-400 hover:text-dark-200 hover:bg-dark-850"
-                  }`}
+                className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 py-2 sm:py-1.5 sm:px-4 rounded-lg text-[10px] font-bold tracking-wider uppercase whitespace-nowrap transition-all duration-200 ${
+                  isActive
+                    ? "bg-brand-500/15 border border-brand-500/25 text-brand-400 shadow-[0_0_12px_rgba(99,102,241,0.05)]"
+                    : "text-dark-400 hover:text-white border border-transparent"
+                }`}
               >
                 <TabIcon size={13} />
                 <span>{tab.label}</span>
@@ -215,9 +228,12 @@ const OrganizationList = () => {
       <div className="relative z-10">
         {loading && orgs.length === 0 ? (
           /* High Fidelity Animated Skeletons */
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="glass-panel p-6 h-[210px] flex flex-col justify-between animate-pulse">
+              <div
+                key={i}
+                className="relative bg-[#0f172a]/30 border border-white/[0.02] rounded-[24px] p-6 h-[210px] flex flex-col justify-between animate-pulse"
+              >
                 <div>
                   <div className="flex justify-between items-start mb-4">
                     <div className="w-12 h-12 bg-dark-700 rounded-2xl" />
@@ -235,10 +251,13 @@ const OrganizationList = () => {
           </div>
         ) : filteredOrgs.length === 0 ? (
           /* Upgraded Empty State Card */
-          <div className="glass-panel p-12 text-center max-w-xl mx-auto mt-8 border border-dark-700/40 relative overflow-hidden">
+          <div className="relative bg-[#0f172a]/30 border-dashed border border-dark-700/30 rounded-[24px] p-8 sm:p-12 text-center max-w-xl mx-auto mt-6 sm:mt-8 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-brand-500/5 to-transparent pointer-events-none" />
             <div className="w-16 h-16 bg-brand-600/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-brand-500/20">
-              <Building2 size={32} className="text-brand-400 animate-pulse-slow" />
+              <Building2
+                size={32}
+                className="text-brand-400 animate-pulse-slow"
+              />
             </div>
             <h3 className="text-xl font-bold text-white mb-2">
               No workspaces found
@@ -261,10 +280,18 @@ const OrganizationList = () => {
                 </Button>
               ) : (
                 <>
-                  <Button icon={Plus} onClick={() => setShowCreate(true)} className="shadow-lg shadow-brand-500/20">
+                  <Button
+                    icon={Plus}
+                    onClick={() => setShowCreate(true)}
+                    className="shadow-lg shadow-brand-500/20"
+                  >
                     Create Organization
                   </Button>
-                  <Button variant="secondary" icon={Rocket} onClick={() => setShowJoin(true)}>
+                  <Button
+                    variant="secondary"
+                    icon={Rocket}
+                    onClick={() => setShowJoin(true)}
+                  >
                     Join
                   </Button>
                 </>
@@ -273,11 +300,11 @@ const OrganizationList = () => {
           </div>
         ) : (
           /* High Fidelity Glassmorphic Cards Grid */
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6">
             {filteredOrgs.map((org) => (
               <div
                 key={org.id}
-                className="glass-panel group relative flex flex-col justify-between overflow-hidden p-6 cursor-pointer hover:-translate-y-1.5 hover:scale-[1.01] hover:border-brand-500/40 transition-all duration-300"
+                className="relative bg-[#0f172a]/30 backdrop-blur-[20px] border border-white/[0.02] rounded-[24px] overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.015] hover:border-indigo-500/20 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5),0_0_25px_rgba(99,102,241,0.08)] p-6 cursor-pointer group flex flex-col justify-between h-[210px]"
                 onClick={() => navigate(`/app/organizations/${org.id}/teams`)}
               >
                 {/* Subtle top decoration card line */}
@@ -286,16 +313,21 @@ const OrganizationList = () => {
                 <div>
                   {/* Avatar and Role */}
                   <div className="flex items-start justify-between mb-5">
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${getGradient(org.name)} flex items-center justify-center font-bold text-white text-base shadow-lg`}>
+                    <div
+                      className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${getGradient(org.name)} flex items-center justify-center font-bold text-white text-base shadow-lg`}
+                    >
                       {getOrgInitials(org.name)}
                     </div>
 
                     <div className="flex items-center gap-2">
                       {/* Role badge */}
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase ${org.user_role === "ADMIN"
-                        ? "bg-red-500/10 text-red-400 border border-red-500/20 shadow-[0_0_8px_rgba(239,68,68,0.1)]"
-                        : "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_8px_rgba(59,130,246,0.1)]"
-                        }`}>
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase ${
+                          org.user_role === "ADMIN"
+                            ? "bg-red-500/10 text-red-400 border border-red-500/20 shadow-[0_0_8px_rgba(239,68,68,0.1)]"
+                            : "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_8px_rgba(59,130,246,0.1)]"
+                        }`}
+                      >
                         {org.user_role === "ADMIN" ? (
                           <>
                             <Shield size={10} />
@@ -343,9 +375,14 @@ const OrganizationList = () => {
                 <div className="flex items-center justify-between pt-4 border-t border-dark-800/80 mt-auto">
                   <span className="text-xs font-bold text-brand-400 group-hover:text-brand-300 transition-colors flex items-center gap-1">
                     Enter Workspace
-                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight
+                      size={14}
+                      className="group-hover:translate-x-1 transition-transform"
+                    />
                   </span>
-                  <span className="text-[10px] text-dark-500 font-mono tracking-wider">CF-{org.id}</span>
+                  <span className="text-[10px] text-dark-500 font-mono tracking-wider">
+                    CF-{org.id}
+                  </span>
                 </div>
               </div>
             ))}
@@ -369,10 +406,19 @@ const OrganizationList = () => {
             autoFocus
           />
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-dark-800/60 -mx-6 px-6">
-            <Button variant="ghost" onClick={() => setShowCreate(false)} type="button">
+            <Button
+              variant="ghost"
+              onClick={() => setShowCreate(false)}
+              type="button"
+            >
               Cancel
             </Button>
-            <Button type="submit" loading={creating} icon={Plus} className="shadow-lg shadow-brand-500/25">
+            <Button
+              type="submit"
+              loading={creating}
+              icon={Plus}
+              className="shadow-lg shadow-brand-500/25"
+            >
               Create
             </Button>
           </div>
@@ -390,7 +436,10 @@ const OrganizationList = () => {
             <AlertTriangle size={24} className="flex-shrink-0" />
             <div>
               <p className="font-bold text-sm">Warning: Critical Action</p>
-              <p className="text-xs opacity-80 leading-relaxed mt-0.5">Deleting an organization will permanently remove all associated teams, projects, and tasks. This cannot be undone.</p>
+              <p className="text-xs opacity-80 leading-relaxed mt-0.5">
+                Deleting an organization will permanently remove all associated
+                teams, projects, and tasks. This cannot be undone.
+              </p>
             </div>
           </div>
 
@@ -399,7 +448,11 @@ const OrganizationList = () => {
           </p>
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-dark-800/60 -mx-6 px-6">
-            <Button variant="ghost" onClick={() => setDeleteConfirm(null)} type="button">
+            <Button
+              variant="ghost"
+              onClick={() => setDeleteConfirm(null)}
+              type="button"
+            >
               Cancel
             </Button>
             <Button
@@ -424,4 +477,3 @@ const OrganizationList = () => {
 };
 
 export default OrganizationList;
-

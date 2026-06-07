@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Zap,
@@ -12,7 +13,9 @@ import {
   Heart,
   Terminal,
   Sparkles,
-  Lock
+  Lock,
+  Menu,
+  X
 } from "lucide-react";
 import logo from "../../assets/logo2.png";
 import heroBg from "../../assets/hero-bg.jpg";
@@ -93,6 +96,8 @@ const testimonials = [
 ];
 
 const Landing = () => {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const scrollTo = (id) => (e) => {
     e.preventDefault();
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -143,7 +148,8 @@ const Landing = () => {
             </a>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Desktop Right CTA */}
+          <div className="hidden md:flex items-center gap-3">
             <Link
               to="/login"
               className="px-4 py-2 text-sm font-medium text-dark-300 hover:text-white transition-colors"
@@ -154,7 +160,67 @@ const Landing = () => {
               Get started free
             </Link>
           </div>
+
+          {/* Mobile controls */}
+          <div className="md:hidden flex items-center gap-2">
+            <Link to="/login" className="px-3 py-1.5 text-xs font-semibold text-dark-300 hover:text-white transition-colors">
+              Sign in
+            </Link>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="p-2 rounded-xl text-dark-400 hover:text-dark-100 hover:bg-dark-800 transition-all duration-200 active:scale-95"
+              aria-label="Toggle Menu"
+            >
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Menu Panel */}
+        {menuOpen && (
+          <div className="absolute top-20 left-0 right-0 mx-2 bg-dark-900/95 backdrop-blur-2xl border border-dark-800 rounded-3xl p-6 shadow-2xl z-40 md:hidden animate-fade-in flex flex-col gap-6">
+            <div className="flex flex-col gap-4 text-center">
+              <a
+                href="#features"
+                onClick={(e) => { scrollTo("features")(e); setMenuOpen(false); }}
+                className="py-3 px-4 rounded-xl text-dark-300 hover:text-white hover:bg-dark-800/50 transition-colors text-base font-semibold"
+              >
+                Features
+              </a>
+              <a
+                href="#about"
+                onClick={(e) => { scrollTo("about")(e); setMenuOpen(false); }}
+                className="py-3 px-4 rounded-xl text-dark-300 hover:text-white hover:bg-dark-800/50 transition-colors text-base font-semibold"
+              >
+                About
+              </a>
+              <a
+                href="#pricing"
+                onClick={() => setMenuOpen(false)}
+                className="py-3 px-4 rounded-xl text-dark-300 hover:text-white hover:bg-dark-800/50 transition-colors text-base font-semibold"
+              >
+                Pricing
+              </a>
+            </div>
+            
+            <div className="border-t border-dark-800 pt-6 flex flex-col gap-4">
+              <Link
+                to="/login"
+                onClick={() => setMenuOpen(false)}
+                className="w-full py-3 text-center text-sm font-semibold text-dark-300 hover:text-white hover:bg-dark-800 rounded-xl transition-all"
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/register"
+                onClick={() => setMenuOpen(false)}
+                className="w-full py-4 text-center text-sm font-bold text-white bg-brand-600 hover:bg-brand-500 rounded-xl shadow-glow transition-all"
+              >
+                Get started free
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
       {/* Hero */}
       <section className="relative pt-40 pb-24 px-6">
@@ -185,7 +251,7 @@ const Landing = () => {
             <span className="text-dark-100">Project management reimagined</span>
           </div>
 
-          <h1 className="text-6xl md:text-8xl font-extrabold text-white leading-[1.1] tracking-tight mb-8">
+          <h1 className="text-4xl sm:text-6xl md:text-8xl font-extrabold text-white leading-[1.1] tracking-tight mb-8">
             Build faster with{" "}
             <span className="text-gradient block mt-2">
               Your Crew
@@ -233,13 +299,13 @@ const Landing = () => {
               <div className="ml-4 flex-1 bg-dark-700 rounded-md h-5 max-w-xs" />
             </div>
 
-            <div className="p-6 grid grid-cols-3 gap-4">
+            <div className="p-6 flex md:grid md:grid-cols-3 gap-4 overflow-x-auto snap-x scrollbar-thin">
               {[
                 { col: "Todo", color: "text-dark-400", count: 3 },
                 { col: "In Progress", color: "text-blue-400", count: 2 },
                 { col: "Done", color: "text-green-400", count: 4 },
               ].map(({ col, color, count }) => (
-                <div key={col} className="space-y-3">
+                <div key={col} className="space-y-3 min-w-[200px] flex-1 md:min-w-0 snap-align-start flex-shrink-0">
                   <div className={`text-xs font-semibold uppercase ${color}`}>
                     {col}
                   </div>

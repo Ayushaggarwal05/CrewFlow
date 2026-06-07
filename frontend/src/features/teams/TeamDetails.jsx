@@ -257,14 +257,23 @@ const TeamDetails = () => {
         <CardSkeleton count={3} />
       ) : activeTab === "projects" ? (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
             <p className="text-dark-400 font-medium">{projects.length} projects</p>
-            <div className="flex gap-3">
-              <Button variant="secondary" icon={Rocket} onClick={() => setShowJoin(true)}>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <Button
+                variant="secondary"
+                icon={Rocket}
+                onClick={() => setShowJoin(true)}
+                className="flex-1 sm:flex-initial justify-center"
+              >
                 Join
               </Button>
               {(isAdmin || isManager) && (
-                <Button onClick={() => setShowCreateProject(true)} icon={Plus}>
+                <Button
+                  onClick={() => setShowCreateProject(true)}
+                  icon={Plus}
+                  className="flex-1 sm:flex-initial justify-center"
+                >
                   New Project
                 </Button>
               )}
@@ -293,11 +302,15 @@ const TeamDetails = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
             <p className="text-dark-400 font-medium">{sortedMemberships.length} members</p>
             {/* Members tab: gate on isAdmin OR isTeamManager (team-level ownership) */}
             {(isAdmin || isTeamManager) && (
-              <Button onClick={() => setShowAddMember(true)} icon={UserPlus}>
+              <Button
+                onClick={() => setShowAddMember(true)}
+                icon={UserPlus}
+                className="w-full sm:w-auto justify-center"
+              >
                 Add Member
               </Button>
             )}

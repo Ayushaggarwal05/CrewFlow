@@ -430,7 +430,7 @@ const Dashboard = () => {
           {/* Main Content Areas */}
           <div className="lg:col-span-8 space-y-6">
             {/* Workspace Velocity */}
-            <GlassCard className="!p-8 !bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#8B5CF6]/20">
+            <GlassCard className="p-4 sm:p-8 !bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#8B5CF6]/20">
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h2 className="text-2xl font-bold text-[#dae2fd] tracking-tight">Workspace Velocity</h2>
@@ -484,9 +484,9 @@ const Dashboard = () => {
                       <thead>
                         <tr className="border-b border-white/5 bg-white/[0.02]">
                           <th className="py-3 px-5 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal">Project Name</th>
-                          <th className="py-3 px-5 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal">Lead</th>
+                          <th className="py-3 px-5 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal hidden sm:table-cell">Lead</th>
                           <th className="py-3 px-5 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal">Status</th>
-                          <th className="py-3 px-5 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal">Progress</th>
+                          <th className="py-3 px-5 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal hidden md:table-cell">Progress</th>
                           <th className="py-3 px-5 text-[10px] font-mono text-[#c5c6cd] uppercase tracking-widest font-normal text-right">Action</th>
                         </tr>
                       </thead>
@@ -495,9 +495,9 @@ const Dashboard = () => {
                           <tr key={project.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => navigate(`/app/projects/${project.id}/tasks`)}>
                             <td className="py-4 px-5">
                               <p className="text-sm font-semibold text-[#dae2fd]">{project.name}</p>
-                              <p className="text-[11px] text-[#c5c6cd] mt-0.5 truncate max-w-[200px]">{project.description || "Infrastructure Upgrade"}</p>
+                              <p className="text-[11px] text-[#c5c6cd] mt-0.5 truncate max-w-[150px] sm:max-w-[200px]">{project.description || "Infrastructure Upgrade"}</p>
                             </td>
-                            <td className="py-4 px-5">
+                            <td className="py-4 px-5 hidden sm:table-cell">
                               <div className="flex items-center gap-2">
                                 <div className="w-6 h-6 rounded-full bg-[#1E293B] border border-white/10 flex items-center justify-center text-[10px] text-[#8B5CF6] font-bold">
                                   {getInitials(project.lead_name || project.created_by_name || "U")}
@@ -510,7 +510,7 @@ const Dashboard = () => {
                                 {project.status || "Active"}
                               </span>
                             </td>
-                            <td className="py-4 px-5">
+                            <td className="py-4 px-5 hidden md:table-cell">
                               <div className="flex items-center gap-3">
                                 <div className="w-24 h-1.5 bg-[#0F172A] rounded-full overflow-hidden">
                                   <div className="h-full bg-[#8B5CF6]" style={{ width: `${Math.floor(Math.random() * 60) + 20}%` }}></div>
@@ -543,7 +543,7 @@ const Dashboard = () => {
                     Invite More
                   </button>
                 </SectionHeader>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {subordinates.length === 0 ? (
                     <div className="col-span-full">
                       <EmptyState
